@@ -5,9 +5,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import javax.sql.DataSource;
 
-/** {@link JdbcOperator} の CDI プロデューサー。default と {@link ReadOnly} の 2 種を提供する。 */
 @ApplicationScoped
-public class JdbcOperators {
+public class JdbcOperatorProducer {
 
   @Produces
   @ApplicationScoped
