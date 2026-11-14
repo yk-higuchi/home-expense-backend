@@ -68,7 +68,9 @@ class ExpenseApiTest {
         .body("description", equalTo("ランチ"))
         .body("amount", equalTo(1000))
         .body("payment_date", equalTo("2026-04-10"))
-        .body("expense_attribute_id", equalTo(attributeId));
+        .body("expense_attribute.id", equalTo(attributeId))
+        .body("expense_attribute.name", equalTo("テスト食費"))
+        .body("expense_attribute.category", equalTo("変動費"));
   }
 
   @Test

@@ -8,7 +8,7 @@ public record IncomeGetResponse(
     @JsonProperty("description") String description,
     @JsonProperty("amount") Integer amount,
     @JsonProperty("receive_date") String receiveDate,
-    @JsonProperty("income_attribute_id") String incomeAttributeId) {
+    @JsonProperty("income_attribute") IncomeAttributeResponse incomeAttribute) {
 
   static IncomeGetResponse from(IncomeDetail detail) {
     return new IncomeGetResponse(
@@ -16,6 +16,6 @@ public record IncomeGetResponse(
         detail.description(),
         detail.amount(),
         detail.receiveDate().toString(),
-        detail.attributeId());
+        new IncomeAttributeResponse(detail.attributeId(), detail.attributeName()));
   }
 }

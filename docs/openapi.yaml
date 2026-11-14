@@ -544,6 +544,11 @@ components:
   schemas:
     AttributeAmountResponse:
       properties:
+        amount:
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
         attribute_id:
           format: uuid
           maxLength: 36
@@ -551,11 +556,6 @@ components:
         attribute_name:
           maxLength: 512
           type: string
-        amount:
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
       required:
         - attribute_id
         - attribute_name
@@ -563,27 +563,25 @@ components:
       type: object
     AttributeBreakdownResponse:
       properties:
+        breakdown:
+          description: Per-attribute amounts sorted by amount in descending order. Attributes without data in the period are omitted.
+          items:
+            $ref: '#/components/schemas/AttributeAmountResponse'
+          type: array
         total:
           description: Sum of breakdown amounts
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
-        breakdown:
-          description: Per-attribute amounts sorted by amount in descending order. Attributes without data in the period are omitted.
-          items:
-            $ref: '#/components/schemas/AttributeAmountResponse'
-          type: array
       required:
         - total
         - breakdown
       type: object
     BalanceSeriesPointResponse:
       properties:
-        period:
-          $ref: '#/components/schemas/PeriodResponse'
-        income_total:
-          description: Sum of incomes in the bucket
+        expense_total:
+          description: Sum of fixed_expense_total and variable_expense_total
           format: int64
           maximum: 1000000000000
           minimum: 0
@@ -594,14 +592,8 @@ components:
           maximum: 1000000000000
           minimum: 0
           type: integer
-        variable_expense_total:
-          description: Sum of variable expenses in the bucket
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
-        expense_total:
-          description: Sum of fixed_expense_total and variable_expense_total
+        income_total:
+          description: Sum of incomes in the bucket
           format: int64
           maximum: 1000000000000
           minimum: 0
@@ -611,6 +603,14 @@ components:
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
+          type: integer
+        period:
+          $ref: '#/components/schemas/PeriodResponse'
+        variable_expense_total:
+          description: Sum of variable expenses in the bucket
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
           type: integer
       required:
         - period
@@ -641,26 +641,26 @@ components:
       type: object
     BalanceStatisticsResponse:
       properties:
-        period:
-          $ref: '#/components/schemas/PeriodResponse'
-        income:
-          $ref: '#/components/schemas/AttributeBreakdownResponse'
-        fixed_expense:
-          $ref: '#/components/schemas/AttributeBreakdownResponse'
-        variable_expense:
-          $ref: '#/components/schemas/AttributeBreakdownResponse'
         expense_total:
           description: Sum of fixed_expense.total and variable_expense.total
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
+        fixed_expense:
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
+        income:
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
         net:
           description: Net balance, income.total minus expense_total (may be negative)
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
           type: integer
+        period:
+          $ref: '#/components/schemas/PeriodResponse'
+        variable_expense:
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
       required:
         - period
         - income
@@ -737,6 +737,11 @@ components:
       type: object
     ExpenseGetResponse:
       properties:
+        amount:
+          format: int32
+          maximum: 1000000000
+          minimum: 1
+          type: integer
         description:
           maxLength: 512
           type: string
@@ -750,11 +755,6 @@ components:
           format: date
           maxLength: 10
           type: string
-        price:
-          format: int32
-          maximum: 1000000000
-          minimum: 1
-          type: integer
       type: object
     ExpenseListResponse:
       properties:
@@ -766,6 +766,11 @@ components:
       type: object
     ExpensePostRequest:
       properties:
+        amount:
+          format: int32
+          maximum: 1000000000
+          minimum: 1
+          type: integer
         attribute_id:
           format: uuid
           maxLength: 36
@@ -779,19 +784,19 @@ components:
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
           type: string
-        price:
-          format: int32
-          maximum: 1000000000
-          minimum: 1
-          type: integer
       required:
         - description
-        - price
+        - amount
         - payment_date
         - attribute_id
       type: object
     ExpensePutRequest:
       properties:
+        amount:
+          format: int32
+          maximum: 1000000000
+          minimum: 1
+          type: integer
         attribute_id:
           format: uuid
           maxLength: 36
@@ -805,14 +810,9 @@ components:
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
           type: string
-        price:
-          format: int32
-          maximum: 1000000000
-          minimum: 1
-          type: integer
       required:
         - description
-        - price
+        - amount
         - payment_date
         - attribute_id
       type: object
@@ -976,17 +976,17 @@ components:
           example: Bad Request
           maxLength: 256
           type: string
-        type:
-          description: A URI reference that identifies the problem type
-          example: about:blank
-          format: uri
-          maxLength: 2048
-          type: string
         trace_id:
           description: W3C Trace Context trace-id of the request, for correlating the problem with server-side traces (extension member)
           example: 4bf92f3577b34da6a3ce929d0e0e4736
           maxLength: 32
           pattern: ^[0-9a-f]{32}$
+          type: string
+        type:
+          description: A URI reference that identifies the problem type
+          example: about:blank
+          format: uri
+          maxLength: 2048
           type: string
       type: object
   responses:
@@ -1037,8 +1037,7 @@ components:
             title: Precondition Failed
             type: about:blank
     PreconditionRequired:
-      description: |-
-        The `If-Match` header is missing (RFC 6585 §3). A malformed `If-Match` results in 400.
+      description: The `If-Match` header is missing (RFC 6585 §3). A malformed `If-Match` results in 400.
       content:
         application/problem+json:
           schema:
@@ -1134,6 +1133,8 @@ components:
       schema:
         maxLength: 2048
         type: string
+  requestBodies: []
+  securitySchemes: []
 tags:
   - name: Balance Statistics
     description: Operations for income and expense statistics over a period
