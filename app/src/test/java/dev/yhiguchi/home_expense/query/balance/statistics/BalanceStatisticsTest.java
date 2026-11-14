@@ -12,9 +12,9 @@ class BalanceStatisticsTest {
   private static final LocalDate TO = LocalDate.of(2026, 4, 30);
 
   @Test
-  void 内訳の合計がカテゴリの合計になる() {
-    CategoryBreakdown breakdown =
-        new CategoryBreakdown(
+  void 合計は内訳の金額の和() {
+    AttributeBreakdown breakdown =
+        new AttributeBreakdown(
             List.of(
                 new AttributeAmount("00000000-0000-0000-0000-000000000001", "食費", 50000L),
                 new AttributeAmount("00000000-0000-0000-0000-000000000002", "日用品", 30000L)));
@@ -23,52 +23,52 @@ class BalanceStatisticsTest {
   }
 
   @Test
-  void 内訳が空ならカテゴリの合計は0() {
-    assertEquals(0L, CategoryBreakdown.empty().total());
-    assertTrue(CategoryBreakdown.empty().breakdown().isEmpty());
+  void 内訳が空なら合計は0() {
+    assertEquals(0L, AttributeBreakdown.empty().total());
+    assertTrue(AttributeBreakdown.empty().amounts().isEmpty());
   }
 
   @Test
-  void 支出合計は固定費と変動費の和() {
+  void 経費合計は固定費と変動費の和() {
     BalanceStatistics statistics = statistics(500000L, 100000L, 200000L);
 
     assertEquals(300000L, statistics.expenseTotal());
   }
 
   @Test
-  void 収支は収入から支出を引いた値() {
+  void 純収支は収入から経費を引いた値() {
     BalanceStatistics statistics = statistics(500000L, 100000L, 200000L);
 
-    assertEquals(200000L, statistics.balance());
+    assertEquals(200000L, statistics.net());
   }
 
   @Test
-  void 支出超過なら収支はマイナス() {
+  void 経費超過なら純収支はマイナス() {
     BalanceStatistics statistics = statistics(0L, 80000L, 20000L);
 
-    assertEquals(-100000L, statistics.balance());
+    assertEquals(-100000L, statistics.net());
   }
 
   @Test
-  void 支出合計でオーバーフロー時に例外() {
+  void 経費合計でオーバーフロー時に例外() {
     BalanceStatistics statistics = statistics(0L, Long.MAX_VALUE, 1L);
 
     assertThrows(ArithmeticException.class, statistics::expenseTotal);
   }
 
   @Test
-  void 収支でアンダーフロー時に例外() {
+  void 純収支でアンダーフロー時に例外() {
     BalanceStatistics statistics = statistics(Long.MIN_VALUE, 1L, 0L);
 
-    assertThrows(ArithmeticException.class, statistics::balance);
+    assertThrows(ArithmeticException.class, statistics::net);
   }
 
   private static BalanceStatistics statistics(long income, long fixed, long variable) {
     return new BalanceStatistics(FROM, TO, single(income), single(fixed), single(variable));
   }
 
-  private static CategoryBreakdown single(long amount) {
-    return new CategoryBreakdown(
+  private static AttributeBreakdown single(long amount) {
+    return new AttributeBreakdown(
         List.of(new AttributeAmount("00000000-0000-0000-0000-000000000001", "test", amount)));
   }
 }

@@ -1,41 +1,38 @@
 package dev.yhiguchi.home_expense.presentation.api.balance.statistics;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dev.yhiguchi.home_expense.presentation.api.balance.PeriodResponse;
 import dev.yhiguchi.home_expense.query.balance.statistics.AttributeAmount;
+import dev.yhiguchi.home_expense.query.balance.statistics.AttributeBreakdown;
 import dev.yhiguchi.home_expense.query.balance.statistics.BalanceStatistics;
-import dev.yhiguchi.home_expense.query.balance.statistics.CategoryBreakdown;
-import java.time.LocalDate;
 import java.util.List;
 
 public record BalanceStatisticsResponse(
     @JsonProperty("period") PeriodResponse period,
-    @JsonProperty("income") CategoryBreakdownResponse income,
-    @JsonProperty("fixed_expense") CategoryBreakdownResponse fixedExpense,
-    @JsonProperty("variable_expense") CategoryBreakdownResponse variableExpense,
+    @JsonProperty("income") AttributeBreakdownResponse income,
+    @JsonProperty("fixed_expense") AttributeBreakdownResponse fixedExpense,
+    @JsonProperty("variable_expense") AttributeBreakdownResponse variableExpense,
     @JsonProperty("expense_total") long expenseTotal,
-    @JsonProperty("balance") long balance) {
+    @JsonProperty("net") long net) {
 
   public static BalanceStatisticsResponse of(BalanceStatistics statistics) {
     return new BalanceStatisticsResponse(
         new PeriodResponse(statistics.from(), statistics.to()),
-        CategoryBreakdownResponse.of(statistics.income()),
-        CategoryBreakdownResponse.of(statistics.fixedExpense()),
-        CategoryBreakdownResponse.of(statistics.variableExpense()),
+        AttributeBreakdownResponse.of(statistics.income()),
+        AttributeBreakdownResponse.of(statistics.fixedExpense()),
+        AttributeBreakdownResponse.of(statistics.variableExpense()),
         statistics.expenseTotal(),
-        statistics.balance());
+        statistics.net());
   }
 
-  public record PeriodResponse(
-      @JsonProperty("from") LocalDate from, @JsonProperty("to") LocalDate to) {}
-
-  public record CategoryBreakdownResponse(
+  public record AttributeBreakdownResponse(
       @JsonProperty("total") long total,
       @JsonProperty("breakdown") List<AttributeAmountResponse> breakdown) {
 
-    static CategoryBreakdownResponse of(CategoryBreakdown category) {
-      return new CategoryBreakdownResponse(
-          category.total(),
-          category.breakdown().stream().map(AttributeAmountResponse::of).toList());
+    static AttributeBreakdownResponse of(AttributeBreakdown breakdown) {
+      return new AttributeBreakdownResponse(
+          breakdown.total(),
+          breakdown.amounts().stream().map(AttributeAmountResponse::of).toList());
     }
   }
 

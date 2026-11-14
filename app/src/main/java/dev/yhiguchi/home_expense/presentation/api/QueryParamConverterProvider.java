@@ -1,7 +1,6 @@
 package dev.yhiguchi.home_expense.presentation.api;
 
 import dev.yhiguchi.home_expense.query.Granularity;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;
@@ -13,8 +12,10 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 /**
- * クエリ / パスパラメータの型変換。変換できない値は 404 ではなく {@link InvalidQueryParameterException} (400) にする。 空文字は未指定
- * (null) として扱う。
+ * クエリパラメータの型変換。変換できない値は 404 ではなく {@link InvalidQueryParameterException} (400) にする。 空文字は未指定 (null)
+ * として扱う。
+ *
+ * <p>パスパラメータは対象外。変換できないパス値は「該当リソースなし」なので JAX-RS 標準どおり 404 とする。
  */
 @Provider
 public class QueryParamConverterProvider implements ParamConverterProvider {
@@ -23,7 +24,10 @@ public class QueryParamConverterProvider implements ParamConverterProvider {
   @SuppressWarnings("unchecked")
   public <T> ParamConverter<T> getConverter(
       Class<T> rawType, Type genericType, Annotation[] annotations) {
-    String name = parameterName(annotations);
+    String name = queryParamName(annotations);
+    if (name == null) {
+      return null;
+    }
     if (rawType == Integer.class) {
       return (ParamConverter<T>) new Converter<>(name, "整数", Integer::valueOf, String::valueOf);
     }
@@ -42,18 +46,12 @@ public class QueryParamConverterProvider implements ParamConverterProvider {
     return null;
   }
 
-  private static String parameterName(Annotation[] annotations) {
+  private static String queryParamName(Annotation[] annotations) {
     return Arrays.stream(annotations)
-        .map(
-            a ->
-                switch (a) {
-                  case QueryParam q -> q.value();
-                  case PathParam p -> p.value();
-                  default -> null;
-                })
-        .filter(n -> n != null)
+        .filter(QueryParam.class::isInstance)
+        .map(a -> ((QueryParam) a).value())
         .findFirst()
-        .orElse("パラメータ");
+        .orElse(null);
   }
 
   private record Converter<T>(

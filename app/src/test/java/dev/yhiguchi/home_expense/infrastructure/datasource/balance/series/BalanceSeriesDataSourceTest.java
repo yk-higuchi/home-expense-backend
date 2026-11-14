@@ -73,11 +73,11 @@ class BalanceSeriesDataSourceTest {
     assertEquals(Granularity.MONTH, result.granularity());
     assertEquals(4, result.items().size());
     BalanceSeriesPoint first = result.items().get(0);
-    assertEquals(LocalDate.of(2026, 1, 1), first.periodStart());
-    assertEquals(LocalDate.of(2026, 1, 31), first.periodEnd());
+    assertEquals(LocalDate.of(2026, 1, 1), first.from());
+    assertEquals(LocalDate.of(2026, 1, 31), first.to());
     assertEquals(0L, first.incomeTotal());
     assertEquals(0L, first.expenseTotal());
-    assertEquals(0L, first.balance());
+    assertEquals(0L, first.net());
   }
 
   @Test
@@ -85,9 +85,9 @@ class BalanceSeriesDataSourceTest {
     BalanceSeries result = sut.search(monthly("2026-01-01", "2026-12-31"));
 
     assertEquals(12, result.items().size());
-    assertEquals(LocalDate.of(2026, 1, 1), result.items().get(0).periodStart());
-    assertEquals(LocalDate.of(2026, 12, 1), result.items().get(11).periodStart());
-    assertEquals(LocalDate.of(2026, 12, 31), result.items().get(11).periodEnd());
+    assertEquals(LocalDate.of(2026, 1, 1), result.items().get(0).from());
+    assertEquals(LocalDate.of(2026, 12, 1), result.items().get(11).from());
+    assertEquals(LocalDate.of(2026, 12, 31), result.items().get(11).to());
   }
 
   @Test
@@ -106,11 +106,11 @@ class BalanceSeriesDataSourceTest {
     assertEquals(80000L, april.fixedExpenseTotal());
     assertEquals(4000L, april.variableExpenseTotal());
     assertEquals(84000L, april.expenseTotal());
-    assertEquals(216000L, april.balance());
+    assertEquals(216000L, april.net());
   }
 
   @Test
-  void MONTH粒度_同じ月に収入と支出が複数件あっても合計が水増しされない() {
+  void MONTH粒度_同じ月に収入と経費が複数件あっても合計が水増しされない() {
     IncomeAttribute salary = registerIncomeAttribute("給与");
     ExpenseAttribute rent = registerExpenseAttribute("家賃", ExpenseCategory.固定費);
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
@@ -129,7 +129,7 @@ class BalanceSeriesDataSourceTest {
   }
 
   @Test
-  void MONTH粒度_収入のみの月と支出のみの月() {
+  void MONTH粒度_収入のみの月と経費のみの月() {
     IncomeAttribute bonus = registerIncomeAttribute("賞与");
     ExpenseAttribute insurance = registerExpenseAttribute("保険", ExpenseCategory.固定費);
     registerIncome(500000, "2026-06-30", bonus);
@@ -140,12 +140,12 @@ class BalanceSeriesDataSourceTest {
     BalanceSeriesPoint june = result.items().get(0);
     assertEquals(500000L, june.incomeTotal());
     assertEquals(0L, june.expenseTotal());
-    assertEquals(500000L, june.balance());
+    assertEquals(500000L, june.net());
 
     BalanceSeriesPoint july = result.items().get(1);
     assertEquals(0L, july.incomeTotal());
     assertEquals(120000L, july.fixedExpenseTotal());
-    assertEquals(-120000L, july.balance());
+    assertEquals(-120000L, july.net());
   }
 
   @Test
@@ -183,8 +183,8 @@ class BalanceSeriesDataSourceTest {
                 LocalDate.of(2025, 1, 1), LocalDate.of(2026, 12, 31), Granularity.YEAR));
 
     assertEquals(2, result.items().size());
-    assertEquals(LocalDate.of(2025, 1, 1), result.items().get(0).periodStart());
-    assertEquals(LocalDate.of(2025, 12, 31), result.items().get(0).periodEnd());
+    assertEquals(LocalDate.of(2025, 1, 1), result.items().get(0).from());
+    assertEquals(LocalDate.of(2025, 12, 31), result.items().get(0).to());
     assertEquals(5000000L, result.items().get(0).incomeTotal());
     assertEquals(10000L, result.items().get(0).fixedExpenseTotal());
     assertEquals(5500000L, result.items().get(1).incomeTotal());

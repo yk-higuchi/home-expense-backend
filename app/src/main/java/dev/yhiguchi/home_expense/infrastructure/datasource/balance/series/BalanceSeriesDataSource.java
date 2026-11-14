@@ -4,6 +4,7 @@ import dev.yhiguchi.home_expense.domain.model.expense.ExpenseCategory;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ReadOnly;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.ParameterBinder;
+import dev.yhiguchi.home_expense.query.Granularity;
 import dev.yhiguchi.home_expense.query.balance.series.BalanceSeries;
 import dev.yhiguchi.home_expense.query.balance.series.BalanceSeriesCriteria;
 import dev.yhiguchi.home_expense.query.balance.series.BalanceSeriesPoint;
@@ -15,7 +16,7 @@ import java.util.List;
 @ApplicationScoped
 public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
 
-  // 収入と支出は期間ごとに別々に集計してから結合する（直接 JOIN すると行が掛け合わされ合計が水増しされる）。
+  // 収入と経費は期間ごとに別々に集計してから結合する（直接 JOIN すると行が掛け合わされ合計が水増しされる）。
   // 集計範囲は from / to を含む期間全体（例: MONTH 粒度で from=4/15 なら 4/1 から）。
   private static final String SQL_TEMPLATE =
       """
@@ -71,7 +72,7 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
   public BalanceSeries search(BalanceSeriesCriteria criteria) {
     String sql =
         SQL_TEMPLATE.formatted(
-            criteria.granularity().sqlInterval(),
+            dateTruncUnit(criteria.granularity()),
             ExpenseCategory.固定費.name(),
             ExpenseCategory.変動費.name());
 
@@ -88,5 +89,16 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
                     rs.getLong("variable_total")));
 
     return new BalanceSeries(criteria.granularity(), points);
+  }
+
+  /** PostgreSQL の date_trunc / INTERVAL で使う単位 */
+  private static String dateTruncUnit(Granularity granularity) {
+    return switch (granularity) {
+      case DAY -> "day";
+      case WEEK -> "week";
+      case MONTH -> "month";
+      case QUARTER -> "quarter";
+      case YEAR -> "year";
+    };
   }
 }

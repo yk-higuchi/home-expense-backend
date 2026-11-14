@@ -28,7 +28,7 @@ class BalanceStatisticsApiTest {
         .body("variable_expense.total", notNullValue())
         .body("variable_expense.breakdown", notNullValue())
         .body("expense_total", notNullValue())
-        .body("balance", notNullValue());
+        .body("net", notNullValue());
   }
 
   @Test

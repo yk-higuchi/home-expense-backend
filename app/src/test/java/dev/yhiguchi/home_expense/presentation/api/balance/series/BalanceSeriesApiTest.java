@@ -23,13 +23,13 @@ class BalanceSeriesApiTest {
         .statusCode(200)
         .body("granularity", equalTo("month"))
         .body("items", hasSize(4))
-        .body("items[0].period_start", equalTo("2026-01-01"))
-        .body("items[0].period_end", equalTo("2026-01-31"))
+        .body("items[0].period.from", equalTo("2026-01-01"))
+        .body("items[0].period.to", equalTo("2026-01-31"))
         .body("items[0].income_total", notNullValue())
         .body("items[0].fixed_expense_total", notNullValue())
         .body("items[0].variable_expense_total", notNullValue())
         .body("items[0].expense_total", notNullValue())
-        .body("items[0].balance", notNullValue());
+        .body("items[0].net", notNullValue());
   }
 
   @Test

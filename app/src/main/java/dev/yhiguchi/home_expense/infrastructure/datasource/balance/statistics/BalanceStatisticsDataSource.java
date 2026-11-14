@@ -5,10 +5,10 @@ import dev.yhiguchi.home_expense.infrastructure.datasource.ReadOnly;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.yhiguchi.home_expense.query.balance.statistics.AttributeAmount;
+import dev.yhiguchi.home_expense.query.balance.statistics.AttributeBreakdown;
 import dev.yhiguchi.home_expense.query.balance.statistics.BalanceStatistics;
 import dev.yhiguchi.home_expense.query.balance.statistics.BalanceStatisticsCriteria;
 import dev.yhiguchi.home_expense.query.balance.statistics.BalanceStatisticsQuerier;
-import dev.yhiguchi.home_expense.query.balance.statistics.CategoryBreakdown;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Map;
@@ -76,10 +76,10 @@ public class BalanceStatisticsDataSource implements BalanceStatisticsQuerier {
     return new BalanceStatistics(
         criteria.from(),
         criteria.to(),
-        new CategoryBreakdown(income),
-        new CategoryBreakdown(
+        new AttributeBreakdown(income),
+        new AttributeBreakdown(
             expenseByCategory.getOrDefault(ExpenseCategory.固定費.name(), List.of())),
-        new CategoryBreakdown(
+        new AttributeBreakdown(
             expenseByCategory.getOrDefault(ExpenseCategory.変動費.name(), List.of())));
   }
 }

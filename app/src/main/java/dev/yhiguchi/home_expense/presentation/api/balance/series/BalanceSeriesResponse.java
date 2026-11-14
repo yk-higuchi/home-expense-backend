@@ -1,9 +1,9 @@
 package dev.yhiguchi.home_expense.presentation.api.balance.series;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dev.yhiguchi.home_expense.presentation.api.balance.PeriodResponse;
 import dev.yhiguchi.home_expense.query.balance.series.BalanceSeries;
 import dev.yhiguchi.home_expense.query.balance.series.BalanceSeriesPoint;
-import java.time.LocalDate;
 import java.util.List;
 
 public record BalanceSeriesResponse(
@@ -17,23 +17,21 @@ public record BalanceSeriesResponse(
   }
 
   public record PointResponse(
-      @JsonProperty("period_start") LocalDate periodStart,
-      @JsonProperty("period_end") LocalDate periodEnd,
+      @JsonProperty("period") PeriodResponse period,
       @JsonProperty("income_total") long incomeTotal,
       @JsonProperty("fixed_expense_total") long fixedExpenseTotal,
       @JsonProperty("variable_expense_total") long variableExpenseTotal,
       @JsonProperty("expense_total") long expenseTotal,
-      @JsonProperty("balance") long balance) {
+      @JsonProperty("net") long net) {
 
     static PointResponse of(BalanceSeriesPoint point) {
       return new PointResponse(
-          point.periodStart(),
-          point.periodEnd(),
+          new PeriodResponse(point.from(), point.to()),
           point.incomeTotal(),
           point.fixedExpenseTotal(),
           point.variableExpenseTotal(),
           point.expenseTotal(),
-          point.balance());
+          point.net());
     }
   }
 }

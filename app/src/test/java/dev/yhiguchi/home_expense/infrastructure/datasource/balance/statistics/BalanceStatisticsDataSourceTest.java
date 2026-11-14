@@ -83,7 +83,7 @@ class BalanceStatisticsDataSourceTest {
     assertEquals(80000L, result.fixedExpense().total());
     assertEquals(4000L, result.variableExpense().total());
     assertEquals(84000L, result.expenseTotal());
-    assertEquals(216000L, result.balance());
+    assertEquals(216000L, result.net());
   }
 
   @Test
@@ -92,10 +92,10 @@ class BalanceStatisticsDataSourceTest {
 
     assertEquals(0L, result.income().total());
     assertEquals(0L, result.expenseTotal());
-    assertEquals(0L, result.balance());
-    assertTrue(result.income().breakdown().isEmpty());
-    assertTrue(result.fixedExpense().breakdown().isEmpty());
-    assertTrue(result.variableExpense().breakdown().isEmpty());
+    assertEquals(0L, result.net());
+    assertTrue(result.income().amounts().isEmpty());
+    assertTrue(result.fixedExpense().amounts().isEmpty());
+    assertTrue(result.variableExpense().amounts().isEmpty());
   }
 
   @Test
@@ -152,11 +152,11 @@ class BalanceStatisticsDataSourceTest {
         List.of(
             new AttributeAmount(salary.incomeAttributeIdentifier().value(), "給与", 600000),
             new AttributeAmount(side.incomeAttributeIdentifier().value(), "副業", 50000)),
-        result.income().breakdown());
+        result.income().amounts());
   }
 
   @Test
-  void 支出の内訳は固定費と変動費に分かれて金額の降順で返る() {
+  void 経費の内訳は固定費と変動費に分かれて金額の降順で返る() {
     ExpenseAttribute insurance = registerExpenseAttribute("保険", ExpenseCategory.固定費);
     ExpenseAttribute rent = registerExpenseAttribute("家賃", ExpenseCategory.固定費);
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
@@ -171,10 +171,10 @@ class BalanceStatisticsDataSourceTest {
         List.of(
             new AttributeAmount(rent.expenseAttributeIdentifier().value(), "家賃", 160000),
             new AttributeAmount(insurance.expenseAttributeIdentifier().value(), "保険", 10000)),
-        result.fixedExpense().breakdown());
+        result.fixedExpense().amounts());
     assertEquals(
         List.of(new AttributeAmount(food.expenseAttributeIdentifier().value(), "食費", 3000)),
-        result.variableExpense().breakdown());
+        result.variableExpense().amounts());
   }
 
   @Test
@@ -182,15 +182,15 @@ class BalanceStatisticsDataSourceTest {
     IncomeAttribute salary = registerIncomeAttribute("給与");
     registerIncomeAttribute("未使用の収入属性");
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
-    registerExpenseAttribute("未使用の支出属性", ExpenseCategory.固定費);
+    registerExpenseAttribute("未使用の経費属性", ExpenseCategory.固定費);
     registerIncome(300000, "2026-04-25", salary);
     registerExpense(3000, "2026-05-10", food);
 
     BalanceStatistics result = sut.search(new BalanceStatisticsCriteria(2026, 4));
 
-    assertEquals(1, result.income().breakdown().size());
-    assertTrue(result.fixedExpense().breakdown().isEmpty());
-    assertTrue(result.variableExpense().breakdown().isEmpty());
+    assertEquals(1, result.income().amounts().size());
+    assertTrue(result.fixedExpense().amounts().isEmpty());
+    assertTrue(result.variableExpense().amounts().isEmpty());
   }
 
   private IncomeAttribute registerIncomeAttribute(String name) {

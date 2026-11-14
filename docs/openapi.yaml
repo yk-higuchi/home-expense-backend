@@ -19,7 +19,7 @@ paths:
       tags:
         - Balance Series
       summary: Get balance time series
-      description: Retrieve income, fixed expense, variable expense and balance aggregated as a time series with the specified granularity. Each bucket covers the whole period that contains from / to (e.g. month granularity with from=2026-04-15 starts at 2026-04-01).
+      description: Retrieve income, fixed expense, variable expense and net balance aggregated as a time series with the specified granularity. Each bucket covers the whole period that contains from / to (e.g. month granularity with from=2026-04-15 starts at 2026-04-01).
       operationId: getBalanceSeries
       parameters:
         - description: Start date of the period (yyyy-MM-dd)
@@ -559,7 +559,7 @@ components:
         - attribute_name
         - amount
       type: object
-    BalanceCategoryResponse:
+    AttributeBreakdownResponse:
       properties:
         total:
           description: Sum of breakdown amounts
@@ -578,14 +578,8 @@ components:
       type: object
     BalanceSeriesPointResponse:
       properties:
-        period_start:
-          description: Inclusive start date of the bucket
-          format: date
-          type: string
-        period_end:
-          description: Inclusive end date of the bucket
-          format: date
-          type: string
+        period:
+          $ref: '#/components/schemas/PeriodResponse'
         income_total:
           description: Sum of incomes in the bucket
           format: int64
@@ -610,20 +604,19 @@ components:
           maximum: 1000000000000
           minimum: 0
           type: integer
-        balance:
-          description: income_total minus expense_total (may be negative)
+        net:
+          description: Net balance, income_total minus expense_total (may be negative)
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
           type: integer
       required:
-        - period_start
-        - period_end
+        - period
         - income_total
         - fixed_expense_total
         - variable_expense_total
         - expense_total
-        - balance
+        - net
       type: object
     BalanceSeriesResponse:
       properties:
@@ -647,33 +640,21 @@ components:
     BalanceStatisticsResponse:
       properties:
         period:
-          properties:
-            from:
-              description: Inclusive start date of the period
-              format: date
-              type: string
-            to:
-              description: Inclusive end date of the period
-              format: date
-              type: string
-          required:
-            - from
-            - to
-          type: object
+          $ref: '#/components/schemas/PeriodResponse'
         income:
-          $ref: '#/components/schemas/BalanceCategoryResponse'
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
         fixed_expense:
-          $ref: '#/components/schemas/BalanceCategoryResponse'
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
         variable_expense:
-          $ref: '#/components/schemas/BalanceCategoryResponse'
+          $ref: '#/components/schemas/AttributeBreakdownResponse'
         expense_total:
           description: Sum of fixed_expense.total and variable_expense.total
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
-        balance:
-          description: income.total minus expense_total (may be negative)
+        net:
+          description: Net balance, income.total minus expense_total (may be negative)
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
@@ -684,7 +665,7 @@ components:
         - fixed_expense
         - variable_expense
         - expense_total
-        - balance
+        - net
       type: object
     ExpenseAttributeGetResponse:
       properties:
@@ -957,6 +938,21 @@ components:
         - amount
         - receive_date
         - attribute_id
+      type: object
+    PeriodResponse:
+      description: Period with inclusive from and to dates
+      properties:
+        from:
+          description: Inclusive start date
+          format: date
+          type: string
+        to:
+          description: Inclusive end date
+          format: date
+          type: string
+      required:
+        - from
+        - to
       type: object
     ProblemDetail:
       description: RFC 9457 Problem Details for HTTP APIs
