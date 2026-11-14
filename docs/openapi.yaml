@@ -14,6 +14,84 @@ servers:
     description: Local development server
     x-internal: true
 paths:
+  /v1/balance-series:
+    get:
+      tags:
+        - Balance Series
+      summary: Get balance time series
+      description: Retrieve income, fixed expense, variable expense and balance aggregated as a time series with the specified granularity. Each bucket covers the whole period that contains from / to (e.g. month granularity with from=2026-04-15 starts at 2026-04-01).
+      operationId: getBalanceSeries
+      parameters:
+        - description: Start date of the period (yyyy-MM-dd)
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: End date of the period (yyyy-MM-dd, inclusive)
+          in: query
+          name: to
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: Aggregation granularity
+          in: query
+          name: granularity
+          required: true
+          schema:
+            enum:
+              - day
+              - week
+              - month
+              - quarter
+              - year
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceSeriesResponse'
+          description: Successful response
+        "400":
+          $ref: '#/components/responses/BadRequest'
+  /v1/balance-statistics:
+    get:
+      tags:
+        - Balance Statistics
+      summary: Get balance statistics
+      description: Retrieve income and expense totals with per-attribute breakdowns for a year, or for a month when month is specified. Breakdowns are sorted by amount in descending order.
+      operationId: getBalanceStatistics
+      parameters:
+        - description: Target year
+          in: query
+          name: year
+          required: true
+          schema:
+            format: int32
+            maximum: 2200
+            minimum: 1
+            type: integer
+        - description: Target month. When omitted, the whole year is aggregated.
+          in: query
+          name: month
+          required: false
+          schema:
+            format: int32
+            maximum: 12
+            minimum: 1
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceStatisticsResponse'
+          description: Successful response
+        "400":
+          $ref: '#/components/responses/BadRequest'
   /v1/expense-attributes:
     get:
       tags:
@@ -193,41 +271,6 @@ paths:
           headers:
             Location:
               $ref: '#/components/headers/Location'
-        "400":
-          $ref: '#/components/responses/BadRequest'
-  /v1/expense-statistics:
-    get:
-      tags:
-        - Expense Statistics
-      summary: Get expense statistics
-      description: Retrieve expense statistics for a specific month
-      operationId: getExpenseStatistics
-      parameters:
-        - description: Year for statistics
-          in: query
-          name: year
-          required: true
-          schema:
-            format: int32
-            maximum: 2200
-            minimum: 1
-            type: integer
-        - description: Month for statistics
-          in: query
-          name: month
-          required: true
-          schema:
-            format: int32
-            maximum: 12
-            minimum: 1
-            type: integer
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ExpenseStatisticsResponse'
-          description: Successful response
         "400":
           $ref: '#/components/responses/BadRequest'
   /v1/expenses/{id}:
@@ -497,6 +540,152 @@ paths:
           description: Income deleted successfully
 components:
   schemas:
+    AttributeAmountResponse:
+      properties:
+        attribute_id:
+          format: uuid
+          maxLength: 36
+          type: string
+        attribute_name:
+          maxLength: 512
+          type: string
+        amount:
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+      required:
+        - attribute_id
+        - attribute_name
+        - amount
+      type: object
+    BalanceCategoryResponse:
+      properties:
+        total:
+          description: Sum of breakdown amounts
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        breakdown:
+          description: Per-attribute amounts sorted by amount in descending order. Attributes without data in the period are omitted.
+          items:
+            $ref: '#/components/schemas/AttributeAmountResponse'
+          type: array
+      required:
+        - total
+        - breakdown
+      type: object
+    BalanceSeriesPointResponse:
+      properties:
+        period_start:
+          description: Inclusive start date of the bucket
+          format: date
+          type: string
+        period_end:
+          description: Inclusive end date of the bucket
+          format: date
+          type: string
+        income_total:
+          description: Sum of incomes in the bucket
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        fixed_expense_total:
+          description: Sum of fixed expenses in the bucket
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        variable_expense_total:
+          description: Sum of variable expenses in the bucket
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        expense_total:
+          description: Sum of fixed_expense_total and variable_expense_total
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        balance:
+          description: income_total minus expense_total (may be negative)
+          format: int64
+          maximum: 1000000000000
+          minimum: -1000000000000
+          type: integer
+      required:
+        - period_start
+        - period_end
+        - income_total
+        - fixed_expense_total
+        - variable_expense_total
+        - expense_total
+        - balance
+      type: object
+    BalanceSeriesResponse:
+      properties:
+        granularity:
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+          type: string
+        items:
+          items:
+            $ref: '#/components/schemas/BalanceSeriesPointResponse'
+          maxItems: 366
+          type: array
+      required:
+        - granularity
+        - items
+      type: object
+    BalanceStatisticsResponse:
+      properties:
+        period:
+          properties:
+            from:
+              description: Inclusive start date of the period
+              format: date
+              type: string
+            to:
+              description: Inclusive end date of the period
+              format: date
+              type: string
+          required:
+            - from
+            - to
+          type: object
+        income:
+          $ref: '#/components/schemas/BalanceCategoryResponse'
+        fixed_expense:
+          $ref: '#/components/schemas/BalanceCategoryResponse'
+        variable_expense:
+          $ref: '#/components/schemas/BalanceCategoryResponse'
+        expense_total:
+          description: Sum of fixed_expense.total and variable_expense.total
+          format: int64
+          maximum: 1000000000000
+          minimum: 0
+          type: integer
+        balance:
+          description: income.total minus expense_total (may be negative)
+          format: int64
+          maximum: 1000000000000
+          minimum: -1000000000000
+          type: integer
+      required:
+        - period
+        - income
+        - fixed_expense
+        - variable_expense
+        - expense_total
+        - balance
+      type: object
     ExpenseAttributeGetResponse:
       properties:
         category:
@@ -562,21 +751,6 @@ components:
         name:
           maxLength: 512
           type: string
-      type: object
-    ExpenseAttributeStatisticsResponse:
-      properties:
-        attribute_id:
-          format: uuid
-          maxLength: 36
-          type: string
-        attribute_name:
-          maxLength: 512
-          type: string
-        total_amount:
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
       type: object
     ExpenseGetResponse:
       properties:
@@ -658,45 +832,6 @@ components:
         - price
         - payment_date
         - attribute_id
-      type: object
-    ExpenseStatisticsDetailResponse:
-      properties:
-        attribute_statistics:
-          items:
-            $ref: '#/components/schemas/ExpenseAttributeStatisticsResponse'
-          maxItems: 100
-          type: array
-        total_amount:
-          description: Total amount for the category
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
-      type: object
-    ExpenseStatisticsResponse:
-      properties:
-        disposal_income_amount:
-          description: Disposable income (income - total expenses)
-          format: int64
-          maximum: 1000000000000
-          minimum: -1000000000000
-          type: integer
-        fixed_expense_detail:
-          $ref: '#/components/schemas/ExpenseStatisticsDetailResponse'
-        income_total_amount:
-          description: Total income amount for the month
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
-        total_amount:
-          description: Total expense amount
-          format: int64
-          maximum: 1000000000000
-          minimum: 0
-          type: integer
-        variable_expense_detail:
-          $ref: '#/components/schemas/ExpenseStatisticsDetailResponse'
       type: object
     IncomeAttributeGetResponse:
       properties:
@@ -1006,12 +1141,14 @@ components:
         maxLength: 2048
         type: string
 tags:
+  - name: Balance Statistics
+    description: Operations for income and expense statistics over a period
+  - name: Balance Series
+    description: Operations for income and expense time series
   - name: Expenses
     description: Operations related to expenses
   - name: Expense Attributes
     description: Operations related to expense categories and attributes
-  - name: Expense Statistics
-    description: Operations for expense statistics
   - name: Incomes
     description: Operations related to incomes
   - name: Income Attributes

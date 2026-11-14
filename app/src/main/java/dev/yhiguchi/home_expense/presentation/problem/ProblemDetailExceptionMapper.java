@@ -10,6 +10,7 @@ import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeNo
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.datasource.DataAccessException;
 import dev.yhiguchi.home_expense.presentation.validation.payload.PreconditionRequired;
+import dev.yhiguchi.home_expense.query.InvalidQueryCriteriaException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import jakarta.validation.ConstraintViolation;
@@ -96,6 +97,12 @@ public class ProblemDetailExceptionMapper {
     String detail =
         violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "));
     return toResponse(Response.Status.BAD_REQUEST, detail);
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidQueryCriteriaException(
+      InvalidQueryCriteriaException e) {
+    return toResponse(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
   @ServerExceptionMapper
