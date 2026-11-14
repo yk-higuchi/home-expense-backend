@@ -22,7 +22,7 @@ dependencies {
   testImplementation(libs.rest.assured)
 }
 
-group = "dev.yhiguchi.home_expense"
+group = "dev.higuchi.homeexpense"
 
 version = "2.0.0" // x-release-please-version
 
