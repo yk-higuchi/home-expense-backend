@@ -10,3 +10,6 @@ rules:
   owasp-define-error-validation: off
   owasp-security-hosts-https-oas3: off
   operation-description: off
+  # 認証なしで運用している（Envoy Gateway の前段にも認証を置いていない）ため security 定義は不要
+  owasp-protection-global-unsafe: off
+  owasp-protection-global-unsafe-strict: off
