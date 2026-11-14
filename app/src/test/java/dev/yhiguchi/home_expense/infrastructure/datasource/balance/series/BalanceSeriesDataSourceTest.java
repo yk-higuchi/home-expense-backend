@@ -192,6 +192,50 @@ class BalanceSeriesDataSourceTest {
   }
 
   @Test
+  void QUARTER粒度_1年分で4四半期が返る() {
+    IncomeAttribute salary = registerIncomeAttribute("給与");
+    ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
+    registerIncome(300000, "2026-06-30", salary);
+    registerExpense(1000, "2026-04-01", food);
+    registerExpense(2000, "2026-12-31", food);
+
+    BalanceSeries result =
+        sut.search(
+            new BalanceSeriesCriteria(
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), Granularity.QUARTER));
+
+    assertEquals(4, result.items().size());
+    assertEquals(LocalDate.of(2026, 4, 1), result.items().get(1).from());
+    assertEquals(LocalDate.of(2026, 6, 30), result.items().get(1).to());
+    assertEquals(300000L, result.items().get(1).incomeTotal());
+    assertEquals(1000L, result.items().get(1).variableExpenseTotal());
+    assertEquals(LocalDate.of(2026, 10, 1), result.items().get(3).from());
+    assertEquals(LocalDate.of(2026, 12, 31), result.items().get(3).to());
+    assertEquals(2000L, result.items().get(3).variableExpenseTotal());
+  }
+
+  @Test
+  void WEEK粒度_月曜始まりの週で集計される() {
+    ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
+    registerExpense(1000, "2026-05-03", food); // 日曜 → 4/27 の週
+    registerExpense(2000, "2026-05-04", food); // 月曜 → 5/4 の週
+    registerExpense(3000, "2026-05-10", food); // 日曜 → 5/4 の週
+
+    BalanceSeries result =
+        sut.search(
+            new BalanceSeriesCriteria(
+                LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 10), Granularity.WEEK));
+
+    assertEquals(2, result.items().size());
+    assertEquals(LocalDate.of(2026, 4, 27), result.items().get(0).from());
+    assertEquals(LocalDate.of(2026, 5, 3), result.items().get(0).to());
+    assertEquals(1000L, result.items().get(0).variableExpenseTotal());
+    assertEquals(LocalDate.of(2026, 5, 4), result.items().get(1).from());
+    assertEquals(LocalDate.of(2026, 5, 10), result.items().get(1).to());
+    assertEquals(5000L, result.items().get(1).variableExpenseTotal());
+  }
+
+  @Test
   void DAY粒度_3日分() {
     IncomeAttribute salary = registerIncomeAttribute("給与");
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);

@@ -23,13 +23,13 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
       WITH bounds AS (
         SELECT
           date_trunc('%1$s', ?::date)::date AS range_start,
-          (date_trunc('%1$s', ?::date) + INTERVAL '1 %1$s')::date AS range_end
+          (date_trunc('%1$s', ?::date) + INTERVAL '%2$s')::date AS range_end
       ),
       periods AS (
         SELECT generate_series(
-          b.range_start,
-          b.range_end - INTERVAL '1 %1$s',
-          INTERVAL '1 %1$s'
+          b.range_start::timestamp,
+          (b.range_end - INTERVAL '%2$s')::timestamp,
+          INTERVAL '%2$s'
         )::date AS period_start
         FROM bounds b
       ),
@@ -42,8 +42,8 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
       expense_totals AS (
         SELECT
           date_trunc('%1$s', e.payment_date)::date AS period_start,
-          SUM(CASE WHEN a.category = '%2$s' THEN e.amount ELSE 0 END) AS fixed_total,
-          SUM(CASE WHEN a.category = '%3$s' THEN e.amount ELSE 0 END) AS variable_total
+          SUM(CASE WHEN a.category = '%3$s' THEN e.amount ELSE 0 END) AS fixed_total,
+          SUM(CASE WHEN a.category = '%4$s' THEN e.amount ELSE 0 END) AS variable_total
         FROM expense.expense e
         INNER JOIN expense.attribute a ON e.attribute_id = a.id
         CROSS JOIN bounds b
@@ -52,7 +52,7 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
       )
       SELECT
         p.period_start,
-        (p.period_start + INTERVAL '1 %1$s' - INTERVAL '1 day')::date AS period_end,
+        (p.period_start + INTERVAL '%2$s' - INTERVAL '1 day')::date AS period_end,
         COALESCE(it.income_total, 0) AS income_total,
         COALESCE(et.fixed_total, 0) AS fixed_total,
         COALESCE(et.variable_total, 0) AS variable_total
@@ -73,6 +73,7 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
     String sql =
         SQL_TEMPLATE.formatted(
             dateTruncUnit(criteria.granularity()),
+            interval(criteria.granularity()),
             ExpenseCategory.固定費.name(),
             ExpenseCategory.変動費.name());
 
@@ -91,7 +92,7 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
     return new BalanceSeries(criteria.granularity(), points);
   }
 
-  /** PostgreSQL の date_trunc / INTERVAL で使う単位 */
+  /** date_trunc の単位 */
   private static String dateTruncUnit(Granularity granularity) {
     return switch (granularity) {
       case DAY -> "day";
@@ -99,6 +100,17 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
       case MONTH -> "month";
       case QUARTER -> "quarter";
       case YEAR -> "year";
+    };
+  }
+
+  /** 1 期間分の INTERVAL。CockroachDB は 'quarter' を INTERVAL の単位として解釈できないため月数で表す */
+  private static String interval(Granularity granularity) {
+    return switch (granularity) {
+      case DAY -> "1 day";
+      case WEEK -> "7 days";
+      case MONTH -> "1 month";
+      case QUARTER -> "3 months";
+      case YEAR -> "1 year";
     };
   }
 }
