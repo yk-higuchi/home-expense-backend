@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.infrastructure.fake;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.*;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeIdentifier;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
@@ -20,13 +21,21 @@ public class InMemoryIncomeRepository implements IncomeRepository {
   }
 
   @Override
-  public void update(Income income, long expectedVersion) {
+  public void update(Income income, ExpectedVersion expectedVersion) {
     String key = income.incomeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || current.version() != expectedVersion) {
+    if (current == null || !expectedVersion.matches(current.version())) {
       throw new ConcurrentUpdateException();
     }
     store.put(key, new Stored(income, current.version() + 1));
+  }
+
+  @Override
+  public void verifyVersion(Income income, ExpectedVersion expectedVersion) {
+    Stored current = store.get(income.incomeIdentifier().value());
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
   }
 
   @Override

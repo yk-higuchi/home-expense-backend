@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.infrastructure.datasource.expense.attribute;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.ExpenseCategory;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.UniqueConstraintViolationException;
@@ -8,6 +9,7 @@ import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.ParameterBinder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -62,14 +64,22 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   }
 
   @Override
-  public void update(ExpenseAttribute expenseAttribute, long expectedVersion) {
+  public void update(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
     jdbc.updateWithOptimisticLock(
-        "UPDATE expense.attribute SET category = ?, name = ?, version = version + 1 WHERE id = ? AND version = ?",
-        ParameterBinder.of(
+        "UPDATE expense.attribute SET category = ?, name = ?, version = version + 1 WHERE id = ?",
+        List.of(
             expenseAttribute.expenseCategory().name(),
             expenseAttribute.expenseAttributeName().value(),
-            expenseAttribute.expenseAttributeIdentifier().value(),
-            expectedVersion));
+            expenseAttribute.expenseAttributeIdentifier().value()),
+        expectedVersion);
+  }
+
+  @Override
+  public void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+    jdbc.verifyVersion(
+        "SELECT 1 FROM expense.attribute WHERE id = ?",
+        List.of(expenseAttribute.expenseAttributeIdentifier().value()),
+        expectedVersion);
   }
 
   @Override

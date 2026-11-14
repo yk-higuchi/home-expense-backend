@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.domain.model.income.attribute;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import java.util.Optional;
 
 /** 収入属性リポジトリ */
@@ -13,7 +14,10 @@ public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
     return find(incomeAttributeIdentifier).orElseThrow(IncomeAttributeNotFoundException::new);
   }
 
-  void update(IncomeAttribute incomeAttribute, long expectedVersion);
+  void update(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
+
+  /** 書き込みを伴わずにバージョン条件を検証する。一致しなければ ConcurrentUpdateException */
+  void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
 
   void delete(IncomeAttribute incomeAttribute);
 }

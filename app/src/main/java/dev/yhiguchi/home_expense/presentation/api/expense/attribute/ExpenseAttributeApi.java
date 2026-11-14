@@ -7,7 +7,6 @@ import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttribute
 import dev.yhiguchi.home_expense.presentation.api.IfMatchParser;
 import dev.yhiguchi.home_expense.presentation.api.LinkHeaderCreatable;
 import dev.yhiguchi.home_expense.presentation.validation.ExpenseCategory;
-import dev.yhiguchi.home_expense.presentation.validation.IfMatch;
 import dev.yhiguchi.home_expense.presentation.validation.PageNumber;
 import dev.yhiguchi.home_expense.presentation.validation.PerPageSize;
 import dev.yhiguchi.home_expense.presentation.validation.UuidFormat;
@@ -62,7 +61,7 @@ public class ExpenseAttributeApi {
   public Response put(
       @PathParam("id") @UuidFormat String id,
       @Valid ExpenseAttributePutRequest request,
-      @HeaderParam("If-Match") @IfMatch String ifMatch) {
+      @HeaderParam("If-Match") String ifMatch) {
     expenseAttributeUpdateService.update(request.toCommand(id, IfMatchParser.parse(ifMatch)));
     return Response.noContent().build();
   }

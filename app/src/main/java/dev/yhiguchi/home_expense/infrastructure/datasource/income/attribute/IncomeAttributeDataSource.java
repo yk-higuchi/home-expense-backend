@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.infrastructure.datasource.income.attribute;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.UniqueConstraintViolationException;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -7,6 +8,7 @@ import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.ParameterBinder;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -35,13 +37,21 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
   }
 
   @Override
-  public void update(IncomeAttribute incomeAttribute, long expectedVersion) {
+  public void update(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
     jdbc.updateWithOptimisticLock(
-        "UPDATE expense.income_attribute SET name = ?, version = version + 1 WHERE id = ? AND version = ?",
-        ParameterBinder.of(
+        "UPDATE expense.income_attribute SET name = ?, version = version + 1 WHERE id = ?",
+        List.of(
             incomeAttribute.incomeAttributeName().value(),
-            incomeAttribute.incomeAttributeIdentifier().value(),
-            expectedVersion));
+            incomeAttribute.incomeAttributeIdentifier().value()),
+        expectedVersion);
+  }
+
+  @Override
+  public void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+    jdbc.verifyVersion(
+        "SELECT 1 FROM expense.income_attribute WHERE id = ?",
+        List.of(incomeAttribute.incomeAttributeIdentifier().value()),
+        expectedVersion);
   }
 
   @Override

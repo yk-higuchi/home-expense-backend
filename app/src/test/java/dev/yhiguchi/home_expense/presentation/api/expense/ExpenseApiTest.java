@@ -187,7 +187,7 @@ class ExpenseApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", containsString("per_pageは100以下を指定してください"))
-        .body("instance", containsString("/v1/expenses"));
+        .body("instance", nullValue());
   }
 
   @Test
@@ -298,6 +298,6 @@ class ExpenseApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", notNullValue())
-        .body("instance", containsString("/v1/expenses"));
+        .body("instance", nullValue());
   }
 }

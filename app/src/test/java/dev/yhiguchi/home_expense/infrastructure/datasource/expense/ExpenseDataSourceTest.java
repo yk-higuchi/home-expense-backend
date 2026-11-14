@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.*;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
@@ -89,7 +90,7 @@ class ExpenseDataSourceTest {
             new Amount(3000),
             new PaymentDate(LocalDate.of(2026, 4, 10)),
             attribute.expenseAttributeIdentifier());
-    sut.update(updated, INITIAL_VERSION);
+    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
 
     Expense result = sut.find(expense.expenseIdentifier()).orElseThrow();
     assertEquals("ディナー", result.description().value());
@@ -111,7 +112,7 @@ class ExpenseDataSourceTest {
             fetched.amount(),
             new PaymentDate(LocalDate.of(2026, 4, 1)),
             varAttr.expenseAttributeIdentifier());
-    sut.update(updated, INITIAL_VERSION);
+    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
 
     Expense result = sut.find(expense.expenseIdentifier()).orElseThrow();
     assertEquals(varAttr.expenseAttributeIdentifier(), result.expenseAttributeIdentifier());
@@ -130,7 +131,8 @@ class ExpenseDataSourceTest {
             new Amount(600),
             new PaymentDate(LocalDate.of(2026, 4, 10)),
             attribute.expenseAttributeIdentifier());
-    assertThrows(ConcurrentUpdateException.class, () -> sut.update(modified, 999L));
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
   }
 
   @Test

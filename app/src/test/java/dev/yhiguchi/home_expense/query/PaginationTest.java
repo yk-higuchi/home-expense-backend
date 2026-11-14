@@ -37,9 +37,9 @@ class PaginationTest {
   }
 
   @Test
-  void lastPage_件数が0の場合() {
+  void lastPage_件数が0の場合は1() {
     Pagination pagination = new Pagination(1, 10);
-    assertEquals(0, pagination.lastPage(0));
+    assertEquals(1, pagination.lastPage(0));
   }
 
   @Test
@@ -53,5 +53,15 @@ class PaginationTest {
     Pagination pagination = new Pagination(3, 10);
     assertTrue(pagination.isLastPage(30));
     assertFalse(pagination.isLastPage(31));
+  }
+
+  @Test
+  void isLastPage_最終ページを超えたページもtrue() {
+    assertTrue(new Pagination(5, 10).isLastPage(20));
+  }
+
+  @Test
+  void isLastPage_件数が0なら1ページ目が最終ページ() {
+    assertTrue(new Pagination(1, 10).isLastPage(0));
   }
 }

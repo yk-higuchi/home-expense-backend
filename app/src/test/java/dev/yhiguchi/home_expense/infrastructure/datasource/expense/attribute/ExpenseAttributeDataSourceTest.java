@@ -2,6 +2,7 @@ package dev.yhiguchi.home_expense.infrastructure.datasource.expense.attribute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.ExpenseCategory;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
@@ -86,7 +87,7 @@ class ExpenseAttributeDataSourceTest {
             fetched.expenseAttributeIdentifier(),
             new ExpenseAttributeName("水道光熱費"),
             ExpenseCategory.変動費);
-    sut.update(updated, INITIAL_VERSION);
+    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
 
     ExpenseAttribute result = sut.find(attribute.expenseAttributeIdentifier()).orElseThrow();
     assertEquals("水道光熱費", result.expenseAttributeName().value());
@@ -103,7 +104,8 @@ class ExpenseAttributeDataSourceTest {
             attribute.expenseAttributeIdentifier(),
             new ExpenseAttributeName("通信費更新"),
             ExpenseCategory.固定費);
-    assertThrows(ConcurrentUpdateException.class, () -> sut.update(modified, 999L));
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
   }
 
   @Test

@@ -2,8 +2,10 @@ package dev.yhiguchi.home_expense.application.usecase.expense;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.ExpenseCategory;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
+import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +25,9 @@ class ExpenseAttributeUpdateServiceTest {
 
     sut.update(
         new ExpenseAttributeUpdateCommand(
-            new ExpenseAttributeIdentifier("attr-1"), new ExpenseAttributeName("交通費"), 1L));
+            new ExpenseAttributeIdentifier("attr-1"),
+            new ExpenseAttributeName("交通費"),
+            ExpectedVersion.of(1L)));
 
     ExpenseAttribute updated =
         attributeRepository.find(new ExpenseAttributeIdentifier("attr-1")).orElseThrow();
@@ -43,11 +47,32 @@ class ExpenseAttributeUpdateServiceTest {
 
     sut.update(
         new ExpenseAttributeUpdateCommand(
-            new ExpenseAttributeIdentifier("attr-1"), new ExpenseAttributeName("食費"), 1L));
+            new ExpenseAttributeIdentifier("attr-1"),
+            new ExpenseAttributeName("食費"),
+            ExpectedVersion.of(1L)));
 
     ExpenseAttribute result =
         attributeRepository.find(new ExpenseAttributeIdentifier("attr-1")).orElseThrow();
     assertSame(existing, result);
     assertEquals(1L, attributeRepository.versionOf(new ExpenseAttributeIdentifier("attr-1")));
+  }
+
+  @Test
+  void 変更がなくてもバージョン不一致なら楽観ロック例外() {
+    ExpenseAttribute existing =
+        new ExpenseAttribute(
+            new ExpenseAttributeIdentifier("attr-1"),
+            new ExpenseAttributeName("食費"),
+            ExpenseCategory.変動費);
+    attributeRepository.register(existing);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () ->
+            sut.update(
+                new ExpenseAttributeUpdateCommand(
+                    new ExpenseAttributeIdentifier("attr-1"),
+                    new ExpenseAttributeName("食費"),
+                    ExpectedVersion.of(2L))));
   }
 }

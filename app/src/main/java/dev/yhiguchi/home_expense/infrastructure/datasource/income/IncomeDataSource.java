@@ -2,6 +2,7 @@ package dev.yhiguchi.home_expense.infrastructure.datasource.income;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.*;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeIdentifier;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -10,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -37,20 +39,28 @@ public class IncomeDataSource implements IncomeRepository {
   }
 
   @Override
-  public void update(Income income, long expectedVersion) {
+  public void update(Income income, ExpectedVersion expectedVersion) {
     jdbc.updateWithOptimisticLock(
         """
         UPDATE expense.income
         SET attribute_id = ?, description = ?, amount = ?, receive_date = ?, version = version + 1
-        WHERE id = ? AND version = ?
+        WHERE id = ?
         """,
-        ParameterBinder.of(
+        List.of(
             income.incomeAttributeIdentifier().value(),
             income.description().value(),
             income.amount().value(),
             income.receiveDate().value(),
-            income.incomeIdentifier().value(),
-            expectedVersion));
+            income.incomeIdentifier().value()),
+        expectedVersion);
+  }
+
+  @Override
+  public void verifyVersion(Income income, ExpectedVersion expectedVersion) {
+    jdbc.verifyVersion(
+        "SELECT 1 FROM expense.income WHERE id = ?",
+        List.of(income.incomeIdentifier().value()),
+        expectedVersion);
   }
 
   @Override

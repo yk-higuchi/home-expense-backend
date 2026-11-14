@@ -957,18 +957,12 @@ components:
         - to
       type: object
     ProblemDetail:
-      description: RFC 9457 Problem Details for HTTP APIs
+      description: RFC 9457 Problem Details for HTTP APIs. `instance` is not returned; use `trace_id` to correlate an occurrence.
       properties:
         detail:
           description: A human-readable explanation specific to this occurrence of the problem
           example: descriptionは必須入力です
           maxLength: 1024
-          type: string
-        instance:
-          description: A URI reference that identifies the specific occurrence of the problem
-          example: /v1/expenses
-          format: uri-reference
-          maxLength: 2048
           type: string
         status:
           description: The HTTP status code
@@ -988,6 +982,12 @@ components:
           format: uri
           maxLength: 2048
           type: string
+        trace_id:
+          description: W3C Trace Context trace-id of the request, for correlating the problem with server-side traces (extension member)
+          example: 4bf92f3577b34da6a3ce929d0e0e4736
+          maxLength: 32
+          pattern: ^[0-9a-f]{32}$
+          type: string
       type: object
   responses:
     BadRequest:
@@ -998,7 +998,6 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
           example:
             detail: descriptionは必須入力です
-            instance: /v1/expenses
             status: 400
             title: Bad Request
             type: about:blank
@@ -1010,7 +1009,6 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
           example:
             detail: 既に登録されています
-            instance: /v1/expense-attributes
             status: 409
             title: Conflict
             type: about:blank
@@ -1022,34 +1020,31 @@ components:
             $ref: '#/components/schemas/ProblemDetail'
           example:
             detail: 経費が見つかりません
-            instance: /v1/expenses/123
             status: 404
             title: Not Found
             type: about:blank
     PreconditionFailed:
       description: |
-        The `If-Match` value did not match the current resource version.
+        The `If-Match` condition evaluated to false (RFC 9110 §13.1.1): no listed entity-tag strongly matches the current `ETag` (weak tags never match).
         The client should re-fetch the resource to obtain a fresh `ETag` and retry.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
           example:
-            detail: リソースが他のリクエストによって更新されています
-            instance: /v1/expenses/123
+            detail: 指定されたバージョンは既に更新されています。最新を取得して再試行してください
             status: 412
             title: Precondition Failed
             type: about:blank
     PreconditionRequired:
-      description: |
-        The `If-Match` header was missing or malformed. RFC 6585 §3.
+      description: |-
+        The `If-Match` header is missing (RFC 6585 §3). A malformed `If-Match` results in 400.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
           example:
             detail: If-Matchヘッダーは必須です
-            instance: /v1/expenses/123
             status: 428
             title: Precondition Required
             type: about:blank
@@ -1076,8 +1071,9 @@ components:
       name: If-Match
       in: header
       description: |
-        Opaque resource version echoed from a prior `ETag` response header.
-        Used for optimistic locking on `PUT` operations (RFC 9110 §13.1.1).
+        Entity-tags from a prior `ETag` response header (RFC 9110 §13.1.1), compared with the strong comparison.
+        Accepts `*` (update if the resource exists, regardless of version) or a comma-separated list such as `"3", "4"`.
+        Missing → 428, malformed → 400, no match → 412.
       required: true
       schema:
         maxLength: 128
@@ -1129,7 +1125,7 @@ components:
         maxLength: 128
         type: string
     Link:
-      description: Pagination links (RFC 5988)
+      description: 'Pagination links (RFC 8288). Relation types: `self`, `first`, `last`, and `prev` / `next` when applicable. Links keep the request query parameters (filters) and replace only `page` / `per_page`.'
       schema:
         maxLength: 2048
         type: string

@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.infrastructure.fake;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.ExpenseCategory;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
@@ -38,13 +39,21 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   }
 
   @Override
-  public void update(ExpenseAttribute expenseAttribute, long expectedVersion) {
+  public void update(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
     String key = expenseAttribute.expenseAttributeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || current.version() != expectedVersion) {
+    if (current == null || !expectedVersion.matches(current.version())) {
       throw new ConcurrentUpdateException();
     }
     store.put(key, new Stored(expenseAttribute, current.version() + 1));
+  }
+
+  @Override
+  public void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+    Stored current = store.get(expenseAttribute.expenseAttributeIdentifier().value());
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
   }
 
   @Override

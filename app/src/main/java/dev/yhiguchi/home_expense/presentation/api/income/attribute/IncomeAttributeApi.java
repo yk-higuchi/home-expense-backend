@@ -6,7 +6,6 @@ import dev.yhiguchi.home_expense.application.usecase.income.IncomeAttributeUpdat
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeIdentifier;
 import dev.yhiguchi.home_expense.presentation.api.IfMatchParser;
 import dev.yhiguchi.home_expense.presentation.api.LinkHeaderCreatable;
-import dev.yhiguchi.home_expense.presentation.validation.IfMatch;
 import dev.yhiguchi.home_expense.presentation.validation.PageNumber;
 import dev.yhiguchi.home_expense.presentation.validation.PerPageSize;
 import dev.yhiguchi.home_expense.presentation.validation.UuidFormat;
@@ -60,7 +59,7 @@ public class IncomeAttributeApi {
   public Response put(
       @PathParam("id") @UuidFormat String id,
       @Valid IncomeAttributePutRequest request,
-      @HeaderParam("If-Match") @IfMatch String ifMatch) {
+      @HeaderParam("If-Match") String ifMatch) {
     incomeAttributeUpdateService.update(request.toCommand(id, IfMatchParser.parse(ifMatch)));
     return Response.noContent().build();
   }

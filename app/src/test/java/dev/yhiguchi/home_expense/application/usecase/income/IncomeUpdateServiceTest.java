@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.*;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.*;
+import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryIncomeRepository;
 import java.time.LocalDate;
@@ -39,7 +41,7 @@ class IncomeUpdateServiceTest {
             new Amount(310000),
             new ReceiveDate(LocalDate.of(2026, 5, 25)),
             new IncomeAttributeIdentifier("attr-1"),
-            1L));
+            ExpectedVersion.of(1L)));
 
     Income updated = incomeRepository.find(new IncomeIdentifier("inc-1")).orElseThrow();
     assertEquals("5月給与", updated.description().value());
@@ -66,7 +68,7 @@ class IncomeUpdateServiceTest {
             new Amount(300000),
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             new IncomeAttributeIdentifier("attr-1"),
-            1L));
+            ExpectedVersion.of(1L)));
 
     Income result = incomeRepository.find(new IncomeIdentifier("inc-1")).orElseThrow();
     assertSame(existing, result);
@@ -87,7 +89,7 @@ class IncomeUpdateServiceTest {
                     new Amount(300000),
                     new ReceiveDate(LocalDate.of(2026, 4, 25)),
                     new IncomeAttributeIdentifier("attr-1"),
-                    1L)));
+                    ExpectedVersion.of(1L))));
   }
 
   @Test
@@ -111,6 +113,31 @@ class IncomeUpdateServiceTest {
                     new Amount(310000),
                     new ReceiveDate(LocalDate.of(2026, 5, 25)),
                     new IncomeAttributeIdentifier("not-exist"),
-                    1L)));
+                    ExpectedVersion.of(1L))));
+  }
+
+  @Test
+  void 変更がなくてもバージョン不一致なら楽観ロック例外() {
+    Income existing =
+        new Income(
+            new IncomeIdentifier("inc-1"),
+            new Description("4月給与"),
+            new Amount(300000),
+            new ReceiveDate(LocalDate.of(2026, 4, 25)),
+            new IncomeAttributeIdentifier("attr-1"));
+    incomeRepository.register(existing);
+    attributeRepository.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () ->
+            sut.update(
+                new IncomeUpdateCommand(
+                    new IncomeIdentifier("inc-1"),
+                    new Description("4月給与"),
+                    new Amount(300000),
+                    new ReceiveDate(LocalDate.of(2026, 4, 25)),
+                    new IncomeAttributeIdentifier("attr-1"),
+                    ExpectedVersion.of(2L))));
   }
 }

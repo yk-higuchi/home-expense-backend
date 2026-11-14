@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.domain.model.expense;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttributeIdentifier;
 import java.util.Optional;
 
@@ -16,7 +17,10 @@ public interface ExpenseRepository {
 
   boolean existsByAttributeIdentifier(ExpenseAttributeIdentifier expenseAttributeIdentifier);
 
-  void update(Expense expense, long expectedVersion);
+  void update(Expense expense, ExpectedVersion expectedVersion);
+
+  /** 書き込みを伴わずにバージョン条件を検証する。一致しなければ ConcurrentUpdateException */
+  void verifyVersion(Expense expense, ExpectedVersion expectedVersion);
 
   void delete(Expense expense);
 }

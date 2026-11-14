@@ -2,7 +2,9 @@ package dev.yhiguchi.home_expense.application.usecase.income;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.*;
+import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +21,9 @@ class IncomeAttributeUpdateServiceTest {
 
     sut.update(
         new IncomeAttributeUpdateCommand(
-            new IncomeAttributeIdentifier("attr-1"), new IncomeAttributeName("賞与"), 1L));
+            new IncomeAttributeIdentifier("attr-1"),
+            new IncomeAttributeName("賞与"),
+            ExpectedVersion.of(1L)));
 
     IncomeAttribute updated =
         attributeRepository.find(new IncomeAttributeIdentifier("attr-1")).orElseThrow();
@@ -35,11 +39,29 @@ class IncomeAttributeUpdateServiceTest {
 
     sut.update(
         new IncomeAttributeUpdateCommand(
-            new IncomeAttributeIdentifier("attr-1"), new IncomeAttributeName("給与"), 1L));
+            new IncomeAttributeIdentifier("attr-1"),
+            new IncomeAttributeName("給与"),
+            ExpectedVersion.of(1L)));
 
     IncomeAttribute result =
         attributeRepository.find(new IncomeAttributeIdentifier("attr-1")).orElseThrow();
     assertSame(existing, result);
     assertEquals(1L, attributeRepository.versionOf(new IncomeAttributeIdentifier("attr-1")));
+  }
+
+  @Test
+  void 変更がなくてもバージョン不一致なら楽観ロック例外() {
+    IncomeAttribute existing =
+        new IncomeAttribute(new IncomeAttributeIdentifier("attr-1"), new IncomeAttributeName("給与"));
+    attributeRepository.register(existing);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () ->
+            sut.update(
+                new IncomeAttributeUpdateCommand(
+                    new IncomeAttributeIdentifier("attr-1"),
+                    new IncomeAttributeName("給与"),
+                    ExpectedVersion.of(2L))));
   }
 }

@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.*;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttribute;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttributeName;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttributeNotFoundException;
+import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import dev.yhiguchi.home_expense.infrastructure.fake.InMemoryExpenseRepository;
 import java.time.LocalDate;
@@ -45,7 +47,7 @@ class ExpenseUpdateServiceTest {
             new Amount(2000),
             new PaymentDate(LocalDate.of(2026, 4, 2)),
             new ExpenseAttributeIdentifier("attr-1"),
-            1L));
+            ExpectedVersion.of(1L)));
 
     Expense updated = expenseRepository.find(new ExpenseIdentifier("exp-1")).orElseThrow();
     assertEquals("ディナー", updated.description().value());
@@ -72,7 +74,7 @@ class ExpenseUpdateServiceTest {
             new Amount(1000),
             new PaymentDate(LocalDate.of(2026, 4, 1)),
             new ExpenseAttributeIdentifier("attr-1"),
-            1L));
+            ExpectedVersion.of(1L)));
 
     Expense result = expenseRepository.find(new ExpenseIdentifier("exp-1")).orElseThrow();
     assertSame(existing, result);
@@ -93,7 +95,7 @@ class ExpenseUpdateServiceTest {
                     new Amount(1000),
                     new PaymentDate(LocalDate.of(2026, 4, 1)),
                     new ExpenseAttributeIdentifier("attr-1"),
-                    1L)));
+                    ExpectedVersion.of(1L))));
   }
 
   @Test
@@ -117,6 +119,31 @@ class ExpenseUpdateServiceTest {
                     new Amount(2000),
                     new PaymentDate(LocalDate.of(2026, 4, 2)),
                     new ExpenseAttributeIdentifier("not-exist"),
-                    1L)));
+                    ExpectedVersion.of(1L))));
+  }
+
+  @Test
+  void 変更がなくてもバージョン不一致なら楽観ロック例外() {
+    Expense existing =
+        new Expense(
+            new ExpenseIdentifier("exp-1"),
+            new Description("ランチ"),
+            new Amount(1000),
+            new PaymentDate(LocalDate.of(2026, 4, 1)),
+            new ExpenseAttributeIdentifier("attr-1"));
+    expenseRepository.register(existing);
+    attributeRepository.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () ->
+            sut.update(
+                new ExpenseUpdateCommand(
+                    new ExpenseIdentifier("exp-1"),
+                    new Description("ランチ"),
+                    new Amount(1000),
+                    new PaymentDate(LocalDate.of(2026, 4, 1)),
+                    new ExpenseAttributeIdentifier("attr-1"),
+                    ExpectedVersion.of(2L))));
   }
 }

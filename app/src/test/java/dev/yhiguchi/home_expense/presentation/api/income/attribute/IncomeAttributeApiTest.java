@@ -108,7 +108,7 @@ class IncomeAttributeApiTest {
         .body("title", equalTo("Conflict"))
         .body("status", equalTo(409))
         .body("detail", equalTo("既に登録されています"))
-        .body("instance", containsString("/v1/income-attributes"));
+        .body("instance", nullValue());
   }
 
   @Test
@@ -163,7 +163,7 @@ class IncomeAttributeApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", containsString("per_pageは100以下を指定してください"))
-        .body("instance", containsString("/v1/income-attributes"));
+        .body("instance", nullValue());
   }
 
   @Test
@@ -222,6 +222,6 @@ class IncomeAttributeApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", notNullValue())
-        .body("instance", containsString("/v1/income-attributes"));
+        .body("instance", nullValue());
   }
 }

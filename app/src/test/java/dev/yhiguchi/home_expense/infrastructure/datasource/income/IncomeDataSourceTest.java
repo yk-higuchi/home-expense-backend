@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.*;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
@@ -89,7 +90,7 @@ class IncomeDataSourceTest {
             new Amount(350000),
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             attribute.incomeAttributeIdentifier());
-    sut.update(updated, INITIAL_VERSION);
+    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
 
     Income result = sut.find(income.incomeIdentifier()).orElseThrow();
     assertEquals("4月給与（修正）", result.description().value());
@@ -109,7 +110,8 @@ class IncomeDataSourceTest {
             new Amount(310000),
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             attribute.incomeAttributeIdentifier());
-    assertThrows(ConcurrentUpdateException.class, () -> sut.update(modified, 999L));
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
   }
 
   @Test

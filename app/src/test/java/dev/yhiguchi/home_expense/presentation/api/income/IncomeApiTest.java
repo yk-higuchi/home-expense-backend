@@ -187,7 +187,7 @@ class IncomeApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", containsString("per_pageは100以下を指定してください"))
-        .body("instance", containsString("/v1/incomes"));
+        .body("instance", nullValue());
   }
 
   @Test
@@ -281,6 +281,6 @@ class IncomeApiTest {
         .body("title", equalTo("Bad Request"))
         .body("status", equalTo(400))
         .body("detail", notNullValue())
-        .body("instance", containsString("/v1/incomes"));
+        .body("instance", nullValue());
   }
 }

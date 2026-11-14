@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.domain.model.income;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeIdentifier;
 import java.util.Optional;
 
@@ -16,7 +17,10 @@ public interface IncomeRepository {
 
   boolean existsByAttributeIdentifier(IncomeAttributeIdentifier incomeAttributeIdentifier);
 
-  void update(Income income, long expectedVersion);
+  void update(Income income, ExpectedVersion expectedVersion);
+
+  /** 書き込みを伴わずにバージョン条件を検証する。一致しなければ ConcurrentUpdateException */
+  void verifyVersion(Income income, ExpectedVersion expectedVersion);
 
   void delete(Income income);
 }

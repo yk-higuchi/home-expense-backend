@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.infrastructure.fake;
 
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.*;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import java.util.LinkedHashMap;
@@ -23,13 +24,21 @@ public class InMemoryIncomeAttributeRepository implements IncomeAttributeReposit
   }
 
   @Override
-  public void update(IncomeAttribute incomeAttribute, long expectedVersion) {
+  public void update(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
     String key = incomeAttribute.incomeAttributeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || current.version() != expectedVersion) {
+    if (current == null || !expectedVersion.matches(current.version())) {
       throw new ConcurrentUpdateException();
     }
     store.put(key, new Stored(incomeAttribute, current.version() + 1));
+  }
+
+  @Override
+  public void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+    Stored current = store.get(incomeAttribute.incomeAttributeIdentifier().value());
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
   }
 
   @Override

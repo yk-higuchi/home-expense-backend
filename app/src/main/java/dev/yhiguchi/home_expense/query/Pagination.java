@@ -28,16 +28,19 @@ public record Pagination(int page, int perPage) {
     return page + 1;
   }
 
+  /** 最終ページ番号。0 件でも 1 ページ目は存在するものとして 1 を返す */
   public int lastPage(int totalCount) {
     int division = totalCount / perPage;
-    return totalCount % perPage > 0 ? division + 1 : division;
+    int last = totalCount % perPage > 0 ? division + 1 : division;
+    return Math.max(PAGE_MIN, last);
   }
 
   public boolean isFirstPage() {
     return page == PAGE_MIN;
   }
 
+  /** 最終ページ以降（最終ページを超えたページ番号を含む）なら true */
   public boolean isLastPage(int totalCount) {
-    return page == lastPage(totalCount);
+    return page >= lastPage(totalCount);
   }
 }

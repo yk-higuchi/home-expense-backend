@@ -2,6 +2,7 @@ package dev.yhiguchi.home_expense.infrastructure.datasource.expense;
 
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.expense.*;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.yhiguchi.home_expense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -10,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -65,20 +67,28 @@ public class ExpenseDataSource implements ExpenseRepository {
   }
 
   @Override
-  public void update(Expense expense, long expectedVersion) {
+  public void update(Expense expense, ExpectedVersion expectedVersion) {
     jdbc.updateWithOptimisticLock(
         """
         UPDATE expense.expense
         SET description = ?, amount = ?, payment_date = ?, attribute_id = ?, version = version + 1
-        WHERE id = ? AND version = ?
+        WHERE id = ?
         """,
-        ParameterBinder.of(
+        List.of(
             expense.description().value(),
             expense.amount().value(),
             expense.paymentDate().value(),
             expense.expenseAttributeIdentifier().value(),
-            expense.expenseIdentifier().value(),
-            expectedVersion));
+            expense.expenseIdentifier().value()),
+        expectedVersion);
+  }
+
+  @Override
+  public void verifyVersion(Expense expense, ExpectedVersion expectedVersion) {
+    jdbc.verifyVersion(
+        "SELECT 1 FROM expense.expense WHERE id = ?",
+        List.of(expense.expenseIdentifier().value()),
+        expectedVersion);
   }
 
   @Override

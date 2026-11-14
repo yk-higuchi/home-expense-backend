@@ -9,17 +9,20 @@ import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeCo
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeNotFoundException;
 import dev.yhiguchi.home_expense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.yhiguchi.home_expense.infrastructure.datasource.DataAccessException;
+import dev.yhiguchi.home_expense.presentation.api.InvalidIfMatchHeaderException;
 import dev.yhiguchi.home_expense.presentation.api.InvalidQueryParameterException;
-import dev.yhiguchi.home_expense.presentation.validation.payload.PreconditionRequired;
+import dev.yhiguchi.home_expense.presentation.api.PreconditionRequiredException;
 import dev.yhiguchi.home_expense.query.InvalidQueryCriteriaException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
@@ -31,6 +34,8 @@ public class ProblemDetailExceptionMapper {
 
   private static final Logger LOG = Logger.getLogger(ProblemDetailExceptionMapper.class);
   private static final String PROBLEM_JSON = "application/problem+json";
+
+  @Inject AllowedMethodsResolver allowedMethodsResolver;
 
   @Context UriInfo uriInfo;
 
@@ -84,20 +89,23 @@ public class ProblemDetailExceptionMapper {
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapConstraintViolationException(
       ConstraintViolationException e) {
-    var violations = e.getConstraintViolations();
-
-    var preconditionRequired =
-        violations.stream()
-            .filter(
-                v -> v.getConstraintDescriptor().getPayload().contains(PreconditionRequired.class))
-            .findFirst();
-    if (preconditionRequired.isPresent()) {
-      return toResponse(428, "Precondition Required", preconditionRequired.get().getMessage());
-    }
-
     String detail =
-        violations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "));
+        e.getConstraintViolations().stream()
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining(", "));
     return toResponse(Response.Status.BAD_REQUEST, detail);
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapPreconditionRequiredException(
+      PreconditionRequiredException e) {
+    return toResponse(428, "Precondition Required", e.getMessage());
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidIfMatchHeaderException(
+      InvalidIfMatchHeaderException e) {
+    return toResponse(Response.Status.BAD_REQUEST, e.getMessage());
   }
 
   @ServerExceptionMapper
@@ -114,7 +122,7 @@ public class ProblemDetailExceptionMapper {
 
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapConcurrentUpdateException(ConcurrentUpdateException e) {
-    LOG.warnv("楽観ロック違反: {0}", uriInfo.getRequestUri());
+    LOG.warn("楽観ロック違反");
     return toResponse(
         Response.Status.PRECONDITION_FAILED, "指定されたバージョンは既に更新されています。最新を取得して再試行してください");
   }
@@ -143,14 +151,60 @@ public class ProblemDetailExceptionMapper {
     return toResponse(Response.Status.INTERNAL_SERVER_ERROR, "サーバ内部エラーが発生しました");
   }
 
-  private RestResponse<ProblemDetail> toResponse(Response.Status status, String detail) {
+  /**
+   * フレームワークが送出する HTTP エラー（不正な JSON 本文、未定義のパス、許可されないメソッド、未対応のメディアタイプ等）も Problem Details で返す。405 の
+   * Allow など元のレスポンスのヘッダーは引き継ぐ。
+   */
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapWebApplicationException(WebApplicationException e) {
+    Response original = e.getResponse();
+    int status = original.getStatus();
+    if (status >= 500) {
+      LOG.error("HTTPエラー", e);
+    }
+    RestResponse.ResponseBuilder<ProblemDetail> builder =
+        RestResponse.ResponseBuilder.create(
+            RestResponse.Status.fromStatusCode(status),
+            ProblemDetail.of(status, reasonPhrase(status), detailFor(status), currentTraceId()));
+    original
+        .getHeaders()
+        .forEach((name, values) -> {
+          if (!name.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)
+              && !name.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH)) {
+            values.forEach(v -> builder.header(name, v));
+          }
+        });
+    if (status == 405 && original.getHeaderString(HttpHeaders.ALLOW) == null) {
+      allowedMethodsResolver
+          .allowFor(uriInfo.getPath())
+          .ifPresent(allow -> builder.header(HttpHeaders.ALLOW, allow));
+    }
+    return builder.header(HttpHeaders.CONTENT_TYPE, PROBLEM_JSON).build();
+  }
+
+  private static String detailFor(int status) {
+    return switch (status) {
+      case 400 -> "リクエストの形式が不正です";
+      case 404 -> "指定されたリソースは存在しません";
+      case 405 -> "このリソースでは許可されていないメソッドです";
+      case 406 -> "要求されたメディアタイプでは応答できません";
+      case 415 -> "サポートされていないメディアタイプです";
+      default -> reasonPhrase(status);
+    };
+  }
+
+  private static String reasonPhrase(int status) {
+    Response.StatusType type = Response.Status.fromStatusCode(status);
+    return type != null ? type.getReasonPhrase() : "HTTP " + status;
+  }
+
+  private static RestResponse<ProblemDetail> toResponse(Response.Status status, String detail) {
     return toResponse(status.getStatusCode(), status.getReasonPhrase(), detail);
   }
 
-  private RestResponse<ProblemDetail> toResponse(int statusCode, String title, String detail) {
-    URI instance = uriInfo.getRequestUri();
-    ProblemDetail problemDetail =
-        ProblemDetail.of(statusCode, title, detail, instance, currentTraceId());
+  private static RestResponse<ProblemDetail> toResponse(
+      int statusCode, String title, String detail) {
+    ProblemDetail problemDetail = ProblemDetail.of(statusCode, title, detail, currentTraceId());
     return RestResponse.ResponseBuilder.create(
             RestResponse.Status.fromStatusCode(statusCode), problemDetail)
         .header("Content-Type", PROBLEM_JSON)

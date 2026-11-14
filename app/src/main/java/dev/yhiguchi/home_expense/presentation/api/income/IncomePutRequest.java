@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.yhiguchi.home_expense.application.usecase.income.IncomeUpdateCommand;
 import dev.yhiguchi.home_expense.domain.model.Amount;
 import dev.yhiguchi.home_expense.domain.model.Description;
+import dev.yhiguchi.home_expense.domain.model.ExpectedVersion;
 import dev.yhiguchi.home_expense.domain.model.income.IncomeIdentifier;
 import dev.yhiguchi.home_expense.domain.model.income.ReceiveDate;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeIdentifier;
@@ -32,13 +33,13 @@ public record IncomePutRequest(
         @JsonProperty("attribute_id")
         String attributeId) {
 
-  IncomeUpdateCommand toCommand(String id, long version) {
+  IncomeUpdateCommand toCommand(String id, ExpectedVersion expectedVersion) {
     return new IncomeUpdateCommand(
         new IncomeIdentifier(id),
         new Description(description),
         new Amount(amount),
         new ReceiveDate(LocalDate.parse(receiveDate)),
         new IncomeAttributeIdentifier(attributeId),
-        version);
+        expectedVersion);
   }
 }
