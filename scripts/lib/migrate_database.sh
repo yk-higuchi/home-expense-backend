@@ -17,6 +17,6 @@ container run --rm \
   -e DB_PASSWORD="${db_password}" \
   -e DB_NAME="${db_name}" \
   -e FLYWAY_CLEAN_DISABLED=false \
-  flyway-migration clean migrate
+  flyway-migration migrate
 
 echo "Flyway migration completed."
