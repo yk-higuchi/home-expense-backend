@@ -1133,8 +1133,6 @@ components:
       schema:
         maxLength: 2048
         type: string
-  requestBodies: []
-  securitySchemes: []
 tags:
   - name: Balance Statistics
     description: Operations for income and expense statistics over a period

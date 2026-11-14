@@ -79,3 +79,9 @@ yq -i -P \
 yq -i -P \
   '.components.securitySchemes[] |= pick(["type","description","name","in","scheme","bearerFormat","flows","openIdConnectUrl"])' \
   "$FILE"
+
+# The selectors above create missing component sections (e.g. requestBodies,
+# securitySchemes) as empty arrays with recent yq versions; drop empty ones.
+yq -i -P \
+  '.components |= with_entries(select((.value | length) > 0))' \
+  "$FILE"
