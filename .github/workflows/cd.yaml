@@ -1,5 +1,5 @@
-name: Continuous Delivery
-run-name: Continuous Delivery
+name: CD
+run-name: CD · ${{ github.sha }}
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  pre-build-and-push:
+  set-version:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set-version.outputs.version }}
@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 25
           cache: gradle
       - name: Set Version
         id: set-version
@@ -29,11 +29,11 @@ jobs:
     uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
     with:
       build-context: ${{ matrix.build-context }}
-      version: ${{ needs.pre-build-and-push.outputs.version }}
+      version: ${{ needs.set-version.outputs.version }}
       platform: ${{ matrix.platform }}
       push: true
     needs:
-      - pre-build-and-push
+      - set-version
     strategy:
       fail-fast: false
       matrix:

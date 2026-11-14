@@ -1,5 +1,5 @@
-name: Continuous Integration
-run-name: Continuous Integration
+name: CI
+run-name: CI · ${{ github.event_name }} · ${{ github.head_ref || github.ref_name }}
 on:
   pull_request:
     branches:
@@ -9,26 +9,66 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 25
           cache: gradle
-      - name: Gradle lint
+      - name: Gradle check
         run: ./gradlew --console=plain --no-daemon -q check
         working-directory: app
-  build-and-lint-docker-image:
+  openapi-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install vacuum
+        run: |
+          curl -fsSL https://github.com/daveshanley/vacuum/releases/latest/download/vacuum_linux_amd64.tar.gz | tar -xz
+          sudo install -m 0755 vacuum /usr/local/bin/vacuum
+      - name: Lint OpenAPI
+        run: vacuum lint -r .vacuum.yaml -d docs/openapi.yaml
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Biome check
+        run: pnpm biome check .
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint commits
+        run: pnpm commitlint --from origin/main --to HEAD --verbose
+  docker-image-build:
     uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
     with:
       build-context: ${{ matrix.build-context }}
       version: lint
       platform: ${{ matrix.platform }}
     needs:
-      - lint
+      - test
     strategy:
       fail-fast: false
       matrix:
