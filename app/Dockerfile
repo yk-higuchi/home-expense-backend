@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.23.0
+# syntax=docker/dockerfile:1.29.0
 FROM ghcr.io/graalvm/native-image-community:25.0.2-ol9-20260120 AS builder
 
 WORKDIR /work
