@@ -4,10 +4,16 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # main への push はリリースにつながるため途中で取り消さない
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -50,6 +56,7 @@ jobs:
       - name: Biome check
         run: pnpm biome check .
   commitlint:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -62,20 +69,93 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Lint commits
-        run: pnpm commitlint --from origin/main --to HEAD --verbose
-  docker-image-build:
-    uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
-    with:
-      build-context: ${{ matrix.build-context }}
-      version: lint
-      platform: ${{ matrix.platform }}
+        run: pnpm commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
+  # イメージは CI で一度だけビルドしてスキャンする。main への push ではテスト済みのイメージを
+  # sha-<commit> タグで GHCR に置き、リリース時は CD がそれを作り直さずに昇格させる。
+  image:
     needs:
       - test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
         build-context:
           - app
           - flyway
-        platform:
-          - linux/amd64
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read version
+        id: version
+        run: echo "version=$(sed -nE 's/^version = "([^"]+)".*x-release-please-version.*/\1/p' app/build.gradle.kts)" >> "${GITHUB_OUTPUT}"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build ${{ matrix.build-context }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./${{ matrix.build-context }}
+          platforms: linux/amd64
+          load: true
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.build-context }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.build-context }}
+      - name: Scan ${{ matrix.build-context }} with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+      - name: Login to GitHub Container Registry
+        if: env.PUSH == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push tested image as release candidate
+        if: env.PUSH == 'true'
+        run: docker push "${IMAGE}:sha-${GITHUB_SHA}"
+  # main の全チェックとイメージのビルドが通った場合だけリリース PR を更新する。
+  # リリース PR のマージでタグとリリースが作られたら、同じ実行の中で CD を呼ぶ
+  # （GITHUB_TOKEN で作ったタグ/リリースは他のワークフローを起動しないため）。
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - test
+      - openapi-lint
+      - frontend-lint
+      - image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+  deliver:
+    needs:
+      - release
+    if: needs.release.outputs.release_created == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/cd.yaml
+    with:
+      version: ${{ needs.release.outputs.version }}
+      source-sha: ${{ github.sha }}

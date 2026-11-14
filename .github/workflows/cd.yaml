@@ -1,44 +1,66 @@
 name: CD
-run-name: CD · ${{ github.sha }}
+run-name: CD · ${{ inputs.version }}
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      version:
+        description: Release version (X.Y.Z)
+        required: true
+        type: string
+      source-sha:
+        description: Commit SHA whose tested image (sha-<commit>) is promoted
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (X.Y.Z)
+        required: true
+        type: string
+      source-sha:
+        description: Commit SHA whose tested image (sha-<commit>) is promoted
+        required: true
+        type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ inputs.version }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+  packages: write
 jobs:
-  set-version:
+  # CI でテスト・スキャン済みのイメージ（sha-<commit>）を、作り直さずに digest のまま
+  # バージョンタグと latest に昇格させる。
+  promote:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 25
-          cache: gradle
-      - name: Set Version
-        id: set-version
-        run: |
-          echo "version=$(./gradlew --console=plain --no-daemon -q printVersion)" >> "${GITHUB_OUTPUT}"
-        working-directory: app
-  build-and-push:
-    uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
-    with:
-      build-context: ${{ matrix.build-context }}
-      version: ${{ needs.set-version.outputs.version }}
-      platform: ${{ matrix.platform }}
-      push: true
-    needs:
-      - set-version
     strategy:
       fail-fast: false
       matrix:
         build-context:
           - app
           - flyway
-        platform:
-          - linux/amd64
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
+      VERSION: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source-sha }}
+    steps:
+      - name: Validate inputs
+        run: |
+          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${VERSION}"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${SOURCE_SHA}"; exit 1; }
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote tested image
+        run: |
+          source="${IMAGE}:sha-${SOURCE_SHA}"
+          source_digest=$(docker buildx imagetools inspect "${source}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "source: ${source}@${source_digest}"
+          docker buildx imagetools create --tag "${IMAGE}:${VERSION}" --tag "${IMAGE}:latest" "${source}@${source_digest}"
+          promoted_digest=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          [ "${promoted_digest}" = "${source_digest}" ] || { echo "digest mismatch: ${promoted_digest} != ${source_digest}"; exit 1; }
+          echo "### ${IMAGE}:${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "promoted from \`${source}\` (\`${source_digest}\`)" >> "${GITHUB_STEP_SUMMARY}"

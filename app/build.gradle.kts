@@ -24,7 +24,7 @@ dependencies {
 
 group = "dev.yhiguchi.home_expense"
 
-version = "2.0.0"
+version = "2.0.0" // x-release-please-version
 
 System.getenv("DEPLOY_ENV")?.let { deployEnv ->
   version = "$version-$deployEnv"
