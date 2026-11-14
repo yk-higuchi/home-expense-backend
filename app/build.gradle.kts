@@ -35,7 +35,7 @@ java {
   targetCompatibility = JavaVersion.VERSION_25
 }
 
-val integrationTest by sourceSets.getting {
+sourceSets.getByName("integrationTest") {
   compileClasspath += sourceSets.test.get().output
   runtimeClasspath += sourceSets.test.get().output
 }

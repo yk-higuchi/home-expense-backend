@@ -21,8 +21,8 @@ class ExpenseAttributeApiTest {
             .contentType(ContentType.JSON)
             .body(
                 """
-            {"name": "テスト属性A", "category": "変動費"}
-            """)
+                {"name": "テスト属性A", "category": "変動費"}
+                """)
             .when()
             .post("/v1/expense-attributes")
             .then()

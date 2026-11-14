@@ -32,10 +32,9 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   public boolean existsByName(
       ExpenseAttributeName expenseAttributeName, ExpenseCategory expenseCategory) {
     return store.values().stream()
-        .anyMatch(
-            v ->
-                v.entity().expenseAttributeName().equals(expenseAttributeName)
-                    && v.entity().expenseCategory() == expenseCategory);
+        .anyMatch(v ->
+            v.entity().expenseAttributeName().equals(expenseAttributeName)
+                && v.entity().expenseCategory() == expenseCategory);
   }
 
   @Override

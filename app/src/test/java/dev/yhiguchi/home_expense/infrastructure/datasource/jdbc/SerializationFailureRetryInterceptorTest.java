@@ -22,13 +22,12 @@ class SerializationFailureRetryInterceptorTest {
     AtomicInteger calls = new AtomicInteger();
     Object result =
         sut.retry(
-            context(
-                () -> {
-                  if (calls.incrementAndGet() < 3) {
-                    throw serializationFailure();
-                  }
-                  return "ok";
-                }));
+            context(() -> {
+              if (calls.incrementAndGet() < 3) {
+                throw serializationFailure();
+              }
+              return "ok";
+            }));
 
     assertEquals("ok", result);
     assertEquals(3, calls.get());
@@ -42,11 +41,10 @@ class SerializationFailureRetryInterceptorTest {
         DataAccessException.class,
         () ->
             sut.retry(
-                context(
-                    () -> {
-                      calls.incrementAndGet();
-                      throw serializationFailure();
-                    })));
+                context(() -> {
+                  calls.incrementAndGet();
+                  throw serializationFailure();
+                })));
     assertEquals(SerializationFailureRetryInterceptor.MAX_ATTEMPTS, calls.get());
   }
 
@@ -58,11 +56,10 @@ class SerializationFailureRetryInterceptorTest {
         DataAccessException.class,
         () ->
             sut.retry(
-                context(
-                    () -> {
-                      calls.incrementAndGet();
-                      throw new DataAccessException(new SQLException("duplicate", "23505"));
-                    })));
+                context(() -> {
+                  calls.incrementAndGet();
+                  throw new DataAccessException(new SQLException("duplicate", "23505"));
+                })));
     assertEquals(1, calls.get());
   }
 

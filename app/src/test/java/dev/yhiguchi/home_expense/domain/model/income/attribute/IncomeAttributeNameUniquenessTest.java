@@ -36,10 +36,9 @@ class IncomeAttributeNameUniquenessTest {
           new IncomeAttribute(
               new IncomeAttributeIdentifier("attr-1"), new IncomeAttributeName("給与"));
       IncomeAttributeNameUniqueness sut =
-          new IncomeAttributeNameUniqueness(
-              name -> {
-                throw new AssertionError("検査されるべきでない");
-              });
+          new IncomeAttributeNameUniqueness(name -> {
+            throw new AssertionError("検査されるべきでない");
+          });
 
       assertDoesNotThrow(() -> sut.assertUniqueForUpdate(current, new IncomeAttributeName("給与")));
     }

@@ -29,33 +29,29 @@ class BalanceSeriesCriteriaTest {
 
   @Test
   void MONTH粒度で12ヶ月は許容() {
-    assertDoesNotThrow(
-        () ->
-            new BalanceSeriesCriteria(
-                LocalDate.of(2025, 5, 1), LocalDate.of(2026, 4, 30), Granularity.MONTH));
+    assertDoesNotThrow(() ->
+        new BalanceSeriesCriteria(
+            LocalDate.of(2025, 5, 1), LocalDate.of(2026, 4, 30), Granularity.MONTH));
   }
 
   @Test
   void YEAR粒度で20年は許容() {
-    assertDoesNotThrow(
-        () ->
-            new BalanceSeriesCriteria(
-                LocalDate.of(2007, 1, 1), LocalDate.of(2026, 12, 31), Granularity.YEAR));
+    assertDoesNotThrow(() ->
+        new BalanceSeriesCriteria(
+            LocalDate.of(2007, 1, 1), LocalDate.of(2026, 12, 31), Granularity.YEAR));
   }
 
   @Test
   void DAY粒度で365日は許容() {
-    assertDoesNotThrow(
-        () ->
-            new BalanceSeriesCriteria(
-                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), Granularity.DAY));
+    assertDoesNotThrow(() ->
+        new BalanceSeriesCriteria(
+            LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), Granularity.DAY));
   }
 
   @Test
   void from_to同日は許容() {
-    assertDoesNotThrow(
-        () ->
-            new BalanceSeriesCriteria(
-                LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 1), Granularity.DAY));
+    assertDoesNotThrow(() ->
+        new BalanceSeriesCriteria(
+            LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 1), Granularity.DAY));
   }
 }

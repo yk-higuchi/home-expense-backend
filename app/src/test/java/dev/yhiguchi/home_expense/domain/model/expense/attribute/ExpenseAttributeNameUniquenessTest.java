@@ -16,9 +16,8 @@ class ExpenseAttributeNameUniquenessTest {
       ExpenseAttributeNameUniqueness sut =
           new ExpenseAttributeNameUniqueness((name, category) -> false);
 
-      assertDoesNotThrow(
-          () ->
-              sut.assertUniqueForRegistration(new ExpenseAttributeName("食費"), ExpenseCategory.変動費));
+      assertDoesNotThrow(() ->
+          sut.assertUniqueForRegistration(new ExpenseAttributeName("食費"), ExpenseCategory.変動費));
     }
 
     @Test
@@ -37,9 +36,8 @@ class ExpenseAttributeNameUniquenessTest {
       ExpenseAttributeNameUniqueness sut =
           new ExpenseAttributeNameUniqueness((name, category) -> category == ExpenseCategory.固定費);
 
-      assertDoesNotThrow(
-          () ->
-              sut.assertUniqueForRegistration(new ExpenseAttributeName("食費"), ExpenseCategory.変動費));
+      assertDoesNotThrow(() ->
+          sut.assertUniqueForRegistration(new ExpenseAttributeName("食費"), ExpenseCategory.変動費));
     }
   }
 
@@ -54,10 +52,9 @@ class ExpenseAttributeNameUniquenessTest {
               new ExpenseAttributeName("食費"),
               ExpenseCategory.変動費);
       ExpenseAttributeNameUniqueness sut =
-          new ExpenseAttributeNameUniqueness(
-              (name, category) -> {
-                throw new AssertionError("検査されるべきでない");
-              });
+          new ExpenseAttributeNameUniqueness((name, category) -> {
+            throw new AssertionError("検査されるべきでない");
+          });
 
       assertDoesNotThrow(() -> sut.assertUniqueForUpdate(current, new ExpenseAttributeName("食費")));
     }

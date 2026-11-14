@@ -21,8 +21,8 @@ class IncomeAttributeApiTest {
             .contentType(ContentType.JSON)
             .body(
                 """
-            {"name": "テスト収入属性A"}
-            """)
+                {"name": "テスト収入属性A"}
+                """)
             .when()
             .post("/v1/income-attributes")
             .then()
