@@ -28,6 +28,7 @@ paths:
           required: true
           schema:
             format: date
+            maxLength: 10
             type: string
         - description: End date of the period (yyyy-MM-dd, inclusive)
           in: query
@@ -35,6 +36,7 @@ paths:
           required: true
           schema:
             format: date
+            maxLength: 10
             type: string
         - description: Aggregation granularity
           in: query
