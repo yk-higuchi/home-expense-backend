@@ -18,6 +18,10 @@ jobs:
           distribution: temurin
           java-version: 25
           cache: gradle
+      - name: Start test database (CockroachDB)
+        run: scripts/setup_test_db.sh
+        env:
+          CONTAINER_CLI: docker
       - name: Gradle check
         run: ./gradlew --console=plain --no-daemon -q check
         working-directory: app
