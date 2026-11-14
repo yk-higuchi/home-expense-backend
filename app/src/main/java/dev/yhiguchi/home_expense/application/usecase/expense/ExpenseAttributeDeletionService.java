@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.application.usecase.expense;
 
+import dev.yhiguchi.home_expense.application.transaction.RetryOnSerializationFailure;
 import dev.yhiguchi.home_expense.domain.model.expense.ExpenseRepository;
 import dev.yhiguchi.home_expense.domain.model.expense.attribute.*;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -7,6 +8,7 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 @Transactional
+@RetryOnSerializationFailure
 public class ExpenseAttributeDeletionService {
 
   ExpenseAttributeRepository expenseAttributeRepository;

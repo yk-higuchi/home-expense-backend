@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.application.usecase.income;
 
+import dev.yhiguchi.home_expense.application.transaction.RetryOnSerializationFailure;
 import dev.yhiguchi.home_expense.domain.model.income.IncomeRepository;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttribute;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeConstraintException;
@@ -10,6 +11,7 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 @Transactional
+@RetryOnSerializationFailure
 public class IncomeAttributeDeletionService {
 
   IncomeAttributeRepository incomeAttributeRepository;

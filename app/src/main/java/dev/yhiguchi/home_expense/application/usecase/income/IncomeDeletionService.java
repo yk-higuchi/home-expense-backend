@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.application.usecase.income;
 
+import dev.yhiguchi.home_expense.application.transaction.RetryOnSerializationFailure;
 import dev.yhiguchi.home_expense.domain.model.income.Income;
 import dev.yhiguchi.home_expense.domain.model.income.IncomeIdentifier;
 import dev.yhiguchi.home_expense.domain.model.income.IncomeRepository;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 @Transactional
+@RetryOnSerializationFailure
 public class IncomeDeletionService {
 
   IncomeRepository incomeRepository;

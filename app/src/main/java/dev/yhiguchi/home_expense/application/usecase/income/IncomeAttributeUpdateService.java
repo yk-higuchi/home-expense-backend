@@ -1,5 +1,6 @@
 package dev.yhiguchi.home_expense.application.usecase.income;
 
+import dev.yhiguchi.home_expense.application.transaction.RetryOnSerializationFailure;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttribute;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeNameUniqueness;
 import dev.yhiguchi.home_expense.domain.model.income.attribute.IncomeAttributeRepository;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 @Transactional
+@RetryOnSerializationFailure
 public class IncomeAttributeUpdateService {
 
   IncomeAttributeRepository incomeAttributeRepository;
