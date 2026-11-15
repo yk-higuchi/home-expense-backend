@@ -20,5 +20,5 @@ public interface ExpenseRepository {
 
   void verifyVersion(Expense expense, ExpectedVersion expectedVersion);
 
-  void delete(Expense expense);
+  void delete(Expense expense, ExpectedVersion expectedVersion);
 }

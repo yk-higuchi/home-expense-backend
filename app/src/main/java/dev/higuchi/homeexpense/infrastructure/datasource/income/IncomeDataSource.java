@@ -64,10 +64,11 @@ public class IncomeDataSource implements IncomeRepository {
   }
 
   @Override
-  public void delete(Income income) {
-    jdbc.update(
+  public void delete(Income income, ExpectedVersion expectedVersion) {
+    jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.income WHERE income.id = ?",
-        ParameterBinder.of(income.incomeIdentifier().value()));
+        List.of(income.incomeIdentifier().value()),
+        expectedVersion);
   }
 
   @Override

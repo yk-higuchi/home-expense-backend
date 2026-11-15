@@ -7,6 +7,8 @@ import io.quarkus.test.junit.QuarkusTest;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 class ConditionalRequestApiTest {
@@ -129,5 +131,61 @@ class ConditionalRequestApiTest {
         .put(path)
         .then()
         .statusCode(412);
+  }
+
+  @Test
+  void DELETEもIfMatchなしは428() {
+    given().delete(path).then().statusCode(428).contentType("application/problem+json");
+    given().get(path).then().statusCode(200);
+  }
+
+  @Test
+  void DELETEで一致しないETagは412で削除しない() {
+    given().header("If-Match", "\"9\"").delete(path).then().statusCode(412);
+    given().get(path).then().statusCode(200);
+  }
+
+  @Test
+  void DELETEで一致するETagなら削除できる() {
+    given().header("If-Match", "\"1\"").delete(path).then().statusCode(204);
+    given().get(path).then().statusCode(404);
+  }
+
+  @Test
+  void DELETEでアスタリスクならバージョンを問わず削除できる() {
+    given().header("If-Match", "*").delete(path).then().statusCode(204);
+    given().get(path).then().statusCode(404);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "/v1/expenses/",
+        "/v1/expense-attributes/",
+        "/v1/incomes/",
+        "/v1/income-attributes/"
+      })
+  void すべてのDELETEでIfMatchが必須(String collection) {
+    given().delete(collection + UUID.randomUUID()).then().statusCode(428);
+  }
+
+  @Test
+  void 一覧の各要素のversionは個別取得のETagと一致する() {
+    String id = path.substring(path.lastIndexOf('/') + 1);
+    given()
+        .contentType("application/json")
+        .header("If-Match", "\"1\"")
+        .body(body())
+        .put(path)
+        .then()
+        .statusCode(204);
+    given().get(path).then().header("ETag", equalTo("\"2\"")).body("version", equalTo(2));
+    given()
+        .queryParam("per_page", 100)
+        .queryParam("page", 1)
+        .get("/v1/income-attributes")
+        .then()
+        .statusCode(200)
+        .body("income_attributes.find { it.id == '%s' }.version".formatted(id), equalTo(2));
   }
 }

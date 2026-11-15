@@ -53,8 +53,13 @@ public class InMemoryExpenseRepository implements ExpenseRepository {
   }
 
   @Override
-  public void delete(Expense expense) {
-    store.remove(expense.expenseIdentifier().value());
+  public void delete(Expense expense, ExpectedVersion expectedVersion) {
+    String key = expense.expenseIdentifier().value();
+    Stored current = store.get(key);
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
+    store.remove(key);
   }
 
   public List<Expense> all() {

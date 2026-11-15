@@ -39,8 +39,13 @@ public class InMemoryIncomeRepository implements IncomeRepository {
   }
 
   @Override
-  public void delete(Income income) {
-    store.remove(income.incomeIdentifier().value());
+  public void delete(Income income, ExpectedVersion expectedVersion) {
+    String key = income.incomeIdentifier().value();
+    Stored current = store.get(key);
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
+    store.remove(key);
   }
 
   @Override

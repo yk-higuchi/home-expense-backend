@@ -92,10 +92,11 @@ public class ExpenseDataSource implements ExpenseRepository {
   }
 
   @Override
-  public void delete(Expense expense) {
-    jdbc.update(
+  public void delete(Expense expense, ExpectedVersion expectedVersion) {
+    jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.expense WHERE expense.id = ?",
-        ParameterBinder.of(expense.expenseIdentifier().value()));
+        List.of(expense.expenseIdentifier().value()),
+        expectedVersion);
   }
 
   static Expense mapExpense(ResultSet rs) throws SQLException {

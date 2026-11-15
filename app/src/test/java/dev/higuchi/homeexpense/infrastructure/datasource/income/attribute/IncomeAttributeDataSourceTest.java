@@ -163,11 +163,21 @@ class IncomeAttributeDataSourceTest {
     IncomeAttribute attribute = createAttribute("その他");
     sut.register(attribute);
 
-    sut.delete(attribute);
+    sut.delete(attribute, ExpectedVersion.of(1L));
     assertTrue(sut.find(attribute.incomeAttributeIdentifier()).isEmpty());
   }
 
   private IncomeAttribute createAttribute(String name) {
     return IncomeAttribute.create(new IncomeAttributeName(name));
+  }
+
+  @Test
+  void バージョンが一致しない収入属性は削除せず例外をスローする() {
+    IncomeAttribute attribute = createAttribute("その他");
+    sut.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.delete(attribute, ExpectedVersion.of(2L)));
+    assertTrue(sut.find(attribute.incomeAttributeIdentifier()).isPresent());
   }
 }

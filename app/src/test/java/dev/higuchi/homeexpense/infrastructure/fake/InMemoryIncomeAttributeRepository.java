@@ -42,8 +42,13 @@ public class InMemoryIncomeAttributeRepository implements IncomeAttributeReposit
   }
 
   @Override
-  public void delete(IncomeAttribute incomeAttribute) {
-    store.remove(incomeAttribute.incomeAttributeIdentifier().value());
+  public void delete(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+    String key = incomeAttribute.incomeAttributeIdentifier().value();
+    Stored current = store.get(key);
+    if (current == null || !expectedVersion.matches(current.version())) {
+      throw new ConcurrentUpdateException();
+    }
+    store.remove(key);
   }
 
   @Override

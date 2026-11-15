@@ -17,5 +17,5 @@ public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
 
   void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
 
-  void delete(IncomeAttribute incomeAttribute);
+  void delete(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
 }

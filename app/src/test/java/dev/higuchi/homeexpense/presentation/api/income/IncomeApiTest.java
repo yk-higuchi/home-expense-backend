@@ -115,14 +115,24 @@ class IncomeApiTest {
   @Test
   @Order(5)
   void DELETE_収入を削除できる() {
-    given().when().delete("/v1/incomes/{id}", incomeId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/incomes/{id}", incomeId).header("ETag"))
+        .when()
+        .delete("/v1/incomes/{id}", incomeId)
+        .then()
+        .statusCode(204);
     incomeId = null;
   }
 
   @Test
   @Order(6)
   void クリーンアップ_収入属性を削除する() {
-    given().when().delete("/v1/income-attributes/{id}", attributeId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/income-attributes/{id}", attributeId).header("ETag"))
+        .when()
+        .delete("/v1/income-attributes/{id}", attributeId)
+        .then()
+        .statusCode(204);
     attributeId = null;
   }
 

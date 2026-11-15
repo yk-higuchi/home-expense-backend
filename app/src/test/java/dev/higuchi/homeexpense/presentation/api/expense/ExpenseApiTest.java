@@ -116,14 +116,24 @@ class ExpenseApiTest {
   @Test
   @Order(5)
   void DELETE_経費を削除できる() {
-    given().when().delete("/v1/expenses/{id}", expenseId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/expenses/{id}", expenseId).header("ETag"))
+        .when()
+        .delete("/v1/expenses/{id}", expenseId)
+        .then()
+        .statusCode(204);
     expenseId = null;
   }
 
   @Test
   @Order(6)
   void クリーンアップ_経費属性を削除する() {
-    given().when().delete("/v1/expense-attributes/{id}", attributeId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/expense-attributes/{id}", attributeId).header("ETag"))
+        .when()
+        .delete("/v1/expense-attributes/{id}", attributeId)
+        .then()
+        .statusCode(204);
     attributeId = null;
   }
 

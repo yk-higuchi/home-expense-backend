@@ -20,5 +20,5 @@ public interface IncomeRepository {
 
   void verifyVersion(Income income, ExpectedVersion expectedVersion);
 
-  void delete(Income income);
+  void delete(Income income, ExpectedVersion expectedVersion);
 }

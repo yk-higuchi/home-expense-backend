@@ -67,8 +67,10 @@ public class IncomeAttributeApi {
   @DELETE
   @Path("{id}")
   @RunOnVirtualThread
-  public Response delete(@PathParam("id") @UuidFormat String id) {
-    incomeAttributeDeletionService.delete(new IncomeAttributeIdentifier(id));
+  public Response delete(
+      @PathParam("id") @UuidFormat String id, @HeaderParam("If-Match") String ifMatch) {
+    incomeAttributeDeletionService.delete(
+        new IncomeAttributeIdentifier(id), IfMatchParser.parse(ifMatch));
     return Response.noContent().build();
   }
 

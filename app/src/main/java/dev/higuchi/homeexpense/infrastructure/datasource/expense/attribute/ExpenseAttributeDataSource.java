@@ -83,10 +83,11 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   }
 
   @Override
-  public void delete(ExpenseAttribute expenseAttribute) {
-    jdbc.update(
+  public void delete(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+    jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.attribute WHERE id = ?",
-        ParameterBinder.of(expenseAttribute.expenseAttributeIdentifier().value()));
+        List.of(expenseAttribute.expenseAttributeIdentifier().value()),
+        expectedVersion);
   }
 
   static ExpenseAttribute mapExpenseAttribute(ResultSet rs) throws SQLException {

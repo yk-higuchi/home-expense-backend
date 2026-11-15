@@ -144,6 +144,9 @@
 			},
 			"name": {
 				"type": "string"
+			},
+			"version": {
+				"type": "float64"
 			}
 		},
 		"additionalProperties": true
@@ -161,6 +164,9 @@
 						},
 						"name": {
 							"type": "string"
+						},
+						"version": {
+							"type": "float64"
 						}
 					},
 					"additionalProperties": true
@@ -213,6 +219,9 @@
 			},
 			"payment_date": {
 				"type": "string"
+			},
+			"version": {
+				"type": "float64"
 			}
 		},
 		"additionalProperties": true
@@ -247,6 +256,9 @@
 						},
 						"payment_date": {
 							"type": "string"
+						},
+						"version": {
+							"type": "float64"
 						}
 					},
 					"additionalProperties": true
@@ -294,6 +306,9 @@
 			},
 			"name": {
 				"type": "string"
+			},
+			"version": {
+				"type": "float64"
 			}
 		},
 		"additionalProperties": true
@@ -308,6 +323,9 @@
 						},
 						"name": {
 							"type": "string"
+						},
+						"version": {
+							"type": "float64"
 						}
 					},
 					"additionalProperties": true
@@ -354,6 +372,9 @@
 			},
 			"receive_date": {
 				"type": "string"
+			},
+			"version": {
+				"type": "float64"
 			}
 		},
 		"additionalProperties": true
@@ -385,6 +406,9 @@
 						},
 						"receive_date": {
 							"type": "string"
+						},
+						"version": {
+							"type": "float64"
 						}
 					},
 					"additionalProperties": true

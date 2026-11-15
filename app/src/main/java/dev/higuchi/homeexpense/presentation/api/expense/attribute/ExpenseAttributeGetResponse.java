@@ -6,8 +6,10 @@ import dev.higuchi.homeexpense.query.expense.attribute.ExpenseAttributeDetail;
 public record ExpenseAttributeGetResponse(
     @JsonProperty("id") String id,
     @JsonProperty("name") String name,
-    @JsonProperty("category") String category) {
+    @JsonProperty("category") String category,
+    @JsonProperty("version") long version) {
   static ExpenseAttributeGetResponse from(ExpenseAttributeDetail detail) {
-    return new ExpenseAttributeGetResponse(detail.id(), detail.name(), detail.category());
+    return new ExpenseAttributeGetResponse(
+        detail.id(), detail.name(), detail.category(), detail.version());
   }
 }

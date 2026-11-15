@@ -114,7 +114,12 @@ class IncomeAttributeApiTest {
   @Test
   @Order(6)
   void DELETE_収入属性を削除できる() {
-    given().when().delete("/v1/income-attributes/{id}", createdId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/income-attributes/{id}", createdId).header("ETag"))
+        .when()
+        .delete("/v1/income-attributes/{id}", createdId)
+        .then()
+        .statusCode(204);
     createdId = null;
   }
 

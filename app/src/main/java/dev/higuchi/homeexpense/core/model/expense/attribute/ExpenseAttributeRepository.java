@@ -17,5 +17,5 @@ public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
 
   void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion);
 
-  void delete(ExpenseAttribute expenseAttribute);
+  void delete(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion);
 }

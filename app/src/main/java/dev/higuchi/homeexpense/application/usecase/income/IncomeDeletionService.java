@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.application.usecase.income;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
+import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.income.Income;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.IncomeRepository;
@@ -18,8 +19,8 @@ public class IncomeDeletionService {
     this.incomeRepository = incomeRepository;
   }
 
-  public void delete(IncomeIdentifier incomeIdentifier) {
+  public void delete(IncomeIdentifier incomeIdentifier, ExpectedVersion expectedVersion) {
     Income income = incomeRepository.get(incomeIdentifier);
-    incomeRepository.delete(income);
+    incomeRepository.delete(income, expectedVersion);
   }
 }

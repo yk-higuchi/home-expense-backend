@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.application.usecase.income;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
+import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.income.IncomeRepository;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
@@ -23,11 +24,12 @@ public class IncomeAttributeDeletionService {
     this.incomeRepository = incomeRepository;
   }
 
-  public void delete(IncomeAttributeIdentifier incomeAttributeIdentifier) {
+  public void delete(
+      IncomeAttributeIdentifier incomeAttributeIdentifier, ExpectedVersion expectedVersion) {
     IncomeAttribute attribute = incomeAttributeRepository.get(incomeAttributeIdentifier);
     if (incomeRepository.existsByAttributeIdentifier(attribute.incomeAttributeIdentifier())) {
       throw new IncomeAttributeConstraintException();
     }
-    incomeAttributeRepository.delete(attribute);
+    incomeAttributeRepository.delete(attribute, expectedVersion);
   }
 }

@@ -70,8 +70,9 @@ public class ExpenseApi {
   @DELETE
   @Path("{id}")
   @RunOnVirtualThread
-  public Response delete(@PathParam("id") @UuidFormat String id) {
-    expenseDeletionService.delete(new ExpenseIdentifier(id));
+  public Response delete(
+      @PathParam("id") @UuidFormat String id, @HeaderParam("If-Match") String ifMatch) {
+    expenseDeletionService.delete(new ExpenseIdentifier(id), IfMatchParser.parse(ifMatch));
     return Response.noContent().build();
   }
 

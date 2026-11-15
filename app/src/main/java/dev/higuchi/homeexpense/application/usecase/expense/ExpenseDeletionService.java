@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.application.usecase.expense;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
+import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.expense.Expense;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseRepository;
@@ -18,8 +19,8 @@ public class ExpenseDeletionService {
     this.expenseRepository = expenseRepository;
   }
 
-  public void delete(ExpenseIdentifier expenseIdentifier) {
+  public void delete(ExpenseIdentifier expenseIdentifier, ExpectedVersion expectedVersion) {
     Expense expense = expenseRepository.get(expenseIdentifier);
-    expenseRepository.delete(expense);
+    expenseRepository.delete(expense, expectedVersion);
   }
 }

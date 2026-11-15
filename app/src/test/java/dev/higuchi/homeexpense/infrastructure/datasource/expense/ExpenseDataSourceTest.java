@@ -141,7 +141,7 @@ class ExpenseDataSourceTest {
     Expense expense = createExpense("おやつ", 200, "2026-04-10", attribute);
     sut.register(expense);
 
-    sut.delete(expense);
+    sut.delete(expense, ExpectedVersion.of(1L));
     assertTrue(sut.find(expense.expenseIdentifier()).isEmpty());
   }
 
@@ -159,5 +159,16 @@ class ExpenseDataSourceTest {
         new Amount(price),
         new PaymentDate(LocalDate.parse(paymentDate)),
         attribute.expenseAttributeIdentifier());
+  }
+
+  @Test
+  void バージョンが一致しない経費は削除せず例外をスローする() {
+    ExpenseAttribute attribute = registerAttribute("食費5", ExpenseCategory.変動費);
+    Expense expense = createExpense("おやつ", 200, "2026-04-10", attribute);
+    sut.register(expense);
+
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.delete(expense, ExpectedVersion.of(2L)));
+    assertTrue(sut.find(expense.expenseIdentifier()).isPresent());
   }
 }

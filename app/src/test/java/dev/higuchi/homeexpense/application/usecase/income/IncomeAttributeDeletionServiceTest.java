@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
+import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
+import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeRepository;
 import java.time.LocalDate;
@@ -28,7 +30,7 @@ class IncomeAttributeDeletionServiceTest {
   void 収入属性を削除する() {
     attributeRepository.register(attribute);
 
-    sut.delete(new IncomeAttributeIdentifier("attr-1"));
+    sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(1));
 
     assertTrue(attributeRepository.all().isEmpty());
   }
@@ -47,7 +49,17 @@ class IncomeAttributeDeletionServiceTest {
 
     assertThrows(
         IncomeAttributeConstraintException.class,
-        () -> sut.delete(new IncomeAttributeIdentifier("attr-1")));
+        () -> sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(1)));
+    assertEquals(1, attributeRepository.all().size());
+  }
+
+  @Test
+  void バージョンが一致しない収入属性は削除せず例外をスローする() {
+    attributeRepository.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () -> sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(2L)));
     assertEquals(1, attributeRepository.all().size());
   }
 }

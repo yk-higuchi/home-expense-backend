@@ -120,7 +120,7 @@ class IncomeDataSourceTest {
     Income income = createIncome("4月給与", 300000, "2026-04-25", attribute);
     sut.register(income);
 
-    sut.delete(income);
+    sut.delete(income, ExpectedVersion.of(1L));
     assertTrue(sut.find(income.incomeIdentifier()).isEmpty());
   }
 
@@ -138,5 +138,15 @@ class IncomeDataSourceTest {
         new Amount(amount),
         new ReceiveDate(LocalDate.parse(receiveDate)),
         attribute.incomeAttributeIdentifier());
+  }
+
+  @Test
+  void バージョンが一致しない収入は削除せず例外をスローする() {
+    IncomeAttribute attribute = registerAttribute("給与4");
+    Income income = createIncome("4月給与", 300000, "2026-04-25", attribute);
+    sut.register(income);
+
+    assertThrows(ConcurrentUpdateException.class, () -> sut.delete(income, ExpectedVersion.of(2L)));
+    assertTrue(sut.find(income.incomeIdentifier()).isPresent());
   }
 }

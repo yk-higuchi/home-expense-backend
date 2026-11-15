@@ -115,7 +115,12 @@ class ExpenseAttributeApiTest {
   @Test
   @Order(6)
   void DELETE_経費属性を削除できる() {
-    given().when().delete("/v1/expense-attributes/{id}", createdId).then().statusCode(204);
+    given()
+        .header("If-Match", given().get("/v1/expense-attributes/{id}", createdId).header("ETag"))
+        .when()
+        .delete("/v1/expense-attributes/{id}", createdId)
+        .then()
+        .statusCode(204);
     createdId = null;
   }
 

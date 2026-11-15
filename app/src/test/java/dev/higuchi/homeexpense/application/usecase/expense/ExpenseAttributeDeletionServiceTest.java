@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
+import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
+import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseRepository;
 import java.time.LocalDate;
@@ -31,7 +33,7 @@ class ExpenseAttributeDeletionServiceTest {
   void 経費属性を削除する() {
     attributeRepository.register(attribute);
 
-    sut.delete(new ExpenseAttributeIdentifier("attr-1"));
+    sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(1));
 
     assertTrue(attributeRepository.all().isEmpty());
   }
@@ -50,7 +52,17 @@ class ExpenseAttributeDeletionServiceTest {
 
     assertThrows(
         ExpenseAttributeConstraintException.class,
-        () -> sut.delete(new ExpenseAttributeIdentifier("attr-1")));
+        () -> sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(1)));
+    assertEquals(1, attributeRepository.all().size());
+  }
+
+  @Test
+  void バージョンが一致しない経費属性は削除せず例外をスローする() {
+    attributeRepository.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () -> sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(2L)));
     assertEquals(1, attributeRepository.all().size());
   }
 }

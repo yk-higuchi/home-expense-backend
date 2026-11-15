@@ -113,11 +113,21 @@ class ExpenseAttributeDataSourceTest {
     ExpenseAttribute attribute = createAttribute("交際費", ExpenseCategory.変動費);
     sut.register(attribute);
 
-    sut.delete(attribute);
+    sut.delete(attribute, ExpectedVersion.of(1L));
     assertTrue(sut.find(attribute.expenseAttributeIdentifier()).isEmpty());
   }
 
   private ExpenseAttribute createAttribute(String name, ExpenseCategory category) {
     return ExpenseAttribute.create(new ExpenseAttributeName(name), category);
+  }
+
+  @Test
+  void バージョンが一致しない経費属性は削除せず例外をスローする() {
+    ExpenseAttribute attribute = createAttribute("交際費", ExpenseCategory.変動費);
+    sut.register(attribute);
+
+    assertThrows(
+        ConcurrentUpdateException.class, () -> sut.delete(attribute, ExpectedVersion.of(2L)));
+    assertTrue(sut.find(attribute.expenseAttributeIdentifier()).isPresent());
   }
 }

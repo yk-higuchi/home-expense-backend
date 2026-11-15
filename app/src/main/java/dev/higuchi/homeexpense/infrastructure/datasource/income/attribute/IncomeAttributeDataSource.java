@@ -55,10 +55,11 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
   }
 
   @Override
-  public void delete(IncomeAttribute incomeAttribute) {
-    jdbc.update(
+  public void delete(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+    jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.income_attribute WHERE id = ?",
-        ParameterBinder.of(incomeAttribute.incomeAttributeIdentifier().value()));
+        List.of(incomeAttribute.incomeAttributeIdentifier().value()),
+        expectedVersion);
   }
 
   @Override
