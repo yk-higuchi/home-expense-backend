@@ -7,12 +7,10 @@ ENV GRADLE_USER_HOME=/home/quarkus/.gradle
 COPY --chown=quarkus:quarkus gradlew ./
 COPY --chown=quarkus:quarkus gradle/ ./gradle/
 COPY --chown=quarkus:quarkus settings.gradle.kts build.gradle.kts ./
-RUN --mount=type=cache,target=/home/quarkus/.gradle,uid=1001,gid=1001 \
-    ./gradlew --no-daemon resolveDependencies
+RUN ./gradlew --no-daemon resolveDependencies
 
 COPY --chown=quarkus:quarkus src/ ./src/
-RUN --mount=type=cache,target=/home/quarkus/.gradle,uid=1001,gid=1001 \
-    ./gradlew --no-daemon build \
+RUN ./gradlew --no-daemon build \
     -Dquarkus.native.enabled=true \
     -Dquarkus.package.jar.enabled=false \
     -x check
