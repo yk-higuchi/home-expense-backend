@@ -61,6 +61,25 @@ public class InMemoryIncomeAttributeRepository implements IncomeAttributeReposit
         .anyMatch(v -> v.entity().incomeAttributeName().equals(incomeAttributeName));
   }
 
+  @Override
+  public IncomeAttributeOrder order() {
+    return new IncomeAttributeOrder(
+        store.values().stream()
+            .map(Stored::entity)
+            .map(IncomeAttribute::incomeAttributeIdentifier)
+            .toList());
+  }
+
+  @Override
+  public void reorder(IncomeAttributeOrder order) {
+    for (IncomeAttributeIdentifier id : order.identifiers()) {
+      Stored stored = store.remove(id.value());
+      if (stored != null) {
+        store.put(id.value(), stored);
+      }
+    }
+  }
+
   public List<IncomeAttribute> all() {
     return store.values().stream().map(Stored::entity).toList();
   }

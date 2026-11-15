@@ -25,12 +25,18 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   public void register(ExpenseAttribute expenseAttribute) {
     try {
       jdbc.update(
-          "INSERT INTO expense.attribute(id, category, name, document_digest) VALUES (?, ?, ?, ?)",
+          """
+          INSERT INTO expense.attribute(id, category, name, document_digest, sort_order)
+          SELECT ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+          FROM expense.attribute
+          WHERE category = ?
+          """,
           ParameterBinder.of(
               expenseAttribute.expenseAttributeIdentifier().value(),
               expenseAttribute.expenseCategory().name(),
               expenseAttribute.expenseAttributeName().value(),
-              expenseAttribute.digest().toBytes()));
+              expenseAttribute.digest().toBytes(),
+              expenseAttribute.expenseCategory().name()));
     } catch (UniqueConstraintViolationException e) {
       throw new ExpenseAttributeAlreadyExistsException();
     }
@@ -87,6 +93,31 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
         "DELETE FROM expense.attribute WHERE id = ?",
         List.of(expenseAttribute.expenseAttributeIdentifier().value()),
         expectedDigest);
+  }
+
+  @Override
+  public ExpenseAttributeOrder order(ExpenseCategory category) {
+    List<ExpenseAttributeIdentifier> identifiers =
+        jdbc.queryForList(
+            """
+            SELECT id FROM expense.attribute
+            WHERE category = ?
+            ORDER BY sort_order, id
+            FOR UPDATE
+            """,
+            ParameterBinder.of(category.name()),
+            rs -> new ExpenseAttributeIdentifier(rs.getString("id")));
+    return new ExpenseAttributeOrder(category, identifiers);
+  }
+
+  @Override
+  public void reorder(ExpenseAttributeOrder order) {
+    List<ExpenseAttributeIdentifier> identifiers = order.identifiers();
+    for (int i = 0; i < identifiers.size(); i++) {
+      jdbc.update(
+          "UPDATE expense.attribute SET sort_order = ? WHERE id = ? AND category = ?",
+          ParameterBinder.of(i + 1, identifiers.get(i).value(), order.category().name()));
+    }
   }
 
   static ExpenseAttribute mapExpenseAttribute(ResultSet rs) throws SQLException {

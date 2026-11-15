@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS expense.attribute
     category   VARCHAR(256)                           NOT NULL,
     name       VARCHAR(512)                           NOT NULL,
     document_digest BYTEA                             NOT NULL,
+    sort_order INTEGER                                NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_attribute PRIMARY KEY (id),
     CONSTRAINT uq_attribute_name_category UNIQUE (name, category)
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS expense.income_attribute
     id         CHAR(36)                               NOT NULL,
     name       VARCHAR(512)                           NOT NULL,
     document_digest BYTEA                             NOT NULL,
+    sort_order INTEGER                                NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_income_attribute PRIMARY KEY (id),
     CONSTRAINT uq_income_attribute_name UNIQUE (name)

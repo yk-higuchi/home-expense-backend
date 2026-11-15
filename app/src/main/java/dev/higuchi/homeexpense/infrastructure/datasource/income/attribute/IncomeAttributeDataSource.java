@@ -24,7 +24,11 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
   public void register(IncomeAttribute incomeAttribute) {
     try {
       jdbc.update(
-          "INSERT INTO expense.income_attribute(id, name, document_digest) VALUES (?, ?, ?)",
+          """
+          INSERT INTO expense.income_attribute(id, name, document_digest, sort_order)
+          SELECT ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+          FROM expense.income_attribute
+          """,
           ParameterBinder.of(
               incomeAttribute.incomeAttributeIdentifier().value(),
               incomeAttribute.incomeAttributeName().value(),
@@ -80,6 +84,25 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
     return jdbc.queryForOptional(
             sql, ParameterBinder.of(incomeAttributeName.value()), rs -> rs.getBoolean(1))
         .orElse(false);
+  }
+
+  @Override
+  public IncomeAttributeOrder order() {
+    return new IncomeAttributeOrder(
+        jdbc.queryForList(
+            "SELECT id FROM expense.income_attribute ORDER BY sort_order, id FOR UPDATE",
+            ParameterBinder.EMPTY,
+            rs -> new IncomeAttributeIdentifier(rs.getString("id"))));
+  }
+
+  @Override
+  public void reorder(IncomeAttributeOrder order) {
+    List<IncomeAttributeIdentifier> identifiers = order.identifiers();
+    for (int i = 0; i < identifiers.size(); i++) {
+      jdbc.update(
+          "UPDATE expense.income_attribute SET sort_order = ? WHERE id = ?",
+          ParameterBinder.of(i + 1, identifiers.get(i).value()));
+    }
   }
 
   static IncomeAttribute mapIncomeAttribute(ResultSet rs) throws SQLException {

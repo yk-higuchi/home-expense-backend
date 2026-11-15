@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -165,6 +166,31 @@ class IncomeAttributeDataSourceTest {
 
     sut.delete(attribute, ExpectedDigest.of(attribute.digest()));
     assertTrue(sut.find(attribute.incomeAttributeIdentifier()).isEmpty());
+  }
+
+  @Test
+  void 登録した収入属性は並びの末尾に入り_並びを置き換えられる() {
+    IncomeAttribute a = createAttribute("給与");
+    IncomeAttribute b = createAttribute("賞与");
+    IncomeAttribute c = createAttribute("副業");
+    sut.register(a);
+    sut.register(b);
+    sut.register(c);
+    assertEquals(
+        List.of(
+            a.incomeAttributeIdentifier(),
+            b.incomeAttributeIdentifier(),
+            c.incomeAttributeIdentifier()),
+        sut.order().identifiers());
+
+    List<IncomeAttributeIdentifier> reordered =
+        List.of(
+            b.incomeAttributeIdentifier(),
+            c.incomeAttributeIdentifier(),
+            a.incomeAttributeIdentifier());
+    sut.reorder(new IncomeAttributeOrder(reordered));
+
+    assertEquals(reordered, sut.order().identifiers());
   }
 
   private IncomeAttribute createAttribute(String name) {

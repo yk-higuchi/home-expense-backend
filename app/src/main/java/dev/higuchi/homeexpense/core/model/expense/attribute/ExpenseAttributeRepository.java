@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.core.model.expense.attribute;
 
 import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import java.util.Optional;
 
 public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
@@ -18,4 +19,8 @@ public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
   void verifyDigest(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
 
   void delete(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
+
+  ExpenseAttributeOrder order(ExpenseCategory category);
+
+  void reorder(ExpenseAttributeOrder order);
 }

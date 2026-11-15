@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,6 +116,69 @@ class ExpenseAttributeDataSourceTest {
 
     sut.delete(attribute, ExpectedDigest.of(attribute.digest()));
     assertTrue(sut.find(attribute.expenseAttributeIdentifier()).isEmpty());
+  }
+
+  @Test
+  void 登録した経費属性は分類ごとの並びの末尾に入る() {
+    ExpenseAttribute first = createAttribute("住居", ExpenseCategory.固定費);
+    ExpenseAttribute second = createAttribute("通信", ExpenseCategory.固定費);
+    ExpenseAttribute variable = createAttribute("食費", ExpenseCategory.変動費);
+    sut.register(first);
+    sut.register(variable);
+    sut.register(second);
+
+    assertEquals(
+        List.of(first.expenseAttributeIdentifier(), second.expenseAttributeIdentifier()),
+        sut.order(ExpenseCategory.固定費).identifiers());
+    assertEquals(
+        List.of(variable.expenseAttributeIdentifier()),
+        sut.order(ExpenseCategory.変動費).identifiers());
+  }
+
+  @Test
+  void 並びを置き換えられ_ほかの分類と属性のダイジェストは変わらない() {
+    ExpenseAttribute a = createAttribute("住居", ExpenseCategory.固定費);
+    ExpenseAttribute b = createAttribute("通信", ExpenseCategory.固定費);
+    ExpenseAttribute c = createAttribute("保険", ExpenseCategory.固定費);
+    ExpenseAttribute variable = createAttribute("食費", ExpenseCategory.変動費);
+    sut.register(a);
+    sut.register(b);
+    sut.register(c);
+    sut.register(variable);
+
+    List<ExpenseAttributeIdentifier> reordered =
+        List.of(
+            c.expenseAttributeIdentifier(),
+            a.expenseAttributeIdentifier(),
+            b.expenseAttributeIdentifier());
+    sut.reorder(new ExpenseAttributeOrder(ExpenseCategory.固定費, reordered));
+
+    assertEquals(reordered, sut.order(ExpenseCategory.固定費).identifiers());
+    assertEquals(
+        List.of(variable.expenseAttributeIdentifier()),
+        sut.order(ExpenseCategory.変動費).identifiers());
+    assertDoesNotThrow(() -> sut.verifyDigest(a, ExpectedDigest.of(a.digest())));
+  }
+
+  @Test
+  void 並べ替えたあとに登録した経費属性も末尾に入る() {
+    ExpenseAttribute a = createAttribute("住居", ExpenseCategory.固定費);
+    ExpenseAttribute b = createAttribute("通信", ExpenseCategory.固定費);
+    sut.register(a);
+    sut.register(b);
+    sut.reorder(
+        new ExpenseAttributeOrder(
+            ExpenseCategory.固定費,
+            List.of(b.expenseAttributeIdentifier(), a.expenseAttributeIdentifier())));
+    ExpenseAttribute c = createAttribute("保険", ExpenseCategory.固定費);
+    sut.register(c);
+
+    assertEquals(
+        List.of(
+            b.expenseAttributeIdentifier(),
+            a.expenseAttributeIdentifier(),
+            c.expenseAttributeIdentifier()),
+        sut.order(ExpenseCategory.固定費).identifiers());
   }
 
   private ExpenseAttribute createAttribute(String name, ExpenseCategory category) {
