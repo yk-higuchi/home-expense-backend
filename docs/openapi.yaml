@@ -302,7 +302,7 @@ paths:
       tags:
         - Expenses
       summary: 経費の一覧を取得する
-      description: 経費の一覧をページ単位で返します。条件で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
+      description: 経費の一覧をページ単位で返します。条件で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。並び順は、区分の降順（変動費、固定費の順）、支払日の新しい順、同じ日の中は登録の新しい順で、最後に ID の順です。並び順が一意に決まるので、同じ条件でページを順に取得すると、どの経費もちょうど 1 回ずつ現れます（取得の間に登録や削除がない場合）。
       operationId: getExpenses
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -644,7 +644,7 @@ paths:
       tags:
         - Incomes
       summary: 収入の一覧を取得する
-      description: 収入の一覧をページ単位で返します。年で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
+      description: 収入の一覧をページ単位で返します。年で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。並び順は、受取日の新しい順、同じ日の中は登録の新しい順で、最後に ID の順です。並び順が一意に決まるので、同じ条件でページを順に取得すると、どの収入もちょうど 1 回ずつ現れます（取得の間に登録や削除がない場合）。
       operationId: getIncomes
       parameters:
         - $ref: '#/components/parameters/Page'

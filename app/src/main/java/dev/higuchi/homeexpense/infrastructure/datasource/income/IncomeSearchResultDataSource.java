@@ -78,7 +78,7 @@ public class IncomeSearchResultDataSource implements IncomeSearchResultQuerier {
     StringBuilder sql = new StringBuilder(SELECT_COLUMNS);
     List<Object> params = new ArrayList<>();
     appendDateRange(criteria, sql, params);
-    sql.append(" ORDER BY income.receive_date DESC");
+    sql.append(" ORDER BY income.receive_date DESC, income.created_at DESC, income.id");
     sql.append(" OFFSET ? ROWS FETCH FIRST ? ROWS ONLY");
     params.add(criteria.offset());
     params.add(criteria.perPage());

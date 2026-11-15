@@ -79,7 +79,9 @@ public class ExpenseSearchResultDataSource implements ExpenseSearchResultQuerier
     StringBuilder sql = new StringBuilder(SELECT_COLUMNS);
     List<Object> params = new ArrayList<>();
     appendWhere(criteria, sql, params);
-    sql.append(" ORDER BY attribute.category DESC, expense.payment_date DESC");
+    sql.append(
+        " ORDER BY attribute.category DESC, expense.payment_date DESC, expense.created_at DESC,"
+            + " expense.id");
     sql.append(" OFFSET ? ROWS FETCH FIRST ? ROWS ONLY");
     params.add(criteria.pagination().offset());
     params.add(criteria.pagination().perPage());
