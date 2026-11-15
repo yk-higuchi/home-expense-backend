@@ -1,3 +1,70 @@
+CREATE INDEX IF NOT EXISTS idx_expense_payment_date ON expense.expense(payment_date);
+
+CREATE INDEX IF NOT EXISTS idx_income_receive_date ON expense.income(receive_date);
+
+CREATE INDEX IF NOT EXISTS idx_income_attribute_id ON expense.income(attribute_id);
+
+ALTER TABLE expense.expense ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE expense.attribute ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE expense.income_attribute ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE expense.income ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE expense.attribute ADD CONSTRAINT uq_attribute_name_category UNIQUE (name, category);
+
+ALTER TABLE expense.income_attribute ADD CONSTRAINT uq_income_attribute_name UNIQUE (name);
+
+ALTER TABLE expense.income ADD CONSTRAINT ck_income_amount_positive CHECK (amount > 0);
+
+ALTER TABLE expense.expense RENAME COLUMN price TO amount;
+
+ALTER TABLE expense.expense ADD CONSTRAINT ck_expense_amount_positive CHECK (amount > 0);
+
+ALTER TABLE expense.expense ADD COLUMN attribute_id CHAR(36);
+
+UPDATE expense.expense AS e
+SET attribute_id = COALESCE(
+    (SELECT attribute_id FROM expense.fixed_expense WHERE expense_id = e.id),
+    (SELECT attribute_id FROM expense.variable_expense WHERE expense_id = e.id)
+);
+
+ALTER TABLE expense.expense ALTER COLUMN attribute_id SET NOT NULL;
+
+ALTER TABLE expense.expense
+    ADD CONSTRAINT fk_expense_attribute FOREIGN KEY (attribute_id) REFERENCES expense.attribute (id);
+
+CREATE INDEX idx_expense_attribute_id ON expense.expense(attribute_id);
+
+DROP TABLE expense.fixed_expense;
+
+DROP TABLE expense.variable_expense;
+
+ALTER TABLE expense.attribute ADD COLUMN sort_order INTEGER;
+
+ALTER TABLE expense.income_attribute ADD COLUMN sort_order INTEGER;
+
+UPDATE expense.attribute
+SET sort_order = ranked.position
+FROM (
+    SELECT id, row_number() OVER (PARTITION BY category ORDER BY created_at, id) AS position
+    FROM expense.attribute
+) AS ranked
+WHERE attribute.id = ranked.id;
+
+UPDATE expense.income_attribute
+SET sort_order = ranked.position
+FROM (
+    SELECT id, row_number() OVER (ORDER BY created_at, id) AS position
+    FROM expense.income_attribute
+) AS ranked
+WHERE income_attribute.id = ranked.id;
+
+ALTER TABLE expense.attribute ALTER COLUMN sort_order SET NOT NULL;
+
+ALTER TABLE expense.income_attribute ALTER COLUMN sort_order SET NOT NULL;
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE FUNCTION expense.jcs_string(s TEXT) RETURNS TEXT IMMUTABLE LANGUAGE SQL AS $$
@@ -31,13 +98,5 @@ ALTER TABLE expense.expense ALTER COLUMN document_digest SET NOT NULL;
 ALTER TABLE expense.income_attribute ALTER COLUMN document_digest SET NOT NULL;
 
 ALTER TABLE expense.income ALTER COLUMN document_digest SET NOT NULL;
-
-ALTER TABLE expense.attribute DROP COLUMN version;
-
-ALTER TABLE expense.expense DROP COLUMN version;
-
-ALTER TABLE expense.income_attribute DROP COLUMN version;
-
-ALTER TABLE expense.income DROP COLUMN version;
 
 DROP FUNCTION expense.jcs_string(TEXT);
