@@ -76,7 +76,12 @@ class ExpenseApiTest {
   @Test
   @Order(3)
   void GET_経費一覧を取得できる() {
-    given().when().get("/v1/expenses").then().statusCode(200).body("list", is(not(empty())));
+    given()
+        .when()
+        .get("/v1/expenses")
+        .then()
+        .statusCode(200)
+        .body("expenses", hasSize(greaterThan(0)));
   }
 
   @Test

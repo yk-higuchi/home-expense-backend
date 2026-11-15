@@ -4,15 +4,10 @@ import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeDeletio
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeRegistrationService;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeUpdateService;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeOrder;
 import dev.higuchi.homeexpense.presentation.api.IfMatchParser;
-import dev.higuchi.homeexpense.presentation.api.LinkHeaderCreatable;
-import dev.higuchi.homeexpense.presentation.validation.PageNumber;
-import dev.higuchi.homeexpense.presentation.validation.PerPageSize;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
-import dev.higuchi.homeexpense.query.Pagination;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeDetail;
-import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchCriteria;
-import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchResult;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchResultQuerier;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.validation.Valid;
@@ -22,6 +17,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.List;
 
 @Path("/v1/income-attributes")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -76,22 +72,14 @@ public class IncomeAttributeApi {
 
   @GET
   @RunOnVirtualThread
-  public Response get(
-      @QueryParam("page") @DefaultValue("1") @PageNumber Integer page,
-      @QueryParam("per_page") @DefaultValue("20") @PerPageSize Integer perPage,
-      @Context UriInfo uriInfo) {
-    Pagination pagination = new Pagination(page, perPage);
-    IncomeAttributeSearchCriteria criteria = new IncomeAttributeSearchCriteria(pagination);
-    IncomeAttributeSearchResult incomeAttributeSearchResult =
-        incomeAttributeSearchResultQuerier.search(criteria);
-    IncomeAttributeGetListResponse response =
-        IncomeAttributeGetListResponse.from(incomeAttributeSearchResult, page);
-    return Response.ok(response)
-        .header(
-            "Link",
-            LinkHeaderCreatable.create(
-                uriInfo, pagination, incomeAttributeSearchResult.totalCount()))
-        .build();
+  public Response list() {
+    List<IncomeAttributeDetail> details = incomeAttributeSearchResultQuerier.list();
+    String etag =
+        new IncomeAttributeOrder(
+                details.stream().map(detail -> new IncomeAttributeIdentifier(detail.id())).toList())
+            .digest()
+            .value();
+    return Response.ok(IncomeAttributeGetListResponse.from(details)).tag(etag).build();
   }
 
   @GET

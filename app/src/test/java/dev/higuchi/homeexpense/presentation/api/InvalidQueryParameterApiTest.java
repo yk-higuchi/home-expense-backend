@@ -32,8 +32,7 @@ class InvalidQueryParameterApiTest {
   @Test
   void 整数パラメータに数値以外_page() {
     assertBadRequest(
-        given().queryParam("page", "x").when().get("/v1/expense-attributes").then(),
-        "pageは整数を指定してください");
+        given().queryParam("page", "x").when().get("/v1/incomes").then(), "pageは整数を指定してください");
   }
 
   @Test

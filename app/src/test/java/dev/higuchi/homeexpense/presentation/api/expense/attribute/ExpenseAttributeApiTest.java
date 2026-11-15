@@ -56,7 +56,7 @@ class ExpenseAttributeApiTest {
         .get("/v1/expense-attributes")
         .then()
         .statusCode(200)
-        .body("list", is(not(empty())));
+        .body("expense_attributes", hasSize(greaterThan(0)));
   }
 
   @Test
@@ -154,22 +154,6 @@ class ExpenseAttributeApiTest {
         .contentType("application/problem+json")
         .body("status", equalTo(404))
         .body("detail", equalTo("経費属性が見つかりません"));
-  }
-
-  @Test
-  void GET_per_pageが上限を超える場合バリデーションエラー() {
-    given()
-        .queryParam("per_page", 101)
-        .when()
-        .get("/v1/expense-attributes")
-        .then()
-        .statusCode(400)
-        .contentType("application/problem+json")
-        .body("type", equalTo("about:blank"))
-        .body("title", equalTo("Bad Request"))
-        .body("status", equalTo(400))
-        .body("detail", containsString("per_pageは100以下を指定してください"))
-        .body("instance", nullValue());
   }
 
   @Test

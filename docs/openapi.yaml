@@ -103,10 +103,10 @@ paths:
       tags:
         - Expense Attributes
       summary: 経費属性の一覧を取得する
-      description: 経費属性の一覧をページ単位で返します。区分で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
+      description: 経費属性を全件、並び順で返します（ページ送りはありません）。区分を指定した場合はその区分の並びを返し、並びの ETag を付けます。区分を指定しない場合は、固定費の並びのあとに変動費の並びを返します（ETag は付けません）。
       operationId: getExpenseAttributes
       parameters:
-        - description: 区分で絞り込む
+        - description: 区分で絞り込む（並べ替えの画面では必ず指定する）
           in: query
           name: category
           schema:
@@ -114,8 +114,6 @@ paths:
               - 固定費
               - 変動費
             type: string
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
       responses:
         "200":
           content:
@@ -124,8 +122,8 @@ paths:
                 $ref: '#/components/schemas/ExpenseAttributeListResponse'
           description: 成功
           headers:
-            Link:
-              $ref: '#/components/headers/Link'
+            ETag:
+              $ref: '#/components/headers/OrderETag'
         "400":
           $ref: '#/components/responses/BadRequest'
         "500":
@@ -407,11 +405,8 @@ paths:
       tags:
         - Income Attributes
       summary: 収入属性の一覧を取得する
-      description: 収入属性の一覧をページ単位で返します。ページ送りのリンクは Link ヘッダーで返します。
+      description: 収入属性を全件、並び順で返します（ページ送りはありません）。並びの ETag を付けます。
       operationId: getIncomeAttributes
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
       responses:
         "200":
           content:
@@ -420,10 +415,8 @@ paths:
                 $ref: '#/components/schemas/IncomeAttributeListResponse'
           description: 成功
           headers:
-            Link:
-              $ref: '#/components/headers/Link'
-        "400":
-          $ref: '#/components/responses/BadRequest'
+            ETag:
+              $ref: '#/components/headers/OrderETag'
         "500":
           $ref: '#/components/responses/InternalServerError'
     post:
@@ -1367,6 +1360,15 @@ components:
       description: 登録したリソースの URI
       schema:
         maxLength: 2048
+        type: string
+    OrderETag:
+      description: |
+        並びのダイジェスト。並べ替えの PUT の本文と同じ形のドキュメント（経費属性は `{"category", "ids"}`、収入属性は `{"ids"}`）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です。
+        並べ替え・登録・削除で変わります。並べ替えの PUT では、この値を `If-Match` に指定します。
+      schema:
+        example: '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
+        maxLength: 45
+        pattern: ^"[A-Za-z0-9_-]{43}"$
         type: string
 tags:
   - name: Balance

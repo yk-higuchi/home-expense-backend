@@ -6,8 +6,6 @@ import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeDetail;
-import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchCriteria;
-import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchResult;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchResultQuerier;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.sql.ResultSet;
@@ -25,13 +23,11 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
   }
 
   @Override
-  public IncomeAttributeSearchResult search(IncomeAttributeSearchCriteria criteria) {
-    int count = selectCount();
-    if (count == 0) {
-      return IncomeAttributeSearchResult.empty();
-    }
-    List<IncomeAttributeDetail> list = selectBy(criteria);
-    return new IncomeAttributeSearchResult(count, list);
+  public List<IncomeAttributeDetail> list() {
+    return jdbc.queryForList(
+        "SELECT id, name, document_digest FROM expense.income_attribute ORDER BY sort_order, id",
+        ParameterBinder.EMPTY,
+        IncomeAttributeSearchResultDataSource::mapDetail);
   }
 
   @Override
@@ -39,23 +35,6 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
     return jdbc.queryForOptional(
         "SELECT id, name, document_digest FROM expense.income_attribute WHERE id = ?",
         ParameterBinder.of(id.value()),
-        IncomeAttributeSearchResultDataSource::mapDetail);
-  }
-
-  private int selectCount() {
-    return jdbc.queryForOptional(
-            "SELECT COUNT(*) FROM expense.income_attribute",
-            ParameterBinder.EMPTY,
-            rs -> rs.getInt(1))
-        .orElse(0);
-  }
-
-  private List<IncomeAttributeDetail> selectBy(IncomeAttributeSearchCriteria criteria) {
-    String sql =
-        "SELECT id, name, document_digest FROM expense.income_attribute ORDER BY income_attribute.created_at OFFSET ? ROWS FETCH FIRST ? ROWS ONLY";
-    return jdbc.queryForList(
-        sql,
-        ParameterBinder.of(criteria.offset(), criteria.perPage()),
         IncomeAttributeSearchResultDataSource::mapDetail);
   }
 

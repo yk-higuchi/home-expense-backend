@@ -75,7 +75,12 @@ class IncomeApiTest {
   @Test
   @Order(3)
   void GET_収入一覧を取得できる() {
-    given().when().get("/v1/incomes").then().statusCode(200).body("list", is(not(empty())));
+    given()
+        .when()
+        .get("/v1/incomes")
+        .then()
+        .statusCode(200)
+        .body("incomes", hasSize(greaterThan(0)));
   }
 
   @Test
