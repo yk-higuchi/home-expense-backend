@@ -10,11 +10,13 @@ import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.PaymentDate;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeOrder;
 import dev.higuchi.homeexpense.core.model.income.Income;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.ReceiveDate;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeOrder;
 import dev.higuchi.homeexpense.infrastructure.datasource.expense.ExpenseDataSource;
 import dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute.ExpenseAttributeDataSource;
 import dev.higuchi.homeexpense.infrastructure.datasource.income.IncomeDataSource;
@@ -139,24 +141,32 @@ class BalanceStatisticsDataSourceTest {
   }
 
   @Test
-  void 収入の内訳は属性ごとの合計を金額の降順で返す() {
+  void 収入の内訳は属性ごとの合計を属性の並び順で返す() {
     IncomeAttribute side = registerIncomeAttribute("副業");
     IncomeAttribute salary = registerIncomeAttribute("給与");
     registerIncome(50000, "2026-03-10", side);
     registerIncome(300000, "2026-01-25", salary);
     registerIncome(300000, "2026-02-25", salary);
 
-    BalanceStatistics result = sut.search(new BalanceStatisticsCriteria(2026, null));
+    assertEquals(
+        List.of(
+            new AttributeAmount(side.incomeAttributeIdentifier().value(), "副業", 50000),
+            new AttributeAmount(salary.incomeAttributeIdentifier().value(), "給与", 600000)),
+        sut.search(new BalanceStatisticsCriteria(2026, null)).income().amounts());
+
+    incomeAttributeDataSource.reorder(
+        new IncomeAttributeOrder(
+            List.of(salary.incomeAttributeIdentifier(), side.incomeAttributeIdentifier())));
 
     assertEquals(
         List.of(
             new AttributeAmount(salary.incomeAttributeIdentifier().value(), "給与", 600000),
             new AttributeAmount(side.incomeAttributeIdentifier().value(), "副業", 50000)),
-        result.income().amounts());
+        sut.search(new BalanceStatisticsCriteria(2026, null)).income().amounts());
   }
 
   @Test
-  void 経費の内訳は固定費と変動費に分かれて金額の降順で返る() {
+  void 経費の内訳は固定費と変動費に分かれて属性の並び順で返る() {
     ExpenseAttribute insurance = registerExpenseAttribute("保険", ExpenseCategory.固定費);
     ExpenseAttribute rent = registerExpenseAttribute("家賃", ExpenseCategory.固定費);
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
@@ -169,12 +179,23 @@ class BalanceStatisticsDataSourceTest {
 
     assertEquals(
         List.of(
-            new AttributeAmount(rent.expenseAttributeIdentifier().value(), "家賃", 160000),
-            new AttributeAmount(insurance.expenseAttributeIdentifier().value(), "保険", 10000)),
+            new AttributeAmount(insurance.expenseAttributeIdentifier().value(), "保険", 10000),
+            new AttributeAmount(rent.expenseAttributeIdentifier().value(), "家賃", 160000)),
         result.fixedExpense().amounts());
     assertEquals(
         List.of(new AttributeAmount(food.expenseAttributeIdentifier().value(), "食費", 3000)),
         result.variableExpense().amounts());
+
+    expenseAttributeDataSource.reorder(
+        new ExpenseAttributeOrder(
+            ExpenseCategory.固定費,
+            List.of(rent.expenseAttributeIdentifier(), insurance.expenseAttributeIdentifier())));
+
+    assertEquals(
+        List.of(
+            new AttributeAmount(rent.expenseAttributeIdentifier().value(), "家賃", 160000),
+            new AttributeAmount(insurance.expenseAttributeIdentifier().value(), "保険", 10000)),
+        sut.search(new BalanceStatisticsCriteria(2026, null)).fixedExpense().amounts());
   }
 
   @Test

@@ -24,8 +24,8 @@ public class BalanceStatisticsDataSource implements BalanceStatisticsQuerier {
       INNER JOIN expense.income_attribute ia
         ON i.attribute_id = ia.id
       WHERE i.receive_date >= ? AND i.receive_date <= ?
-      GROUP BY ia.id, ia.name
-      ORDER BY amount DESC, ia.name, ia.id
+      GROUP BY ia.id, ia.name, ia.sort_order
+      ORDER BY ia.sort_order, ia.id
       """;
 
   private static final String SELECT_EXPENSE_BY_ATTRIBUTE =
@@ -35,8 +35,8 @@ public class BalanceStatisticsDataSource implements BalanceStatisticsQuerier {
       INNER JOIN expense.attribute a
         ON e.attribute_id = a.id
       WHERE e.payment_date >= ? AND e.payment_date <= ?
-      GROUP BY a.category, a.id, a.name
-      ORDER BY amount DESC, a.name, a.id
+      GROUP BY a.category, a.id, a.name, a.sort_order
+      ORDER BY a.sort_order, a.id
       """;
 
   private final JdbcOperator jdbc;

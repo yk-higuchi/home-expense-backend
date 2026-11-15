@@ -66,7 +66,7 @@ paths:
       tags:
         - Balance Statistics
       summary: 収支の統計を取得する
-      description: 指定した年（month を指定した場合はその月）の収入と支出の合計を、属性ごとの内訳とともに返します。内訳は金額の大きい順に並びます。
+      description: 指定した年（month を指定した場合はその月）の収入と支出の合計を、属性ごとの内訳とともに返します。内訳は属性の並び順（属性の一覧と同じ順）に並びます。
       operationId: getBalanceStatistics
       parameters:
         - description: 対象の年
@@ -759,7 +759,7 @@ components:
     AttributeBreakdownResponse:
       properties:
         breakdown:
-          description: 属性ごとの金額（金額の大きい順）。期間内にデータがない属性は含みません。
+          description: 属性ごとの金額（属性の並び順）。期間内にデータがない属性は含みません。
           items:
             $ref: '#/components/schemas/AttributeAmountResponse'
           type: array
