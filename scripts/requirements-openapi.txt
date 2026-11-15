@@ -1,0 +1,2 @@
+# scripts/validate_openapi_exchanges.py
+openapi-core==0.23.1

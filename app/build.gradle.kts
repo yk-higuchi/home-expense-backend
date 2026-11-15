@@ -52,6 +52,17 @@ tasks.withType<Test> {
   }
 }
 
+// Exchanges recorded by OpenApiExchangeRecorder, checked against docs/openapi.yaml by
+// scripts/validate_openapi_exchanges.py
+val openApiExchanges = layout.buildDirectory.file("openapi-exchanges/exchanges.jsonl")
+
+tasks.test {
+  val exchanges = openApiExchanges.get().asFile
+  outputs.file(exchanges)
+  systemProperty("openapi.exchanges.file", exchanges.absolutePath)
+  doFirst { exchanges.delete() }
+}
+
 tasks.jacocoTestReport {
   executionData.setFrom(layout.buildDirectory.file("jacoco-quarkus.exec"))
   reports {

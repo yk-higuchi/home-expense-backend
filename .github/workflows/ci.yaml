@@ -31,6 +31,16 @@ jobs:
       - name: Gradle check
         run: ./gradlew --console=plain --no-daemon -q check
         working-directory: app
+      # テストで実際に送受信したリクエスト/レスポンスを OpenAPI と照合し、実装と仕様書のずれを検出する
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: scripts/requirements-openapi.txt
+      - name: Validate API exchanges against OpenAPI
+        run: |
+          pip install -r scripts/requirements-openapi.txt
+          python scripts/validate_openapi_exchanges.py docs/openapi.yaml app/build/openapi-exchanges/exchanges.jsonl
   openapi-lint:
     runs-on: ubuntu-latest
     steps:
@@ -153,7 +163,7 @@ jobs:
       - release
     if: needs.release.outputs.release_created == 'true'
     permissions:
-      contents: read
+      contents: write
       packages: write
     uses: ./.github/workflows/cd.yaml
     with:
