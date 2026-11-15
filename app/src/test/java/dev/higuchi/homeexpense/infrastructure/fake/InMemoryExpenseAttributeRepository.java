@@ -77,6 +77,13 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   }
 
   @Override
+  public void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest) {
+    if (!expectedDigest.matches(current.digest())) {
+      throw new ConcurrentUpdateException();
+    }
+  }
+
+  @Override
   public void reorder(ExpenseAttributeOrder order) {
     for (ExpenseAttributeIdentifier id : order.identifiers()) {
       Stored stored = store.remove(id.value());

@@ -2,7 +2,9 @@ package dev.higuchi.homeexpense.presentation.api.expense.attribute;
 
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeDeletionService;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeRegistrationService;
+import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeReorderService;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeUpdateService;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeOrder;
 import dev.higuchi.homeexpense.presentation.api.IfMatchParser;
@@ -31,16 +33,29 @@ public class ExpenseAttributeApi {
   ExpenseAttributeUpdateService expenseAttributeUpdateService;
 
   ExpenseAttributeDeletionService expenseAttributeDeletionService;
+  ExpenseAttributeReorderService expenseAttributeReorderService;
 
   public ExpenseAttributeApi(
       ExpenseAttributeRegistrationService expenseAttributeRegistrationService,
       ExpenseAttributeSearchResultQuerier expenseAttributeSearchResultQuerier,
       ExpenseAttributeUpdateService expenseAttributeUpdateService,
-      ExpenseAttributeDeletionService expenseAttributeDeletionService) {
+      ExpenseAttributeDeletionService expenseAttributeDeletionService,
+      ExpenseAttributeReorderService expenseAttributeReorderService) {
     this.expenseAttributeRegistrationService = expenseAttributeRegistrationService;
     this.expenseAttributeSearchResultQuerier = expenseAttributeSearchResultQuerier;
     this.expenseAttributeUpdateService = expenseAttributeUpdateService;
     this.expenseAttributeDeletionService = expenseAttributeDeletionService;
+    this.expenseAttributeReorderService = expenseAttributeReorderService;
+  }
+
+  @PUT
+  @Path("order")
+  @RunOnVirtualThread
+  public Response putOrder(
+      @Valid ExpenseAttributeOrderPutRequest request, @HeaderParam("If-Match") String ifMatch) {
+    DocumentDigest digest =
+        expenseAttributeReorderService.reorder(request.toCommand(IfMatchParser.parse(ifMatch)));
+    return Response.noContent().tag(digest.value()).build();
   }
 
   @POST

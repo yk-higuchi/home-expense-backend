@@ -21,5 +21,7 @@ public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
 
   IncomeAttributeOrder order();
 
+  void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest);
+
   void reorder(IncomeAttributeOrder order);
 }

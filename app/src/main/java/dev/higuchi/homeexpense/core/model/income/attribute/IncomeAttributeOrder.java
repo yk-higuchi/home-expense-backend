@@ -7,6 +7,8 @@ import java.util.Map;
 
 public record IncomeAttributeOrder(List<IncomeAttributeIdentifier> identifiers) {
 
+  public static final int MAX_SIZE = 100;
+
   public IncomeAttributeOrder {
     identifiers = List.copyOf(identifiers);
   }

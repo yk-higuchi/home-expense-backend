@@ -3,6 +3,7 @@ package dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute;
 import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
+import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.UniqueConstraintViolationException;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
@@ -108,6 +109,13 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
             ParameterBinder.of(category.name()),
             rs -> new ExpenseAttributeIdentifier(rs.getString("id")));
     return new ExpenseAttributeOrder(category, identifiers);
+  }
+
+  @Override
+  public void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest) {
+    if (!expectedDigest.matches(current.digest())) {
+      throw new ConcurrentUpdateException();
+    }
   }
 
   @Override

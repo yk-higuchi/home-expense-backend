@@ -2,6 +2,7 @@ package dev.higuchi.homeexpense.infrastructure.datasource.income.attribute;
 
 import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
+import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.UniqueConstraintViolationException;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
@@ -93,6 +94,13 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
             "SELECT id FROM expense.income_attribute ORDER BY sort_order, id FOR UPDATE",
             ParameterBinder.EMPTY,
             rs -> new IncomeAttributeIdentifier(rs.getString("id"))));
+  }
+
+  @Override
+  public void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest) {
+    if (!expectedDigest.matches(current.digest())) {
+      throw new ConcurrentUpdateException();
+    }
   }
 
   @Override

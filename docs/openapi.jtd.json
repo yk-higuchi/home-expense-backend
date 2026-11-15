@@ -169,6 +169,18 @@
 		},
 		"additionalProperties": true
 	},
+	"ExpenseAttributeOrderPutRequest": {
+		"properties": {
+			"category": {
+				"enum": ["固定費", "変動費"]
+			},
+			"ids": {
+				"elements": {
+					"type": "string"
+				}
+			}
+		}
+	},
 	"ExpenseAttributePostRequest": {
 		"properties": {
 			"category": {
@@ -315,6 +327,15 @@
 			}
 		},
 		"additionalProperties": true
+	},
+	"IncomeAttributeOrderPutRequest": {
+		"properties": {
+			"ids": {
+				"elements": {
+					"type": "string"
+				}
+			}
+		}
 	},
 	"IncomeAttributePostRequest": {
 		"properties": {

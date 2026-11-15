@@ -2,7 +2,9 @@ package dev.higuchi.homeexpense.presentation.api.income.attribute;
 
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeDeletionService;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeRegistrationService;
+import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeReorderService;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeUpdateService;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeOrder;
 import dev.higuchi.homeexpense.presentation.api.IfMatchParser;
@@ -28,16 +30,29 @@ public class IncomeAttributeApi {
   IncomeAttributeUpdateService incomeAttributeUpdateService;
   IncomeAttributeDeletionService incomeAttributeDeletionService;
   IncomeAttributeSearchResultQuerier incomeAttributeSearchResultQuerier;
+  IncomeAttributeReorderService incomeAttributeReorderService;
 
   public IncomeAttributeApi(
       IncomeAttributeRegistrationService incomeAttributeRegistrationService,
       IncomeAttributeUpdateService incomeAttributeUpdateService,
       IncomeAttributeDeletionService incomeAttributeDeletionService,
-      IncomeAttributeSearchResultQuerier incomeAttributeSearchResultQuerier) {
+      IncomeAttributeSearchResultQuerier incomeAttributeSearchResultQuerier,
+      IncomeAttributeReorderService incomeAttributeReorderService) {
     this.incomeAttributeRegistrationService = incomeAttributeRegistrationService;
     this.incomeAttributeUpdateService = incomeAttributeUpdateService;
     this.incomeAttributeDeletionService = incomeAttributeDeletionService;
     this.incomeAttributeSearchResultQuerier = incomeAttributeSearchResultQuerier;
+    this.incomeAttributeReorderService = incomeAttributeReorderService;
+  }
+
+  @PUT
+  @Path("order")
+  @RunOnVirtualThread
+  public Response putOrder(
+      @Valid IncomeAttributeOrderPutRequest request, @HeaderParam("If-Match") String ifMatch) {
+    DocumentDigest digest =
+        incomeAttributeReorderService.reorder(request.toCommand(IfMatchParser.parse(ifMatch)));
+    return Response.noContent().tag(digest.value()).build();
   }
 
   @POST

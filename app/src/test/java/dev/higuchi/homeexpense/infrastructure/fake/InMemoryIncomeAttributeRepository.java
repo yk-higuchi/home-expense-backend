@@ -71,6 +71,13 @@ public class InMemoryIncomeAttributeRepository implements IncomeAttributeReposit
   }
 
   @Override
+  public void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest) {
+    if (!expectedDigest.matches(current.digest())) {
+      throw new ConcurrentUpdateException();
+    }
+  }
+
+  @Override
   public void reorder(IncomeAttributeOrder order) {
     for (IncomeAttributeIdentifier id : order.identifiers()) {
       Stored stored = store.remove(id.value());

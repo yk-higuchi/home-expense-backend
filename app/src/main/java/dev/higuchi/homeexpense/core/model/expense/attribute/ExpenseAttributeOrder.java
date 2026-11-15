@@ -10,6 +10,8 @@ import java.util.Objects;
 public record ExpenseAttributeOrder(
     ExpenseCategory category, List<ExpenseAttributeIdentifier> identifiers) {
 
+  public static final int MAX_SIZE = 100;
+
   public ExpenseAttributeOrder {
     Objects.requireNonNull(category, "分類は必須です");
     identifiers = List.copyOf(identifiers);

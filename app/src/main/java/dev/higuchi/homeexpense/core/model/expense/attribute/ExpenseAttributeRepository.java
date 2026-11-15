@@ -22,5 +22,7 @@ public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
 
   ExpenseAttributeOrder order(ExpenseCategory category);
 
+  void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest);
+
   void reorder(ExpenseAttributeOrder order);
 }

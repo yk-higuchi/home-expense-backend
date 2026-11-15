@@ -155,6 +155,40 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
+  /v1/expense-attributes/order:
+    put:
+      tags:
+        - Expense Attributes
+      summary: 経費属性を並べ替える
+      description: 区分ごとの経費属性の並びを、送った並びで置き換えます。一覧（区分を指定）で受け取った並びの ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
+      operationId: reorderExpenseAttributes
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseAttributeOrderPutRequest'
+        description: 新しい並び
+        required: true
+      responses:
+        "204":
+          description: 並べ替えた
+          headers:
+            ETag:
+              $ref: '#/components/headers/OrderETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "412":
+          $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/OrderMismatch'
+        "428":
+          $ref: '#/components/responses/PreconditionRequired'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/expense-attributes/{id}:
     get:
       tags:
@@ -444,6 +478,40 @@ paths:
           $ref: '#/components/responses/Conflict'
         "415":
           $ref: '#/components/responses/UnsupportedMediaType'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+  /v1/income-attributes/order:
+    put:
+      tags:
+        - Income Attributes
+      summary: 収入属性を並べ替える
+      description: 収入属性の並びを、送った並びで置き換えます。一覧で受け取った並びの ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
+      operationId: reorderIncomeAttributes
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncomeAttributeOrderPutRequest'
+        description: 新しい並び
+        required: true
+      responses:
+        "204":
+          description: 並べ替えた
+          headers:
+            ETag:
+              $ref: '#/components/headers/OrderETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "412":
+          $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "422":
+          $ref: '#/components/responses/OrderMismatch'
+        "428":
+          $ref: '#/components/responses/PreconditionRequired'
         "500":
           $ref: '#/components/responses/InternalServerError'
   /v1/income-attributes/{id}:
@@ -825,6 +893,30 @@ components:
       required:
         - expense_attributes
       type: object
+    ExpenseAttributeOrderPutRequest:
+      additionalProperties: false
+      description: 並びの全体。その区分に今ある経費属性の ID を、すべて 1 回ずつ並べます。
+      properties:
+        category:
+          description: 並べ替える区分
+          enum:
+            - 固定費
+            - 変動費
+          type: string
+        ids:
+          description: 並べたい順の経費属性の ID
+          items:
+            format: uuid
+            maxLength: 36
+            pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+            type: string
+          maxItems: 100
+          type: array
+          uniqueItems: true
+      required:
+        - category
+        - ids
+      type: object
     ExpenseAttributePostRequest:
       additionalProperties: false
       properties:
@@ -992,6 +1084,23 @@ components:
           type: array
       required:
         - income_attributes
+      type: object
+    IncomeAttributeOrderPutRequest:
+      additionalProperties: false
+      description: 並びの全体。今ある収入属性の ID を、すべて 1 回ずつ並べます。
+      properties:
+        ids:
+          description: 並べたい順の収入属性の ID
+          items:
+            format: uuid
+            maxLength: 36
+            pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+            type: string
+          maxItems: 100
+          type: array
+          uniqueItems: true
+      required:
+        - ids
       type: object
     IncomeAttributePostRequest:
       additionalProperties: false
@@ -1222,6 +1331,17 @@ components:
             status: 404
             title: Not Found
             type: about:blank
+    OrderMismatch:
+      description: '`ids` が今の属性の並びと一致しない（足りない・余分・存在しない ID がある）。最新の一覧を取得して再試行してください。'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: idsが今の経費属性の並びと一致しません。最新の一覧を取得して再試行してください
+            status: 422
+            title: Unprocessable Content
+            type: about:blank
     PreconditionFailed:
       description: |
         `If-Match` の条件が偽になった（RFC 9110 §13.1.1）。指定したどの entity-tag も、現在の `ETag` と強い比較で一致しません（弱いタグは一致しません）。
@@ -1293,8 +1413,8 @@ components:
       name: If-Match
       in: header
       description: |
-        個別取得のレスポンスの `ETag` ヘッダーで受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
-        `*`（リソースがあれば条件なしで更新・削除）または `"<ETag>", "<ETag>"` のようなカンマ区切りの一覧を指定できます。
+        個別取得のレスポンスの `ETag` ヘッダー（並べ替えでは一覧の並びの `ETag`）で受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
+        `*`（条件なし）または `"<ETag>", "<ETag>"` のようなカンマ区切りの一覧を指定できます。
         ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 になります。
       required: true
       schema:

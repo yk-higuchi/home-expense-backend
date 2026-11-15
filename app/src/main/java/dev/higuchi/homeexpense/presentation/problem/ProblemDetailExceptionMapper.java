@@ -7,10 +7,12 @@ import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferen
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeNotFoundException;
+import dev.higuchi.homeexpense.core.model.expense.attribute.InvalidExpenseAttributeOrderException;
 import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeNotFoundException;
+import dev.higuchi.homeexpense.core.model.income.attribute.InvalidIncomeAttributeOrderException;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.DataAccessException;
 import dev.higuchi.homeexpense.presentation.api.InvalidIfMatchHeaderException;
@@ -63,6 +65,18 @@ public class ProblemDetailExceptionMapper {
   public RestResponse<ProblemDetail> mapIncomeAttributeNotFoundException(
       IncomeAttributeNotFoundException e) {
     return toResponse(Response.Status.NOT_FOUND, "収入属性が見つかりません");
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidExpenseAttributeOrderException(
+      InvalidExpenseAttributeOrderException e) {
+    return toResponse(422, "Unprocessable Content", "idsが今の経費属性の並びと一致しません。最新の一覧を取得して再試行してください");
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidIncomeAttributeOrderException(
+      InvalidIncomeAttributeOrderException e) {
+    return toResponse(422, "Unprocessable Content", "idsが今の収入属性の並びと一致しません。最新の一覧を取得して再試行してください");
   }
 
   @ServerExceptionMapper

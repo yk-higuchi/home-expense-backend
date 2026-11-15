@@ -3,6 +3,7 @@ package dev.higuchi.homeexpense.presentation.validation;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.RECORD_COMPONENT;
+import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import jakarta.validation.Constraint;
@@ -17,7 +18,7 @@ import java.lang.annotation.Target;
     regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     message = "IDの形式が不正です")
 @Constraint(validatedBy = {})
-@Target({FIELD, PARAMETER, RECORD_COMPONENT})
+@Target({FIELD, PARAMETER, RECORD_COMPONENT, TYPE_USE})
 @Retention(RUNTIME)
 @Documented
 public @interface UuidFormat {
