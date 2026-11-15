@@ -8,7 +8,7 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.2.0
+  version: 2.0.0 # x-release-please-version
 servers:
   - url: http://localhost:8080
     description: Local development server
@@ -249,6 +249,7 @@ paths:
           schema:
             format: uuid
             maxLength: 36
+            pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
             type: string
       responses:
         "200":
@@ -733,6 +734,8 @@ components:
           type: string
         name:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
       required:
         - name
@@ -743,6 +746,8 @@ components:
       properties:
         name:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
       required:
         - name
@@ -813,9 +818,12 @@ components:
         attribute_id:
           format: uuid
           maxLength: 36
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
           type: string
         description:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
         payment_date:
           example: "2026-04-10"
@@ -839,9 +847,12 @@ components:
         attribute_id:
           format: uuid
           maxLength: 36
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
           type: string
         description:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
         payment_date:
           example: "2026-04-10"
@@ -882,6 +893,8 @@ components:
       properties:
         name:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
       required:
         - name
@@ -890,6 +903,8 @@ components:
       properties:
         name:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
       required:
         - name
@@ -954,9 +969,12 @@ components:
         attribute_id:
           format: uuid
           maxLength: 36
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
           type: string
         description:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
         receive_date:
           example: "2026-04-25"
@@ -980,9 +998,12 @@ components:
         attribute_id:
           format: uuid
           maxLength: 36
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
           type: string
         description:
           maxLength: 512
+          minLength: 1
+          pattern: \S
           type: string
         receive_date:
           example: "2026-04-25"
@@ -1126,6 +1147,7 @@ components:
       schema:
         format: uuid
         maxLength: 36
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
         type: string
     ExpenseId:
       name: id
@@ -1135,6 +1157,7 @@ components:
       schema:
         format: uuid
         maxLength: 36
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
         type: string
     IfMatch:
       name: If-Match
@@ -1146,6 +1169,7 @@ components:
       required: true
       schema:
         maxLength: 128
+        pattern: ^(\*|(W/)?"[^"]*"(\s*,\s*(W/)?"[^"]*")*)$
         type: string
     IncomeAttributeId:
       name: id
@@ -1155,6 +1179,7 @@ components:
       schema:
         format: uuid
         maxLength: 36
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
         type: string
     IncomeId:
       name: id
@@ -1164,6 +1189,7 @@ components:
       schema:
         format: uuid
         maxLength: 36
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
         type: string
     Page:
       name: page
