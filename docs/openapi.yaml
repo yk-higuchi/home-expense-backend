@@ -6,8 +6,8 @@ info:
   contact:
     name: API Support
   license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
+    name: MIT
+    identifier: MIT
   version: 2.0.0 # x-release-please-version
 servers:
   - url: http://localhost:8080
