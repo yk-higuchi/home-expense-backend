@@ -65,7 +65,6 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
     return store.values().stream().map(Stored::entity).toList();
   }
 
-  /** テスト用: 現在保持している version を取得 */
   public long versionOf(ExpenseAttributeIdentifier id) {
     Stored s = store.get(id.value());
     if (s == null) {

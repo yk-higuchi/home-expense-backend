@@ -33,7 +33,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
-/** RFC 9457 Problem Details を返すグローバル例外マッパー */
 public class ProblemDetailExceptionMapper {
 
   private static final Logger LOG = Logger.getLogger(ProblemDetailExceptionMapper.class);
@@ -167,10 +166,6 @@ public class ProblemDetailExceptionMapper {
     return toResponse(Response.Status.INTERNAL_SERVER_ERROR, "サーバ内部エラーが発生しました");
   }
 
-  /**
-   * JSON 本文がリクエストのスキーマに合わない（未定義のプロパティ、型の不一致など）。Quarkus 既定のマッパーは application/json で返すため、Problem
-   * Details に揃える。
-   */
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapMismatchedInputException(MismatchedInputException e) {
     String field =
@@ -185,10 +180,6 @@ public class ProblemDetailExceptionMapper {
     return toResponse(Response.Status.BAD_REQUEST, detail);
   }
 
-  /**
-   * フレームワークが送出する HTTP エラー（不正な JSON 本文、未定義のパス、許可されないメソッド、未対応のメディアタイプ等）も Problem Details で返す。405 の
-   * Allow など元のレスポンスのヘッダーは引き継ぐ。
-   */
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapWebApplicationException(WebApplicationException e) {
     Response original = e.getResponse();
@@ -244,10 +235,6 @@ public class ProblemDetailExceptionMapper {
         .build();
   }
 
-  /**
-   * RestResponse.Status / Response.Status は 422 などを列挙していない（fromStatusCode が null
-   * を返す）ため、ステータスコードは数値で指定する。
-   */
   private static RestResponse.ResponseBuilder<ProblemDetail> problemResponse(
       int statusCode, ProblemDetail problemDetail) {
     return RestResponse.ResponseBuilder.<ProblemDetail>create(statusCode).entity(problemDetail);

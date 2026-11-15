@@ -1,11 +1,4 @@
 #!/bin/bash
-# Start a fresh CockroachDB (same version as production) for app tests and load the test schema.
-#
-# Usage:
-#   scripts/setup_test_db.sh                       # local (Apple container)
-#   CONTAINER_CLI=docker scripts/setup_test_db.sh  # CI
-#
-# The database listens on localhost:${TEST_DB_PORT} (default 26257), matching the %test profile.
 
 set -euo pipefail
 

@@ -8,7 +8,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** If-Match（RFC 9110 §13.1.1）と 428（RFC 6585 §3）の挙動 */
 @QuarkusTest
 class ConditionalRequestApiTest {
 

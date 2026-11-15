@@ -6,7 +6,6 @@ import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIden
 import java.util.Objects;
 import java.util.UUID;
 
-/** 経費 */
 public class Expense {
   ExpenseIdentifier expenseIdentifier;
 

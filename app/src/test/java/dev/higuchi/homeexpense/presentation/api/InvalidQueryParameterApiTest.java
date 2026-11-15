@@ -7,7 +7,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 
-/** クエリパラメータの型変換に失敗した場合は 404 ではなく 400 (Problem Details) を返す */
 @QuarkusTest
 class InvalidQueryParameterApiTest {
 

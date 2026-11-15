@@ -11,12 +11,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.function.Function;
 
-/**
- * クエリパラメータの型変換。変換できない値は 404 ではなく {@link InvalidQueryParameterException} (400) にする。 空文字は未指定 (null)
- * として扱う。
- *
- * <p>パスパラメータは対象外。変換できないパス値は「該当リソースなし」なので JAX-RS 標準どおり 404 とする。
- */
 @Provider
 public class QueryParamConverterProvider implements ParamConverterProvider {
 

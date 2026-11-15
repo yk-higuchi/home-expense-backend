@@ -9,7 +9,6 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-/** yyyy-MM-dd 形式で、かつ暦上存在する日付（例: 2026-02-30 は不可）。null は対象外 */
 @Constraint(validatedBy = {IsoLocalDateValidator.class})
 @Target({FIELD, PARAMETER, RECORD_COMPONENT})
 @Retention(RUNTIME)

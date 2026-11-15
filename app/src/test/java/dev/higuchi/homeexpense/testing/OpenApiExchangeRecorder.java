@@ -19,14 +19,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Records every HTTP exchange made through REST Assured in {@code @QuarkusTest} tests as JSON
- * Lines, so that {@code scripts/validate_openapi_exchanges.py} can check them against {@code
- * docs/openapi.yaml}.
- *
- * <p>Recording is enabled only when the system property {@value #FILE_PROPERTY} is set (the Gradle
- * {@code test} task sets it). Registered through {@code META-INF/services}.
- */
 public class OpenApiExchangeRecorder implements QuarkusTestBeforeEachCallback, Filter {
 
   static final String FILE_PROPERTY = "openapi.exchanges.file";
@@ -42,7 +34,6 @@ public class OpenApiExchangeRecorder implements QuarkusTestBeforeEachCallback, F
     }
     currentTest =
         context.getTestInstance().getClass().getName() + "#" + context.getTestMethod().getName();
-    // Quarkus keeps the REST Assured configuration across tests; register only once.
     if (RestAssured.filters().stream().noneMatch(OpenApiExchangeRecorder.class::isInstance)) {
       RestAssured.filters(INSTANCE);
     }

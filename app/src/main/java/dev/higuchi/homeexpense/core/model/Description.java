@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.core.model;
 
 import java.util.Objects;
 
-/** 説明文(経費・収入で共通) */
 public record Description(String value) {
 
   public static final int MAX_LENGTH = 512;

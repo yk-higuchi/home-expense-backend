@@ -5,20 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/**
- * If-Match ヘッダー（RFC 9110 §13.1.1）を {@link ExpectedVersion} に変換する。
- *
- * <ul>
- *   <li>未指定 → {@link PreconditionRequiredException}（428, RFC 6585）
- *   <li>{@code *} → バージョンを問わず更新を許可
- *   <li>entity-tag のリスト → 強い比較で一致し得るバージョン（数値の強い ETag）の集合。弱い ETag や数値以外の ETag
- *       はどの表現とも一致しないため無視する（結果が空なら 412）
- *   <li>構文不正 → {@link InvalidIfMatchHeaderException}（400）
- * </ul>
- */
 public final class IfMatchParser {
 
-  /** entity-tag = [ "W/" ] DQUOTE *etagc DQUOTE, etagc = %x21 / %x23-7E / obs-text */
   private static final Pattern ENTITY_TAG =
       Pattern.compile("(W/)?\"([\\x21\\x23-\\x7E\\x80-\\xFF]*)\"");
 
@@ -36,7 +24,6 @@ public final class IfMatchParser {
     }
     Set<Long> versions = new HashSet<>();
     boolean hasElement = false;
-    // #entity-tag: カンマ区切り。空要素は無視する（RFC 9110 §5.6.1.2）
     for (String element : value.split(",", -1)) {
       String tag = element.strip();
       if (tag.isEmpty()) {

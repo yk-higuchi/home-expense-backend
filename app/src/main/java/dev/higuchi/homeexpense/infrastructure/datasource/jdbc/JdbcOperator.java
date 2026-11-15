@@ -62,10 +62,6 @@ public class JdbcOperator {
     }
   }
 
-  /**
-   * 楽観ロック付きで更新する。{@code sql} は WHERE 句で終わる UPDATE 文とし、{@link ExpectedVersion} に応じたバージョン条件を
-   * 末尾に追加する。更新件数が 0 件、または条件がどのバージョンとも一致し得ない場合は {@link ConcurrentUpdateException}。
-   */
   public void updateWithOptimisticLock(String sql, List<Object> params, ExpectedVersion expected) {
     VersionCondition condition = VersionCondition.of(params, expected);
     if (update(sql.stripTrailing() + condition.sql(), condition.binder()) == 0) {
@@ -73,10 +69,6 @@ public class JdbcOperator {
     }
   }
 
-  /**
-   * 書き込みを伴わずにバージョン条件を検証する。{@code sql} は WHERE 句で終わる SELECT 文とし、該当行がなければ {@link
-   * ConcurrentUpdateException}。
-   */
   public void verifyVersion(String sql, List<Object> params, ExpectedVersion expected) {
     VersionCondition condition = VersionCondition.of(params, expected);
     if (queryForOptional(sql.stripTrailing() + condition.sql(), condition.binder(), rs -> true)

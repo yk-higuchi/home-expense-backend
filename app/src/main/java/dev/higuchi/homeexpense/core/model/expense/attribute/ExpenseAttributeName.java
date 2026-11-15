@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.core.model.expense.attribute;
 
 import java.util.Objects;
 
-/** 経費属性名 */
 public record ExpenseAttributeName(String value) {
   public static final int MAX_LENGTH = 512;
 

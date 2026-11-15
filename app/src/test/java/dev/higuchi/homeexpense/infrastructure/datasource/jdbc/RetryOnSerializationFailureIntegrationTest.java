@@ -16,7 +16,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** インターセプターが @Transactional の外側で動き、試行ごとに新しいトランザクションになることを確認する */
 @QuarkusTest
 class RetryOnSerializationFailureIntegrationTest {
 
@@ -56,7 +55,6 @@ class RetryOnSerializationFailureIntegrationTest {
     final List<Object> transactionKeys = new ArrayList<>();
     int failuresBeforeSuccess;
 
-    // 注入されるのはクライアントプロキシなので、状態はフィールドではなくメソッド経由で読み書きする
     public void reset() {
       transactionKeys.clear();
       failuresBeforeSuccess = 0;

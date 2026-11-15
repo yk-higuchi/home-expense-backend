@@ -16,8 +16,6 @@ import java.util.List;
 @ApplicationScoped
 public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
 
-  // 収入と経費は期間ごとに別々に集計してから結合する（直接 JOIN すると行が掛け合わされ合計が水増しされる）。
-  // 集計範囲は from / to を含む期間全体（例: MONTH 粒度で from=4/15 なら 4/1 から）。
   private static final String SQL_TEMPLATE =
       """
       WITH bounds AS (
@@ -92,7 +90,6 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
     return new BalanceSeries(criteria.granularity(), points);
   }
 
-  /** date_trunc の単位 */
   private static String dateTruncUnit(Granularity granularity) {
     return switch (granularity) {
       case DAY -> "day";
@@ -103,7 +100,6 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
     };
   }
 
-  /** 1 期間分の INTERVAL。CockroachDB は 'quarter' を INTERVAL の単位として解釈できないため月数で表す */
   private static String interval(Granularity granularity) {
     return switch (granularity) {
       case DAY -> "1 day";

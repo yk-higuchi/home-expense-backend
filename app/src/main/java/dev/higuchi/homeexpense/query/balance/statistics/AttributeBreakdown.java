@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.query.balance.statistics;
 
 import java.util.List;
 
-/** 属性別の内訳（収入属性別、または経費分類ごとの経費属性別） */
 public record AttributeBreakdown(List<AttributeAmount> amounts) {
 
   public AttributeBreakdown {

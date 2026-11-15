@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.core.model.expense;
 
 import java.util.Arrays;
 
-/** 経費分類 */
 public enum ExpenseCategory {
   固定費,
   変動費;

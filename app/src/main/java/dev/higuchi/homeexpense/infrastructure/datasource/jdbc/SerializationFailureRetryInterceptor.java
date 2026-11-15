@@ -9,12 +9,6 @@ import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 import org.jboss.logging.Logger;
 
-/**
- * {@link RetryOnSerializationFailure} の実装。
- *
- * <p>{@link jakarta.transaction.Transactional} のインターセプター (PLATFORM_BEFORE + 200) より外側で動くよう優先度を
- * 小さくしている。これにより試行ごとに新しいトランザクションで実行される。
- */
 @RetryOnSerializationFailure
 @Interceptor
 @Priority(Interceptor.Priority.PLATFORM_BEFORE + 100)
@@ -61,7 +55,6 @@ public class SerializationFailureRetryInterceptor {
     return false;
   }
 
-  /** 指数バックオフ + ジッター (50ms, 100ms, ... にそれぞれ最大同量のランダム時間を加える) */
   private static long backoffMillis(int attempt) {
     long base = BASE_BACKOFF_MILLIS << (attempt - 1);
     return base + ThreadLocalRandom.current().nextLong(base + 1);

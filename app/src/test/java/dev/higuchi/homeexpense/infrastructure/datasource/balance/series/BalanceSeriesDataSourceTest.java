@@ -217,9 +217,9 @@ class BalanceSeriesDataSourceTest {
   @Test
   void WEEK粒度_月曜始まりの週で集計される() {
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
-    registerExpense(1000, "2026-05-03", food); // 日曜 → 4/27 の週
-    registerExpense(2000, "2026-05-04", food); // 月曜 → 5/4 の週
-    registerExpense(3000, "2026-05-10", food); // 日曜 → 5/4 の週
+    registerExpense(1000, "2026-05-03", food);
+    registerExpense(2000, "2026-05-04", food);
+    registerExpense(3000, "2026-05-10", food);
 
     BalanceSeries result =
         sut.search(

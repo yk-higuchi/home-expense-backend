@@ -7,7 +7,6 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.ext.Provider;
 
-/** W3C Trace Context Level 2 の traceresponse ヘッダを全レスポンスに付与する */
 @Provider
 public class TraceResponseFilter implements ContainerResponseFilter {
 

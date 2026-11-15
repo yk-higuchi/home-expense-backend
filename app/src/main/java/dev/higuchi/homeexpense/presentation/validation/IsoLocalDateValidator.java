@@ -20,7 +20,6 @@ public class IsoLocalDateValidator implements ConstraintValidator<IsoLocalDate, 
       return false;
     }
     try {
-      // ISO_LOCAL_DATE は ResolverStyle.STRICT のため、存在しない日付は例外になる
       LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE);
       return true;
     } catch (DateTimeParseException e) {

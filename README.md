@@ -35,3 +35,26 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements-openapi.txt
   .venv/bin/python scripts/validate_openapi_exchanges.py docs/openapi.yaml app/build/openapi-exchanges/exchanges.jsonl
   ```
+
+## スクリプト
+
+| スクリプト | 内容 |
+|---|---|
+| `scripts/local_development.sh` | ローカル開発用の PostgreSQL を起動し、ユーザー・データベース・スキーマを作って Flyway でマイグレーションする |
+| `scripts/setup_test_db.sh` | テスト用の CockroachDB（本番と同じ版）を作り直し、テスト用のスキーマを読み込む。`localhost:${TEST_DB_PORT}`（既定は 26257）で待ち受け、`%test` プロファイルの接続先と一致する。ローカルでは Apple の `container`、CI では `CONTAINER_CLI=docker` を指定して使う |
+| `scripts/swagger_ui.sh` | `docs/openapi.yaml` を表示する Swagger UI を起動する |
+| `scripts/sort_openapi.sh <openapi.yaml>` | OpenAPI のキーを並べ替える。まず全体をアルファベット順にし、そのあと OpenAPI 3.2 仕様のフィールド順に並べ直す。`x-` で始まる拡張は残す |
+| `scripts/validate_openapi_exchanges.py <openapi.yaml> <exchanges.jsonl>` | テストで記録したやり取りを OpenAPI と照合する（照合のルールは下記） |
+
+`scripts/lib/` 配下は、上のスクリプトから `source` で読み込む部品で、単独では実行しません。
+
+- `migrate_database.sh`：`flyway/` のイメージをビルドし、Flyway CLI でマイグレーションする。呼び出し側で `db_host`、`db_user`、`db_password`、`db_name` を定義しておく
+- `setup_postgres.sh`：ローカルの PostgreSQL コンテナを起動する
+- `setup_swagger_ui.sh`：ローカルの Swagger UI コンテナを起動する。呼び出し側で `openapi_dir_host_path`（`openapi.yaml` があるディレクトリの絶対パス）を定義しておく
+
+### やり取りの照合のルール
+
+- レスポンスは、定義されたステータス・ヘッダー・本文と一致すること
+- リクエストは、定義と一致すること。ただし、テストがわざと不正なリクエストを送るケース（サーバーが 400 / 406 / 412 / 415 / 422 / 428 を返したもの）と、`LENIENT_INPUT_TESTS` に登録したテスト（定義外の入力をわざと受け入れることを確かめるテスト）は除く
+- 定義にないパスやメソッドへのリクエストは、サーバーが 404 / 405 を返した場合だけ許容する（フレームワークのエラー処理のテスト）
+- Quarkus の管理用エンドポイント（`/q/...`）は API の定義の対象外なので照合しない

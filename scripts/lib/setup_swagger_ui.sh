@@ -1,9 +1,4 @@
 #!/bin/bash
-# Library: ensure the local Swagger UI container is running.
-# Intended to be sourced, not executed directly.
-#
-# Required variables in the caller's scope:
-#   openapi_dir_host_path  (absolute path to the directory containing openapi.yaml)
 
 set -euo pipefail
 

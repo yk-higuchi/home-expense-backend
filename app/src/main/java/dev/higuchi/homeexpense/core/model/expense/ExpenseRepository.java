@@ -4,7 +4,6 @@ import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import java.util.Optional;
 
-/** 経費リポジトリ */
 public interface ExpenseRepository {
 
   void register(Expense expense);
@@ -19,7 +18,6 @@ public interface ExpenseRepository {
 
   void update(Expense expense, ExpectedVersion expectedVersion);
 
-  /** 書き込みを伴わずにバージョン条件を検証する。一致しなければ ConcurrentUpdateException */
   void verifyVersion(Expense expense, ExpectedVersion expectedVersion);
 
   void delete(Expense expense);

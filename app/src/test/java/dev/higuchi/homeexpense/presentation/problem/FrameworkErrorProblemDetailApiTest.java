@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.*;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
-/** フレームワークが返す HTTP エラーも RFC 9457 Problem Details で返る */
 @QuarkusTest
 class FrameworkErrorProblemDetailApiTest {
 

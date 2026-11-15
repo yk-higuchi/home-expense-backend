@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""Validate HTTP exchanges recorded by the API tests against the OpenAPI document.
-
-The exchanges are written by OpenApiExchangeRecorder while ``./gradlew test`` runs
-(app/build/openapi-exchanges/exchanges.jsonl).
-
-* Every response must conform to the documented response (status, headers, body).
-* Every request must conform to the documented request, except when the server
-  rejected it with a 4xx listed in REJECTED_ON_PURPOSE (tests send invalid
-  requests on purpose) or the test is listed in LENIENT_INPUT_TESTS.
-* Requests to undocumented paths or methods are allowed only when the server
-  answered 404 / 405 (tests for framework error handling).
-* Quarkus management endpoints (/q/...) are out of the API contract and skipped.
-
-Usage: validate_openapi_exchanges.py <openapi.yaml> <exchanges.jsonl>
-"""
 
 import json
 import sys
@@ -27,19 +12,17 @@ from openapi_core.templating.paths.exceptions import (
 )
 from openapi_core.testing import MockRequest, MockResponse
 
+USAGE = "使い方: validate_openapi_exchanges.py <openapi.yaml> <exchanges.jsonl>"
 SERVER = "http://localhost:8080"
 REJECTED_ON_PURPOSE = {400, 406, 412, 415, 422, 428}
 UNDOCUMENTED_ROUTE_STATUSES = {404, 405}
 NON_API_PATH_PREFIX = "/q/"
-# Tests that deliberately check the server accepts input outside the documented
-# form (Postel's law). Keyed by "<test class>#<method>"; the value is the reason.
 LENIENT_INPUT_TESTS = {
     "dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterApiTest#空文字の任意パラメータは未指定として扱う":
-        "an empty optional query parameter is treated as absent",
+        "空の任意パラメータは未指定として扱う",
     "dev.higuchi.homeexpense.presentation.api.balance.series.BalanceSeriesApiTest#GET_granularity大文字でも受け入れる":
-        "granularity is matched case-insensitively",
+        "granularity は大文字・小文字を区別しない",
 }
-# Set by the HTTP client or the transport, not part of the API contract.
 IGNORED_REQUEST_HEADERS = {"accept", "accept-encoding", "content-type", "content-length", "host", "user-agent", "connection"}
 
 
@@ -66,7 +49,7 @@ def main(spec_path, exchanges_path):
     with open(exchanges_path, encoding="utf-8") as f:
         exchanges = [json.loads(line) for line in f if line.strip()]
     if not exchanges:
-        print(f"no exchanges recorded in {exchanges_path}", file=sys.stderr)
+        print(f"{exchanges_path} にやり取りが記録されていません", file=sys.stderr)
         return 1
 
     unused_lenient = set(LENIENT_INPUT_TESTS)
@@ -99,14 +82,14 @@ def main(spec_path, exchanges_path):
                 skipped += 1
                 continue
             errors.append("route: " + describe(ex))
-        except Exception as ex:  # noqa: BLE001 - every validation error is reported
+        except Exception as ex:
             if e["test"] in LENIENT_INPUT_TESTS:
                 unused_lenient.discard(e["test"])
             elif e["status"] not in REJECTED_ON_PURPOSE:
                 errors.append("request: " + describe(ex))
         try:
             openapi.validate_response(request, response)
-        except Exception as ex:  # noqa: BLE001
+        except Exception as ex:
             errors.append("response: " + describe(ex))
         if errors:
             failures += 1
@@ -117,13 +100,13 @@ def main(spec_path, exchanges_path):
 
     for test in sorted(unused_lenient):
         failures += 1
-        print(f"--- LENIENT_INPUT_TESTS entry no longer needed (renamed or removed?): {test}")
+        print(f"--- LENIENT_INPUT_TESTS の項目が使われていません（テスト名の変更や削除がないか確認してください）: {test}")
 
-    print(f"checked {len(exchanges)} exchanges: {failures} failed, {skipped} skipped (out of the API contract)")
+    print(f"{len(exchanges)} 件を照合: 失敗 {failures} 件、対象外 {skipped} 件")
     return 1 if failures else 0
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        sys.exit(__doc__)
+        sys.exit(USAGE)
     sys.exit(main(sys.argv[1], sys.argv[2]))

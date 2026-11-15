@@ -6,7 +6,6 @@ import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdenti
 import java.util.Objects;
 import java.util.UUID;
 
-/** 収入 */
 public class Income {
   IncomeIdentifier incomeIdentifier;
   Description description;

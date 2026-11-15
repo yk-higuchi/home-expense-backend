@@ -4,12 +4,6 @@ import dev.higuchi.homeexpense.query.Pagination;
 import jakarta.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 
-/**
- * RFC 8288 Link ヘッダーの組立ユーティリティ。
- *
- * <p>関係型は IANA 登録済みの self / first / last / prev / next を使う。リンク先はリクエスト URI を元にし、絞り込み条件などの
- * クエリパラメータを保持したまま page / per_page だけを置き換える。
- */
 public final class LinkHeaderCreatable {
 
   private LinkHeaderCreatable() {}

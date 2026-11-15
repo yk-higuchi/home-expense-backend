@@ -1,6 +1,4 @@
 #!/bin/bash
-# Library: ensure the local PostgreSQL container is running.
-# Intended to be sourced, not executed directly.
 
 set -euo pipefail
 

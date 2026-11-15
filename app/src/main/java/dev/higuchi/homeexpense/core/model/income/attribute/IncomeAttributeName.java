@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.core.model.income.attribute;
 
 import java.util.Objects;
 
-/** 収入属性名 */
 public record IncomeAttributeName(String value) {
   public static final int MAX_LENGTH = 512;
 

@@ -52,8 +52,6 @@ tasks.withType<Test> {
   }
 }
 
-// Exchanges recorded by OpenApiExchangeRecorder, checked against docs/openapi.yaml by
-// scripts/validate_openapi_exchanges.py
 val openApiExchanges = layout.buildDirectory.file("openapi-exchanges/exchanges.jsonl")
 
 tasks.test {

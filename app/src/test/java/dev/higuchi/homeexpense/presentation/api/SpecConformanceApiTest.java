@@ -8,7 +8,6 @@ import io.restassured.response.ValidatableResponse;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** docs/openapi.yaml に定義した入力制約・ステータスコードどおりに応答する */
 @QuarkusTest
 class SpecConformanceApiTest {
 

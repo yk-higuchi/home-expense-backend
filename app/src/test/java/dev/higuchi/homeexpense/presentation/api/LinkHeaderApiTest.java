@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.*;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
-/** Link ヘッダー（RFC 8288） */
 @QuarkusTest
 class LinkHeaderApiTest {
 

@@ -11,7 +11,6 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-/** 年の絞り込み条件（1〜2200）。null は対象外 */
 @Min(value = YearRange.MIN, message = "yearは1〜2200を指定してください")
 @Max(value = YearRange.MAX, message = "yearは1〜2200を指定してください")
 @Constraint(validatedBy = {})

@@ -1,6 +1,5 @@
 package dev.higuchi.homeexpense.core.model;
 
-/** 金額（経費・収入で共通） */
 public record Amount(int value) {
   public static final int MAX_VALUE = 1_000_000_000;
 

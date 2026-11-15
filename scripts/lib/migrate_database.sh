@@ -1,9 +1,4 @@
 #!/bin/bash
-# Library: run Flyway CLI migration (image built from ./flyway) against a database.
-# Intended to be sourced, not executed directly.
-#
-# Required variables in the caller's scope:
-#   db_host, db_user, db_password, db_name
 
 echo "Building Flyway migration container..."
 container build -t flyway-migration ./flyway

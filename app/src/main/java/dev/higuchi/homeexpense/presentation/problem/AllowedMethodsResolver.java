@@ -20,13 +20,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-/**
- * 405 応答に付ける Allow ヘッダー（RFC 9110 §10.2.1, §15.5.6）の値を求める。
- *
- * <p>RESTEasy Reactive が送出する NotAllowedException は許可メソッドを持たないため、リソースクラスの JAX-RS
- * アノテーションから算出する。ネイティブイメージでもリフレクションで読めるよう対象クラスを登録している（リソース追加時は {@link #RESOURCES}
- * にも追加すること。漏れはテストで検出する）。
- */
 @ApplicationScoped
 @RegisterForReflection(
     targets = {
@@ -53,7 +46,6 @@ public class AllowedMethodsResolver {
 
   private final Map<Pattern, Set<String>> routes = buildRoutes(RESOURCES);
 
-  /** リクエストパスに対する Allow の値。該当するリソースがなければ空 */
   public Optional<String> allowFor(String path) {
     String normalized = normalize(path);
     TreeSet<String> allowed = new TreeSet<>();
@@ -76,7 +68,6 @@ public class AllowedMethodsResolver {
               String template = normalize(base + "/" + (sub == null ? "" : sub.value()));
               Set<String> methods = byTemplate.computeIfAbsent(template, t -> new TreeSet<>());
               methods.add(httpMethod);
-              // JAX-RS は GET に対する HEAD と、OPTIONS を自動で提供する
               if (httpMethod.equals(HttpMethod.GET)) {
                 methods.add(HttpMethod.HEAD);
               }
