@@ -20,6 +20,9 @@ public class IncomeAttributeRegistrationService {
   }
 
   public IncomeAttributeIdentifier register(IncomeAttributeName incomeAttributeName) {
+    if (incomeAttributeRepository.order().size() >= IncomeAttributeOrder.MAX_SIZE) {
+      throw new IncomeAttributeLimitExceededException();
+    }
     incomeAttributeNameUniqueness.assertUniqueForRegistration(incomeAttributeName);
     IncomeAttribute incomeAttribute = IncomeAttribute.create(incomeAttributeName);
     incomeAttributeRepository.register(incomeAttribute);

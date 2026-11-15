@@ -132,7 +132,7 @@ paths:
       tags:
         - Expense Attributes
       summary: 経費属性を登録する
-      description: 経費属性を登録します。名前は区分の中で重複できません（重複時は 409）。登録した属性の URI は Location ヘッダーで返します。
+      description: 経費属性を登録します。登録した属性は、その区分の並びの末尾に入ります。名前は区分の中で重複できません（重複時は 409）。区分ごとに 100 件まで登録でき、超える場合も 409 です。登録した属性の URI は Location ヘッダーで返します。
       operationId: createExpenseAttribute
       requestBody:
         content:
@@ -457,7 +457,7 @@ paths:
       tags:
         - Income Attributes
       summary: 収入属性を登録する
-      description: 収入属性を登録します。名前は重複できません（重複時は 409）。登録した属性の URI は Location ヘッダーで返します。
+      description: 収入属性を登録します。登録した属性は、並びの末尾に入ります。名前は重複できません（重複時は 409）。100 件まで登録でき、超える場合も 409 です。登録した属性の URI は Location ヘッダーで返します。
       operationId: createIncomeAttribute
       requestBody:
         content:
@@ -1299,7 +1299,7 @@ components:
             title: Bad Request
             type: about:blank
     Conflict:
-      description: リソースの競合
+      description: リソースの競合（名前の重複、登録件数の上限、参照中の属性の削除など）
       content:
         application/problem+json:
           schema:

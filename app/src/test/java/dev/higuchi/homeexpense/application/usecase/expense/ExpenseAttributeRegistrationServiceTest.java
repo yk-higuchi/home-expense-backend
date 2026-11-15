@@ -43,4 +43,26 @@ class ExpenseAttributeRegistrationServiceTest {
                 new ExpenseAttributeRegistrationCommand(
                     new ExpenseAttributeName("食費"), ExpenseCategory.変動費)));
   }
+
+  @Test
+  void 分類ごとに上限の件数まで登録でき_それを超えると例外() {
+    for (int i = 0; i < ExpenseAttributeOrder.MAX_SIZE; i++) {
+      sut.register(
+          new ExpenseAttributeRegistrationCommand(
+              new ExpenseAttributeName("固定" + i), ExpenseCategory.固定費));
+    }
+
+    ExpenseAttributeLimitExceededException e =
+        assertThrows(
+            ExpenseAttributeLimitExceededException.class,
+            () ->
+                sut.register(
+                    new ExpenseAttributeRegistrationCommand(
+                        new ExpenseAttributeName("超過"), ExpenseCategory.固定費)));
+    assertEquals("固定費の経費属性は100件まで登録できます", e.getMessage());
+    assertDoesNotThrow(() ->
+        sut.register(
+            new ExpenseAttributeRegistrationCommand(
+                new ExpenseAttributeName("変動"), ExpenseCategory.変動費)));
+  }
 }

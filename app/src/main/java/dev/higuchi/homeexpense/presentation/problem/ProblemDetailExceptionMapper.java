@@ -6,11 +6,13 @@ import dev.higuchi.homeexpense.core.model.expense.ExpenseNotFoundException;
 import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeLimitExceededException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeNotFoundException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.InvalidExpenseAttributeOrderException;
 import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeLimitExceededException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeNotFoundException;
 import dev.higuchi.homeexpense.core.model.income.attribute.InvalidIncomeAttributeOrderException;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
@@ -89,6 +91,18 @@ public class ProblemDetailExceptionMapper {
   public RestResponse<ProblemDetail> mapInvalidIncomeAttributeReferenceException(
       InvalidIncomeAttributeReferenceException e) {
     return toResponse(422, "Unprocessable Content", "指定された収入属性が存在しません");
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapExpenseAttributeLimitExceededException(
+      ExpenseAttributeLimitExceededException e) {
+    return toResponse(Response.Status.CONFLICT, e.getMessage());
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapIncomeAttributeLimitExceededException(
+      IncomeAttributeLimitExceededException e) {
+    return toResponse(Response.Status.CONFLICT, e.getMessage());
   }
 
   @ServerExceptionMapper
