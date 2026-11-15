@@ -2,6 +2,7 @@ package dev.higuchi.homeexpense.application.usecase.income;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
 import dev.higuchi.homeexpense.core.model.income.*;
+import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -23,7 +24,10 @@ public class IncomeUpdateService {
 
   public void update(IncomeUpdateCommand command) {
     Income current = incomeRepository.get(command.incomeIdentifier());
-    IncomeAttribute attribute = incomeAttributeRepository.get(command.incomeAttributeIdentifier());
+    IncomeAttribute attribute =
+        incomeAttributeRepository
+            .find(command.incomeAttributeIdentifier())
+            .orElseThrow(InvalidIncomeAttributeReferenceException::new);
     Income updated =
         current.updateWith(
             command.description(),

@@ -2,6 +2,7 @@ package dev.higuchi.homeexpense.application.usecase.expense;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
 import dev.higuchi.homeexpense.core.model.expense.*;
+import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,7 +25,9 @@ public class ExpenseUpdateService {
   public void update(ExpenseUpdateCommand command) {
     Expense current = expenseRepository.get(command.expenseIdentifier());
     ExpenseAttribute attribute =
-        expenseAttributeRepository.get(command.expenseAttributeIdentifier());
+        expenseAttributeRepository
+            .find(command.expenseAttributeIdentifier())
+            .orElseThrow(InvalidExpenseAttributeReferenceException::new);
     Expense updated =
         current.updateWith(
             command.description(),

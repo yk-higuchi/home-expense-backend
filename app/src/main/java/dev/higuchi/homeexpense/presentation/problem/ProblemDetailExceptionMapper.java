@@ -1,9 +1,11 @@
 package dev.higuchi.homeexpense.presentation.problem;
 
 import dev.higuchi.homeexpense.core.model.expense.ExpenseNotFoundException;
+import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeNotFoundException;
+import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeNotFoundException;
@@ -60,6 +62,18 @@ public class ProblemDetailExceptionMapper {
   public RestResponse<ProblemDetail> mapIncomeAttributeNotFoundException(
       IncomeAttributeNotFoundException e) {
     return toResponse(Response.Status.NOT_FOUND, "収入属性が見つかりません");
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidExpenseAttributeReferenceException(
+      InvalidExpenseAttributeReferenceException e) {
+    return toResponse(422, "Unprocessable Content", "指定された経費属性が存在しません");
+  }
+
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapInvalidIncomeAttributeReferenceException(
+      InvalidIncomeAttributeReferenceException e) {
+    return toResponse(422, "Unprocessable Content", "指定された収入属性が存在しません");
   }
 
   @ServerExceptionMapper
@@ -163,8 +177,8 @@ public class ProblemDetailExceptionMapper {
       LOG.error("HTTPエラー", e);
     }
     RestResponse.ResponseBuilder<ProblemDetail> builder =
-        RestResponse.ResponseBuilder.create(
-            RestResponse.Status.fromStatusCode(status),
+        problemResponse(
+            status,
             ProblemDetail.of(status, reasonPhrase(status), detailFor(status), currentTraceId()));
     original
         .getHeaders()
@@ -205,10 +219,18 @@ public class ProblemDetailExceptionMapper {
   private static RestResponse<ProblemDetail> toResponse(
       int statusCode, String title, String detail) {
     ProblemDetail problemDetail = ProblemDetail.of(statusCode, title, detail, currentTraceId());
-    return RestResponse.ResponseBuilder.create(
-            RestResponse.Status.fromStatusCode(statusCode), problemDetail)
-        .header("Content-Type", PROBLEM_JSON)
+    return problemResponse(statusCode, problemDetail)
+        .header(HttpHeaders.CONTENT_TYPE, PROBLEM_JSON)
         .build();
+  }
+
+  /**
+   * RestResponse.Status / Response.Status は 422 などを列挙していない（fromStatusCode が null
+   * を返す）ため、ステータスコードは数値で指定する。
+   */
+  private static RestResponse.ResponseBuilder<ProblemDetail> problemResponse(
+      int statusCode, ProblemDetail problemDetail) {
+    return RestResponse.ResponseBuilder.<ProblemDetail>create(statusCode).entity(problemDetail);
   }
 
   private static String currentTraceId() {

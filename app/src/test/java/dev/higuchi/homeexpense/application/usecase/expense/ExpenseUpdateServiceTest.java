@@ -6,10 +6,10 @@ import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
 import dev.higuchi.homeexpense.core.model.ExpectedVersion;
 import dev.higuchi.homeexpense.core.model.expense.*;
+import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
-import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeNotFoundException;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseRepository;
@@ -110,7 +110,7 @@ class ExpenseUpdateServiceTest {
     expenseRepository.register(existing);
 
     assertThrows(
-        ExpenseAttributeNotFoundException.class,
+        InvalidExpenseAttributeReferenceException.class,
         () ->
             sut.update(
                 new ExpenseUpdateCommand(

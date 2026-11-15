@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.query.expense;
 
+import dev.higuchi.homeexpense.query.InvalidQueryCriteriaException;
 import dev.higuchi.homeexpense.query.Pagination;
 import java.time.LocalDate;
 import java.time.Year;
@@ -19,6 +20,9 @@ public class ExpenseSearchCriteria {
       Integer month,
       String expenseCategory,
       String expenseAttributeIdentifier) {
+    if (Objects.nonNull(month) && Objects.isNull(year)) {
+      throw new InvalidQueryCriteriaException("monthを指定する場合はyearも指定してください");
+    }
     this.pagination = pagination;
     this.year = year;
     this.month = month;

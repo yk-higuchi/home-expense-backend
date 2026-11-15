@@ -159,7 +159,7 @@ class IncomeApiTest {
   }
 
   @Test
-  void POST_存在しない属性IDで収入を登録すると404エラー() {
+  void POST_存在しない属性IDで収入を登録すると422エラー() {
     given()
         .contentType(ContentType.JSON)
         .body(
@@ -169,10 +169,10 @@ class IncomeApiTest {
         .when()
         .post("/v1/incomes")
         .then()
-        .statusCode(404)
+        .statusCode(422)
         .contentType("application/problem+json")
-        .body("status", equalTo(404))
-        .body("detail", equalTo("収入属性が見つかりません"));
+        .body("status", equalTo(422))
+        .body("detail", equalTo("指定された収入属性が存在しません"));
   }
 
   @Test

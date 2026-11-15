@@ -9,6 +9,7 @@ import dev.higuchi.homeexpense.presentation.api.LinkHeaderCreatable;
 import dev.higuchi.homeexpense.presentation.validation.PageNumber;
 import dev.higuchi.homeexpense.presentation.validation.PerPageSize;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
+import dev.higuchi.homeexpense.presentation.validation.YearRange;
 import dev.higuchi.homeexpense.query.Pagination;
 import dev.higuchi.homeexpense.query.income.IncomeDetail;
 import dev.higuchi.homeexpense.query.income.IncomeSearchCriteria;
@@ -16,7 +17,6 @@ import dev.higuchi.homeexpense.query.income.IncomeSearchResult;
 import dev.higuchi.homeexpense.query.income.IncomeSearchResultQuerier;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -77,7 +77,7 @@ public class IncomeApi {
   public Response get(
       @QueryParam("page") @DefaultValue("1") @PageNumber Integer page,
       @QueryParam("per_page") @DefaultValue("20") @PerPageSize Integer perPage,
-      @QueryParam("year") @Min(value = 1, message = "yearは{value}以上を指定してください") Integer year,
+      @QueryParam("year") @YearRange Integer year,
       @Context UriInfo uriInfo) {
     Pagination pagination = new Pagination(page, perPage);
     IncomeSearchCriteria criteria = new IncomeSearchCriteria(pagination, year);

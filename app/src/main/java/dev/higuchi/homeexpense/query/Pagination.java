@@ -3,12 +3,13 @@ package dev.higuchi.homeexpense.query;
 public record Pagination(int page, int perPage) {
 
   public static final int PAGE_MIN = 1;
+  public static final int PAGE_MAX = 1_000_000;
   public static final int PER_PAGE_MIN = 1;
   public static final int PER_PAGE_MAX = 100;
 
   public Pagination {
-    if (page < PAGE_MIN) {
-      throw new IllegalArgumentException("page must be >= " + PAGE_MIN);
+    if (page < PAGE_MIN || page > PAGE_MAX) {
+      throw new IllegalArgumentException("page must be between " + PAGE_MIN + " and " + PAGE_MAX);
     }
     if (perPage < PER_PAGE_MIN || perPage > PER_PAGE_MAX) {
       throw new IllegalArgumentException(

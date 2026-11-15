@@ -10,6 +10,7 @@ import dev.higuchi.homeexpense.presentation.validation.ExpenseCategory;
 import dev.higuchi.homeexpense.presentation.validation.PageNumber;
 import dev.higuchi.homeexpense.presentation.validation.PerPageSize;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
+import dev.higuchi.homeexpense.presentation.validation.YearRange;
 import dev.higuchi.homeexpense.query.expense.ExpenseCriteriaCreator;
 import dev.higuchi.homeexpense.query.expense.ExpenseDetail;
 import dev.higuchi.homeexpense.query.expense.ExpenseSearchCriteria;
@@ -79,13 +80,14 @@ public class ExpenseApi {
   public Response get(
       @QueryParam("page") @DefaultValue("1") @PageNumber Integer page,
       @QueryParam("per_page") @DefaultValue("20") @PerPageSize Integer perPage,
-      @QueryParam("year") @Min(value = 1, message = "yearは{value}以上を指定してください") Integer year,
+      @QueryParam("year") @YearRange Integer year,
       @QueryParam("month")
           @Min(value = 1, message = "monthは1〜12を指定してください")
           @Max(value = 12, message = "monthは1〜12を指定してください")
           Integer month,
       @QueryParam("category") @ExpenseCategory String category,
-      @QueryParam("attribute_id") String attributeId,
+      @QueryParam("attribute_id") @UuidFormat(message = "attribute_idの形式に誤りがあります")
+          String attributeId,
       @Context UriInfo uriInfo) {
     ExpenseSearchCriteria criteria =
         ExpenseCriteriaCreator.create(page, perPage, year, month, category, attributeId);

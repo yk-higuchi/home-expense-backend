@@ -104,7 +104,7 @@ class IncomeUpdateServiceTest {
     incomeRepository.register(existing);
 
     assertThrows(
-        IncomeAttributeNotFoundException.class,
+        InvalidIncomeAttributeReferenceException.class,
         () ->
             sut.update(
                 new IncomeUpdateCommand(

@@ -6,6 +6,7 @@ import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
 import dev.higuchi.homeexpense.core.model.income.ReceiveDate;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
+import dev.higuchi.homeexpense.presentation.validation.IsoLocalDate;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ public record IncomePostRequest(
         @JsonProperty("amount")
         Integer amount,
     @NotBlank(message = "receive_dateは必須入力です")
-        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "receive_dateの形式に誤りがあります")
+        @IsoLocalDate(message = "receive_dateの形式に誤りがあります")
         @JsonProperty("receive_date")
         String receiveDate,
     @NotBlank(message = "attribute_idは必須入力です")

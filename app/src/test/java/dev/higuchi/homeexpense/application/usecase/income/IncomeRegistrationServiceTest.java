@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
 import dev.higuchi.homeexpense.core.model.income.*;
+import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
-import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeNotFoundException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeRepository;
 import java.time.LocalDate;
@@ -46,7 +46,7 @@ class IncomeRegistrationServiceTest {
   @Test
   void 存在しない属性IDで登録すると例外をスローする() {
     assertThrows(
-        IncomeAttributeNotFoundException.class,
+        InvalidIncomeAttributeReferenceException.class,
         () ->
             sut.register(
                 new IncomeRegistrationCommand(

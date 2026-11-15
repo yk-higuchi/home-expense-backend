@@ -160,7 +160,7 @@ class ExpenseApiTest {
   }
 
   @Test
-  void POST_存在しない属性IDで経費を登録すると404エラー() {
+  void POST_存在しない属性IDで経費を登録すると422エラー() {
     given()
         .contentType(ContentType.JSON)
         .body(
@@ -170,10 +170,10 @@ class ExpenseApiTest {
         .when()
         .post("/v1/expenses")
         .then()
-        .statusCode(404)
+        .statusCode(422)
         .contentType("application/problem+json")
-        .body("status", equalTo(404))
-        .body("detail", equalTo("経費属性が見つかりません"));
+        .body("status", equalTo(422))
+        .body("detail", equalTo("指定された経費属性が存在しません"));
   }
 
   @Test

@@ -162,6 +162,8 @@ paths:
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
     put:
@@ -201,6 +203,10 @@ paths:
       responses:
         "204":
           description: Expense attribute deleted successfully
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
         "409":
           $ref: '#/components/responses/Conflict'
   /v1/expenses:
@@ -221,7 +227,7 @@ paths:
             maximum: 2200
             minimum: 1
             type: integer
-        - description: Filter by month
+        - description: Filter by month. Requires year (400 otherwise)
           in: query
           name: month
           schema:
@@ -275,6 +281,8 @@ paths:
               $ref: '#/components/headers/Location'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "422":
+          $ref: '#/components/responses/UnprocessableContent'
   /v1/expenses/{id}:
     get:
       tags:
@@ -293,6 +301,8 @@ paths:
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
     put:
@@ -316,10 +326,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
-        "409":
-          $ref: '#/components/responses/Conflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "422":
+          $ref: '#/components/responses/UnprocessableContent'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
     delete:
@@ -332,6 +342,8 @@ paths:
       responses:
         "204":
           description: Expense deleted successfully
+        "400":
+          $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
   /v1/income-attributes:
@@ -394,6 +406,8 @@ paths:
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
     put:
@@ -433,6 +447,10 @@ paths:
       responses:
         "204":
           description: Income attribute deleted successfully
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
         "409":
           $ref: '#/components/responses/Conflict'
   /v1/incomes:
@@ -483,6 +501,8 @@ paths:
               $ref: '#/components/headers/Location'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "422":
+          $ref: '#/components/responses/UnprocessableContent'
   /v1/incomes/{id}:
     get:
       tags:
@@ -501,6 +521,8 @@ paths:
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
+        "400":
+          $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
     put:
@@ -524,10 +546,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
-        "409":
-          $ref: '#/components/responses/Conflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "422":
+          $ref: '#/components/responses/UnprocessableContent'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
     delete:
@@ -540,6 +562,10 @@ paths:
       responses:
         "204":
           description: Income deleted successfully
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          $ref: '#/components/responses/NotFound'
 components:
   schemas:
     AttributeAmountResponse:
@@ -683,6 +709,10 @@ components:
         name:
           maxLength: 512
           type: string
+      required:
+        - id
+        - name
+        - category
       type: object
     ExpenseAttributeListResponse:
       properties:
@@ -691,6 +721,8 @@ components:
             $ref: '#/components/schemas/ExpenseAttributeGetResponse'
           maxItems: 100
           type: array
+      required:
+        - expense_attributes
       type: object
     ExpenseAttributePostRequest:
       properties:
@@ -707,18 +739,13 @@ components:
         - category
       type: object
     ExpenseAttributePutRequest:
+      description: The category of an expense attribute cannot be changed after creation.
       properties:
-        category:
-          enum:
-            - 固定費
-            - 変動費
-          type: string
         name:
           maxLength: 512
           type: string
       required:
         - name
-        - category
       type: object
     ExpenseAttributeResponse:
       properties:
@@ -734,6 +761,10 @@ components:
         name:
           maxLength: 512
           type: string
+      required:
+        - id
+        - name
+        - category
       type: object
     ExpenseGetResponse:
       properties:
@@ -755,6 +786,12 @@ components:
           format: date
           maxLength: 10
           type: string
+      required:
+        - id
+        - description
+        - amount
+        - payment_date
+        - expense_attribute
       type: object
     ExpenseListResponse:
       properties:
@@ -763,6 +800,8 @@ components:
             $ref: '#/components/schemas/ExpenseGetResponse'
           maxItems: 100
           type: array
+      required:
+        - expenses
       type: object
     ExpensePostRequest:
       properties:
@@ -825,6 +864,9 @@ components:
         name:
           maxLength: 512
           type: string
+      required:
+        - id
+        - name
       type: object
     IncomeAttributeListResponse:
       properties:
@@ -833,6 +875,8 @@ components:
             $ref: '#/components/schemas/IncomeAttributeGetResponse'
           maxItems: 100
           type: array
+      required:
+        - income_attributes
       type: object
     IncomeAttributePostRequest:
       properties:
@@ -859,6 +903,9 @@ components:
         name:
           maxLength: 512
           type: string
+      required:
+        - id
+        - name
       type: object
     IncomeGetResponse:
       properties:
@@ -880,6 +927,12 @@ components:
           format: date
           maxLength: 10
           type: string
+      required:
+        - id
+        - description
+        - amount
+        - receive_date
+        - income_attribute
       type: object
     IncomeListResponse:
       properties:
@@ -888,6 +941,8 @@ components:
             $ref: '#/components/schemas/IncomeGetResponse'
           maxItems: 100
           type: array
+      required:
+        - incomes
       type: object
     IncomePostRequest:
       properties:
@@ -988,6 +1043,10 @@ components:
           format: uri
           maxLength: 2048
           type: string
+      required:
+        - type
+        - title
+        - status
       type: object
   responses:
     BadRequest:
@@ -1046,6 +1105,17 @@ components:
             detail: If-Matchヘッダーは必須です
             status: 428
             title: Precondition Required
+            type: about:blank
+    UnprocessableContent:
+      description: The request refers to an attribute that does not exist (RFC 9110 §15.5.21).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: 指定された経費属性が存在しません
+            status: 422
+            title: Unprocessable Content
             type: about:blank
   parameters:
     ExpenseAttributeId:
