@@ -153,6 +153,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "409":
           $ref: '#/components/responses/Conflict'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
   /v1/expense-attributes/{id}:
@@ -207,6 +209,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
         "500":
@@ -307,6 +311,8 @@ paths:
               $ref: '#/components/headers/Location'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
         "500":
@@ -361,6 +367,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
         "428":
@@ -431,6 +439,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "409":
           $ref: '#/components/responses/Conflict'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
   /v1/income-attributes/{id}:
@@ -485,6 +495,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
         "500":
@@ -561,6 +573,8 @@ paths:
               $ref: '#/components/headers/Location'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
         "500":
@@ -615,6 +629,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
         "428":
@@ -1227,6 +1243,17 @@ components:
             detail: 指定された経費属性が存在しません
             status: 422
             title: Unprocessable Content
+            type: about:blank
+    UnsupportedMediaType:
+      description: The request body is not sent as application/json.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: サポートされていないメディアタイプです
+            status: 415
+            title: Unsupported Media Type
             type: about:blank
   parameters:
     ExpenseAttributeId:
