@@ -160,7 +160,8 @@
 				"path": {
 					"type": "string"
 				}
-			}
+			},
+			"additionalProperties": true
 		}
 	},
 	"ExpenseAttributeListResponse": {
@@ -325,7 +326,8 @@
 				"path": {
 					"type": "string"
 				}
-			}
+			},
+			"additionalProperties": true
 		}
 	},
 	"IncomeAttributeListResponse": {

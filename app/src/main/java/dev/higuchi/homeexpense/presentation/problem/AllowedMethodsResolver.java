@@ -57,6 +57,13 @@ public class AllowedMethodsResolver {
     return allowed.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", allowed));
   }
 
+  public boolean supports(String path, String method) {
+    String normalized = normalize(path);
+    return routes.entrySet().stream()
+        .anyMatch(route ->
+            route.getKey().matcher(normalized).matches() && route.getValue().contains(method));
+  }
+
   private static Map<Pattern, Set<String>> buildRoutes(List<Class<?>> resources) {
     Map<String, Set<String>> byTemplate = new LinkedHashMap<>();
     for (Class<?> resource : resources) {

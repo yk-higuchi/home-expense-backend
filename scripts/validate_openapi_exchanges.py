@@ -16,6 +16,7 @@ USAGE = "使い方: validate_openapi_exchanges.py <openapi.yaml> <exchanges.json
 SERVER = "http://localhost:8080"
 REJECTED_ON_PURPOSE = {400, 406, 412, 415, 422, 428}
 UNDOCUMENTED_ROUTE_STATUSES = {404, 405}
+FRAMEWORK_METHODS = {"OPTIONS", "HEAD"}
 NON_API_PATH_PREFIX = "/q/"
 LENIENT_INPUT_TESTS = {
     "dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterApiTest#空文字の任意パラメータは未指定として扱う":
@@ -83,7 +84,7 @@ def main(spec_path, exchanges_path):
         try:
             openapi.validate_request(request)
         except (PathNotFound, OperationNotFound, ServerNotFound) as ex:
-            if e["status"] in UNDOCUMENTED_ROUTE_STATUSES:
+            if e["status"] in UNDOCUMENTED_ROUTE_STATUSES or e["method"].upper() in FRAMEWORK_METHODS:
                 skipped += 1
                 continue
             errors.append("route: " + describe(ex))

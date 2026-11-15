@@ -106,7 +106,7 @@ class AttributeListPatchApiTest {
   }
 
   @Test
-  void 範囲外の位置は422() {
+  void 範囲外の位置は409() {
     createExpenseAttribute("固定費");
     Response list = fixedList();
     int size = list.<List<String>>path("expense_attributes.id").size();
@@ -115,7 +115,8 @@ class AttributeListPatchApiTest {
             List.of(move("/expense_attributes/" + size, "/expense_attributes/0")),
             list.header("ETag"))
         .then()
-        .statusCode(422)
+        .statusCode(409)
+        .contentType("application/problem+json")
         .body("detail", containsString("範囲外"));
   }
 
@@ -164,7 +165,7 @@ class AttributeListPatchApiTest {
   }
 
   @Test
-  void JSONPatch以外の形式は415で_配列でない本文は400() {
+  void JSONPatch以外の形式は415で受け付ける形式をAcceptPatchで示し_配列でない本文は400() {
     given()
         .contentType("application/json")
         .queryParam("category", "固定費")
@@ -172,7 +173,8 @@ class AttributeListPatchApiTest {
         .body(List.of())
         .patch("/v1/expense-attributes")
         .then()
-        .statusCode(415);
+        .statusCode(415)
+        .header("Accept-Patch", equalTo(JSON_PATCH));
     patchFixed(Map.of("op", "move"), "*").then().statusCode(400);
   }
 
@@ -208,5 +210,48 @@ class AttributeListPatchApiTest {
     assertEquals(
         id,
         given().get("/v1/income-attributes").<List<String>>path("income_attributes.id").getFirst());
+  }
+
+  @Test
+  void 操作で定義されていない項目は無視する() {
+    createExpenseAttribute("固定費");
+    createExpenseAttribute("固定費");
+    Response list = fixedList();
+    List<String> ids = list.path("expense_attributes.id");
+
+    patchFixed(
+            List.of(
+                Map.of(
+                    "op", "move",
+                    "from", "/expense_attributes/1",
+                    "path", "/expense_attributes/0",
+                    "value", "ignored",
+                    "comment", "ignored")),
+            list.header("ETag"))
+        .then()
+        .statusCode(204);
+    assertEquals(ids.get(1), fixedList().<List<String>>path("expense_attributes.id").getFirst());
+  }
+
+  @Test
+  void PATCHを受け付ける一覧のOPTIONSはAcceptPatchを返す() {
+    given()
+        .options("/v1/expense-attributes")
+        .then()
+        .header("Allow", containsString("PATCH"))
+        .header("Accept-Patch", equalTo(JSON_PATCH));
+    given().options("/v1/income-attributes").then().header("Accept-Patch", equalTo(JSON_PATCH));
+  }
+
+  @Test
+  void PATCHを受け付けないリソースにはAcceptPatchを付けない() {
+    given().options("/v1/expenses").then().header("Accept-Patch", nullValue());
+    given()
+        .contentType("text/plain")
+        .body("x")
+        .post("/v1/expenses")
+        .then()
+        .statusCode(415)
+        .header("Accept-Patch", nullValue());
   }
 }

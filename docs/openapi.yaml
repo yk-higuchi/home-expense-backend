@@ -155,6 +155,22 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
+    options:
+      tags:
+        - Expense Attributes
+      summary: 経費属性の一覧で使える操作を取得する
+      description: 使えるメソッドを Allow ヘッダーで、PATCH で受け付けるパッチの形式を Accept-Patch ヘッダーで返します（RFC 5789 §3.1）。
+      operationId: optionsExpenseAttributes
+      responses:
+        "200":
+          description: 成功
+          headers:
+            Accept-Patch:
+              $ref: '#/components/headers/AcceptPatch'
+            Allow:
+              $ref: '#/components/headers/Allow'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     patch:
       tags:
         - Expense Attributes
@@ -187,10 +203,12 @@ paths:
               $ref: '#/components/headers/ListETag'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "409":
+          $ref: '#/components/responses/PatchConflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
         "415":
-          $ref: '#/components/responses/UnsupportedMediaType'
+          $ref: '#/components/responses/UnsupportedPatchMediaType'
         "422":
           $ref: '#/components/responses/UnprocessablePatch'
         "428":
@@ -488,6 +506,22 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
+    options:
+      tags:
+        - Income Attributes
+      summary: 収入属性の一覧で使える操作を取得する
+      description: 使えるメソッドを Allow ヘッダーで、PATCH で受け付けるパッチの形式を Accept-Patch ヘッダーで返します（RFC 5789 §3.1）。
+      operationId: optionsIncomeAttributes
+      responses:
+        "200":
+          description: 成功
+          headers:
+            Accept-Patch:
+              $ref: '#/components/headers/AcceptPatch'
+            Allow:
+              $ref: '#/components/headers/Allow'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     patch:
       tags:
         - Income Attributes
@@ -511,10 +545,12 @@ paths:
               $ref: '#/components/headers/ListETag'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "409":
+          $ref: '#/components/responses/PatchConflict'
         "412":
           $ref: '#/components/responses/PreconditionFailed'
         "415":
-          $ref: '#/components/responses/UnsupportedMediaType'
+          $ref: '#/components/responses/UnsupportedPatchMediaType'
         "422":
           $ref: '#/components/responses/UnprocessablePatch'
         "428":
@@ -907,8 +943,8 @@ components:
         - expense_attributes
       type: object
     ExpenseAttributeMoveOperation:
-      additionalProperties: false
-      description: JSON Patch（RFC 6902）の move。`expense_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。
+      additionalProperties: true
+      description: JSON Patch（RFC 6902）の move。`expense_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。操作で定義されていない項目は無視します（RFC 6902 §4）。
       properties:
         from:
           description: 移動元の要素の JSON Pointer
@@ -1105,8 +1141,8 @@ components:
         - income_attributes
       type: object
     IncomeAttributeMoveOperation:
-      additionalProperties: false
-      description: JSON Patch（RFC 6902）の move。`income_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。
+      additionalProperties: true
+      description: JSON Patch（RFC 6902）の move。`income_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。操作で定義されていない項目は無視します（RFC 6902 §4）。
       properties:
         from:
           description: 移動元の要素の JSON Pointer
@@ -1357,6 +1393,17 @@ components:
             status: 404
             title: Not Found
             type: about:blank
+    PatchConflict:
+      description: 今の一覧に対して JSON Patch を適用できない（移動元・移動先の位置が範囲外。RFC 5789 §2.2 の Conflicting state）。最新の一覧を取得して再試行してください。
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: 移動元の位置 12 は範囲外です
+            status: 409
+            title: Conflict
+            type: about:blank
     PreconditionFailed:
       description: |
         `If-Match` の条件が偽になった（RFC 9110 §13.1.1）。指定したどの entity-tag も、現在の `ETag` と強い比較で一致しません（弱いタグは一致しません）。
@@ -1393,18 +1440,32 @@ components:
             title: Unprocessable Content
             type: about:blank
     UnprocessablePatch:
-      description: JSON Patch を適用できない（move 以外の操作、対象外のパス、範囲外の位置）。
+      description: JSON Patch を処理できない（move 以外の操作、対象外のパス）。
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
           example:
-            detail: 移動元の位置 12 は範囲外です
+            detail: JSON Patch は expense_attributes の要素を移動する move だけを指定できます
             status: 422
             title: Unprocessable Content
             type: about:blank
     UnsupportedMediaType:
-      description: リクエスト本文の形式が対応していない（PATCH は application/json-patch+json、それ以外は application/json）。
+      description: リクエスト本文が application/json で送られていない。
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: サポートされていないメディアタイプです
+            status: 415
+            title: Unsupported Media Type
+            type: about:blank
+    UnsupportedPatchMediaType:
+      description: リクエスト本文の形式が application/json-patch+json でない。受け付ける形式を Accept-Patch ヘッダーで返します（RFC 5789 §2.2）。
+      headers:
+        Accept-Patch:
+          $ref: '#/components/headers/AcceptPatch'
       content:
         application/problem+json:
           schema:
@@ -1488,6 +1549,18 @@ components:
         minimum: 1
         type: integer
   headers:
+    AcceptPatch:
+      description: PATCH で受け付けるパッチの形式（RFC 5789 §3.1）。
+      schema:
+        example: application/json-patch+json
+        maxLength: 64
+        type: string
+    Allow:
+      description: このリソースで使えるメソッド（RFC 9110 §10.2.1）。
+      schema:
+        example: GET, HEAD, OPTIONS, PATCH, POST
+        maxLength: 128
+        type: string
     ETag:
       description: |
         リソースのドキュメントのダイジェスト。ドキュメント（PUT の本文と同じ項目）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です（RFC 9110 §8.8.3）。

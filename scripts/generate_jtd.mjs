@@ -143,7 +143,8 @@ const convertObject = (schema, mode, where, stack) => {
 	if (Object.keys(optionalProperties).length > 0)
 		result.optionalProperties = optionalProperties;
 	if (Object.keys(result).length === 0) result.properties = {};
-	if (mode === "response") result.additionalProperties = true;
+	if (mode === "response" || schema.additionalProperties === true)
+		result.additionalProperties = true;
 	return result;
 };
 

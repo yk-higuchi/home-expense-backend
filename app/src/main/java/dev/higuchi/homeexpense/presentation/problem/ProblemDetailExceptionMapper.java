@@ -72,7 +72,7 @@ public class ProblemDetailExceptionMapper {
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapInvalidAttributeMoveException(
       InvalidAttributeMoveException e) {
-    return toResponse(422, "Unprocessable Content", e.getMessage());
+    return toResponse(Response.Status.CONFLICT, e.getMessage());
   }
 
   @ServerExceptionMapper
