@@ -2,14 +2,45 @@ extends:
   - [vacuum:oas, recommended]
   - [vacuum:owasp, all]
 rules:
-  owasp-string-restricted: off
-  owasp-rate-limit: off
-  owasp-define-error-responses-429: off
-  owasp-define-error-responses-401: off
-  owasp-define-error-responses-500: off
-  owasp-define-error-validation: off
-  owasp-security-hosts-https-oas3: off
-  operation-description: off
+  # --- 推奨セット外のルールを有効化（現状違反なし。退行防止） ---
+  operation-4xx-response: warn
+  post-response-success: warn
+  required-fields-defined: warn
+  operation-singular-tag: warn
+  openapi-tags: warn
+  tag-description: warn
+  oas3-server-trailing-slash: warn
+  oas3-host-not-example: warn
+  paths-specificity-order: info
+  info-license: info
+
+  # --- 命名規則: この API のプロパティ名は snake_case ---
+  camel-case-properties: off
+  snake-case-properties:
+    description: Schema property names must use snake_case
+    howToFix: Rename the property to snake_case (lowercase letters, digits and underscores), e.g. payment_date.
+    severity: error
+    recommended: true
+    formats: [oas3, oas3_1, oas3_2]
+    given: $.components.schemas..properties
+    then:
+      field: "@key"
+      function: casing
+      functionOptions:
+        type: snake
+
+  # --- 無効化 ---
   # 認証なしで運用している（Envoy Gateway の前段にも認証を置いていない）ため security 定義は不要
   owasp-protection-global-unsafe: off
   owasp-protection-global-unsafe-strict: off
+  owasp-protection-global-safe: off
+  # 認証・レート制限を行っていないため 401 / 429 は発生しない
+  owasp-define-error-responses-401: off
+  owasp-define-error-responses-429: off
+  owasp-rate-limit: off
+  # 名前・説明などの自由入力文字列は format / pattern / enum で限定できない
+  owasp-string-restricted: off
+  # servers はローカル開発用の http://localhost のみ
+  owasp-security-hosts-https-oas3: off
+  # タグは親子関係の順に並べている
+  openapi-tags-alphabetical: off
