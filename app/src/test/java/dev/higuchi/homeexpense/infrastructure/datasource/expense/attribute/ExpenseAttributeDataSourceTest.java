@@ -129,10 +129,10 @@ class ExpenseAttributeDataSourceTest {
 
     assertEquals(
         List.of(first.expenseAttributeIdentifier(), second.expenseAttributeIdentifier()),
-        sut.order(ExpenseCategory.固定費).identifiers());
+        sut.list(ExpenseCategory.固定費).identifiers());
     assertEquals(
         List.of(variable.expenseAttributeIdentifier()),
-        sut.order(ExpenseCategory.変動費).identifiers());
+        sut.list(ExpenseCategory.変動費).identifiers());
   }
 
   @Test
@@ -151,12 +151,12 @@ class ExpenseAttributeDataSourceTest {
             c.expenseAttributeIdentifier(),
             a.expenseAttributeIdentifier(),
             b.expenseAttributeIdentifier());
-    sut.reorder(new ExpenseAttributeOrder(ExpenseCategory.固定費, reordered));
+    sut.reorder(new ExpenseAttributeList(ExpenseCategory.固定費, List.of(c, a, b)));
 
-    assertEquals(reordered, sut.order(ExpenseCategory.固定費).identifiers());
+    assertEquals(reordered, sut.list(ExpenseCategory.固定費).identifiers());
     assertEquals(
         List.of(variable.expenseAttributeIdentifier()),
-        sut.order(ExpenseCategory.変動費).identifiers());
+        sut.list(ExpenseCategory.変動費).identifiers());
     assertDoesNotThrow(() -> sut.verifyDigest(a, ExpectedDigest.of(a.digest())));
   }
 
@@ -166,10 +166,7 @@ class ExpenseAttributeDataSourceTest {
     ExpenseAttribute b = createAttribute("通信", ExpenseCategory.固定費);
     sut.register(a);
     sut.register(b);
-    sut.reorder(
-        new ExpenseAttributeOrder(
-            ExpenseCategory.固定費,
-            List.of(b.expenseAttributeIdentifier(), a.expenseAttributeIdentifier())));
+    sut.reorder(new ExpenseAttributeList(ExpenseCategory.固定費, List.of(b, a)));
     ExpenseAttribute c = createAttribute("保険", ExpenseCategory.固定費);
     sut.register(c);
 
@@ -178,7 +175,7 @@ class ExpenseAttributeDataSourceTest {
             b.expenseAttributeIdentifier(),
             a.expenseAttributeIdentifier(),
             c.expenseAttributeIdentifier()),
-        sut.order(ExpenseCategory.固定費).identifiers());
+        sut.list(ExpenseCategory.固定費).identifiers());
   }
 
   private ExpenseAttribute createAttribute(String name, ExpenseCategory category) {

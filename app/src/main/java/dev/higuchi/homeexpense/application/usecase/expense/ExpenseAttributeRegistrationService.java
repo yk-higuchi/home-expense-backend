@@ -21,8 +21,8 @@ public class ExpenseAttributeRegistrationService {
   }
 
   public ExpenseAttributeIdentifier register(ExpenseAttributeRegistrationCommand command) {
-    if (expenseAttributeRepository.order(command.expenseCategory()).size()
-        >= ExpenseAttributeOrder.MAX_SIZE) {
+    if (expenseAttributeRepository.list(command.expenseCategory()).size()
+        >= ExpenseAttributeList.MAX_SIZE) {
       throw new ExpenseAttributeLimitExceededException(command.expenseCategory());
     }
     expenseAttributeNameUniqueness.assertUniqueForRegistration(

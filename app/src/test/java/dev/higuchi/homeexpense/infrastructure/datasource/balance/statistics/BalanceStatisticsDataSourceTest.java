@@ -9,14 +9,14 @@ import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.PaymentDate;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeList;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
-import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeOrder;
 import dev.higuchi.homeexpense.core.model.income.Income;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.ReceiveDate;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeList;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
-import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeOrder;
 import dev.higuchi.homeexpense.infrastructure.datasource.expense.ExpenseDataSource;
 import dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute.ExpenseAttributeDataSource;
 import dev.higuchi.homeexpense.infrastructure.datasource.income.IncomeDataSource;
@@ -154,9 +154,7 @@ class BalanceStatisticsDataSourceTest {
             new AttributeAmount(salary.incomeAttributeIdentifier().value(), "給与", 600000)),
         sut.search(new BalanceStatisticsCriteria(2026, null)).income().amounts());
 
-    incomeAttributeDataSource.reorder(
-        new IncomeAttributeOrder(
-            List.of(salary.incomeAttributeIdentifier(), side.incomeAttributeIdentifier())));
+    incomeAttributeDataSource.reorder(new IncomeAttributeList(List.of(salary, side)));
 
     assertEquals(
         List.of(
@@ -187,9 +185,7 @@ class BalanceStatisticsDataSourceTest {
         result.variableExpense().amounts());
 
     expenseAttributeDataSource.reorder(
-        new ExpenseAttributeOrder(
-            ExpenseCategory.固定費,
-            List.of(rent.expenseAttributeIdentifier(), insurance.expenseAttributeIdentifier())));
+        new ExpenseAttributeList(ExpenseCategory.固定費, List.of(rent, insurance)));
 
     assertEquals(
         List.of(

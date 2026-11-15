@@ -1,19 +1,26 @@
 package dev.higuchi.homeexpense.presentation.api.expense.attribute;
 
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeDeletionService;
+import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeListPatchService;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeRegistrationService;
-import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeReorderService;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeUpdateService;
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
-import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeOrder;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeList;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
 import dev.higuchi.homeexpense.presentation.api.IfMatchParser;
+import dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterException;
+import dev.higuchi.homeexpense.presentation.api.JsonPatchMoves;
+import dev.higuchi.homeexpense.presentation.api.JsonPatchOperation;
 import dev.higuchi.homeexpense.presentation.validation.ExpenseCategory;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
 import dev.higuchi.homeexpense.query.expense.attribute.ExpenseAttributeDetail;
 import dev.higuchi.homeexpense.query.expense.attribute.ExpenseAttributeSearchResultQuerier;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -33,28 +40,39 @@ public class ExpenseAttributeApi {
   ExpenseAttributeUpdateService expenseAttributeUpdateService;
 
   ExpenseAttributeDeletionService expenseAttributeDeletionService;
-  ExpenseAttributeReorderService expenseAttributeReorderService;
+  ExpenseAttributeListPatchService expenseAttributeListPatchService;
 
   public ExpenseAttributeApi(
       ExpenseAttributeRegistrationService expenseAttributeRegistrationService,
       ExpenseAttributeSearchResultQuerier expenseAttributeSearchResultQuerier,
       ExpenseAttributeUpdateService expenseAttributeUpdateService,
       ExpenseAttributeDeletionService expenseAttributeDeletionService,
-      ExpenseAttributeReorderService expenseAttributeReorderService) {
+      ExpenseAttributeListPatchService expenseAttributeListPatchService) {
     this.expenseAttributeRegistrationService = expenseAttributeRegistrationService;
     this.expenseAttributeSearchResultQuerier = expenseAttributeSearchResultQuerier;
     this.expenseAttributeUpdateService = expenseAttributeUpdateService;
     this.expenseAttributeDeletionService = expenseAttributeDeletionService;
-    this.expenseAttributeReorderService = expenseAttributeReorderService;
+    this.expenseAttributeListPatchService = expenseAttributeListPatchService;
   }
 
-  @PUT
-  @Path("order")
+  @PATCH
+  @Consumes(JsonPatchMoves.MEDIA_TYPE)
   @RunOnVirtualThread
-  public Response putOrder(
-      @Valid ExpenseAttributeOrderPutRequest request, @HeaderParam("If-Match") String ifMatch) {
+  public Response patch(
+      @QueryParam("category") @ExpenseCategory String category,
+      @NotNull(message = "JSON Patch の本文は必須です")
+          @Size(max = JsonPatchMoves.MAX_OPERATIONS, message = "操作は{max}件以内で指定してください")
+          List<JsonPatchOperation> operations,
+      @HeaderParam("If-Match") String ifMatch) {
+    if (category == null) {
+      throw new InvalidQueryParameterException("並べ替えではcategoryを指定してください");
+    }
+    var expectedDigest = IfMatchParser.parse(ifMatch);
     DocumentDigest digest =
-        expenseAttributeReorderService.reorder(request.toCommand(IfMatchParser.parse(ifMatch)));
+        expenseAttributeListPatchService.move(
+            dev.higuchi.homeexpense.core.model.expense.ExpenseCategory.valueOf(category),
+            JsonPatchMoves.parse(operations, "expense_attributes"),
+            expectedDigest);
     return Response.noContent().tag(digest.value()).build();
   }
 
@@ -95,17 +113,18 @@ public class ExpenseAttributeApi {
         Optional.ofNullable(category)
             .map(dev.higuchi.homeexpense.core.model.expense.ExpenseCategory::valueOf);
     List<ExpenseAttributeDetail> details = expenseAttributeSearchResultQuerier.list(filter);
-    Response.ResponseBuilder response = Response.ok(ExpenseAttributeGetListResponse.from(details));
-    filter.ifPresent(value ->
-        response.tag(
-            new ExpenseAttributeOrder(
-                    value,
-                    details.stream()
-                        .map(detail -> new ExpenseAttributeIdentifier(detail.id()))
-                        .toList())
-                .digest()
-                .value()));
-    return response.build();
+    String etag =
+        ExpenseAttributeList.digestOf(
+                details.stream()
+                    .map(detail ->
+                        new ExpenseAttribute(
+                            new ExpenseAttributeIdentifier(detail.id()),
+                            new ExpenseAttributeName(detail.name()),
+                            dev.higuchi.homeexpense.core.model.expense.ExpenseCategory.valueOf(
+                                detail.category())))
+                    .toList())
+            .value();
+    return Response.ok(ExpenseAttributeGetListResponse.from(details)).tag(etag).build();
   }
 
   @GET

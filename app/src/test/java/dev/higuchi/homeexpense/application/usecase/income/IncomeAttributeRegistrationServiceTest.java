@@ -35,7 +35,7 @@ class IncomeAttributeRegistrationServiceTest {
 
   @Test
   void 上限の件数まで登録でき_それを超えると例外() {
-    for (int i = 0; i < IncomeAttributeOrder.MAX_SIZE; i++) {
+    for (int i = 0; i < IncomeAttributeList.MAX_SIZE; i++) {
       sut.register(new IncomeAttributeName("収入" + i));
     }
 

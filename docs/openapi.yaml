@@ -103,7 +103,7 @@ paths:
       tags:
         - Expense Attributes
       summary: 経費属性の一覧を取得する
-      description: 経費属性を全件、並び順で返します（ページ送りはありません）。区分を指定した場合はその区分の並びを返し、並びの ETag を付けます。区分を指定しない場合は、固定費の並びのあとに変動費の並びを返します（ETag は付けません）。
+      description: 経費属性を全件、並び順で返します（ページ送りはありません）。区分を指定した場合はその区分の並びを、指定しない場合は固定費の並びのあとに変動費の並びを返します。一覧の ETag を付けます。
       operationId: getExpenseAttributes
       parameters:
         - description: 区分で絞り込む（並べ替えの画面では必ず指定する）
@@ -123,7 +123,7 @@ paths:
           description: 成功
           headers:
             ETag:
-              $ref: '#/components/headers/OrderETag'
+              $ref: '#/components/headers/ListETag'
         "400":
           $ref: '#/components/responses/BadRequest'
         "500":
@@ -155,28 +155,36 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
-  /v1/expense-attributes/order:
-    put:
+    patch:
       tags:
         - Expense Attributes
       summary: 経費属性を並べ替える
-      description: 区分ごとの経費属性の並びを、送った並びで置き換えます。一覧（区分を指定）で受け取った並びの ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
+      description: 区分を指定した経費属性の一覧に、JSON Patch（RFC 6902）の move を適用して並べ替えます。一覧で受け取った ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
       operationId: reorderExpenseAttributes
       parameters:
+        - description: 並べ替える区分
+          in: query
+          name: category
+          required: true
+          schema:
+            enum:
+              - 固定費
+              - 変動費
+            type: string
         - $ref: '#/components/parameters/IfMatch'
       requestBody:
         content:
-          application/json:
+          application/json-patch+json:
             schema:
-              $ref: '#/components/schemas/ExpenseAttributeOrderPutRequest'
-        description: 新しい並び
+              $ref: '#/components/schemas/ExpenseAttributeListPatchRequest'
+        description: 移動の一覧
         required: true
       responses:
         "204":
           description: 並べ替えた
           headers:
             ETag:
-              $ref: '#/components/headers/OrderETag'
+              $ref: '#/components/headers/ListETag'
         "400":
           $ref: '#/components/responses/BadRequest'
         "412":
@@ -184,7 +192,7 @@ paths:
         "415":
           $ref: '#/components/responses/UnsupportedMediaType'
         "422":
-          $ref: '#/components/responses/OrderMismatch'
+          $ref: '#/components/responses/UnprocessablePatch'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
         "500":
@@ -439,7 +447,7 @@ paths:
       tags:
         - Income Attributes
       summary: 収入属性の一覧を取得する
-      description: 収入属性を全件、並び順で返します（ページ送りはありません）。並びの ETag を付けます。
+      description: 収入属性を全件、並び順で返します（ページ送りはありません）。一覧の ETag を付けます。
       operationId: getIncomeAttributes
       responses:
         "200":
@@ -450,7 +458,7 @@ paths:
           description: 成功
           headers:
             ETag:
-              $ref: '#/components/headers/OrderETag'
+              $ref: '#/components/headers/ListETag'
         "500":
           $ref: '#/components/responses/InternalServerError'
     post:
@@ -480,28 +488,27 @@ paths:
           $ref: '#/components/responses/UnsupportedMediaType'
         "500":
           $ref: '#/components/responses/InternalServerError'
-  /v1/income-attributes/order:
-    put:
+    patch:
       tags:
         - Income Attributes
       summary: 収入属性を並べ替える
-      description: 収入属性の並びを、送った並びで置き換えます。一覧で受け取った並びの ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
+      description: 収入属性の一覧に、JSON Patch（RFC 6902）の move を適用して並べ替えます。一覧で受け取った ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
       operationId: reorderIncomeAttributes
       parameters:
         - $ref: '#/components/parameters/IfMatch'
       requestBody:
         content:
-          application/json:
+          application/json-patch+json:
             schema:
-              $ref: '#/components/schemas/IncomeAttributeOrderPutRequest'
-        description: 新しい並び
+              $ref: '#/components/schemas/IncomeAttributeListPatchRequest'
+        description: 移動の一覧
         required: true
       responses:
         "204":
           description: 並べ替えた
           headers:
             ETag:
-              $ref: '#/components/headers/OrderETag'
+              $ref: '#/components/headers/ListETag'
         "400":
           $ref: '#/components/responses/BadRequest'
         "412":
@@ -509,7 +516,7 @@ paths:
         "415":
           $ref: '#/components/responses/UnsupportedMediaType'
         "422":
-          $ref: '#/components/responses/OrderMismatch'
+          $ref: '#/components/responses/UnprocessablePatch'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
         "500":
@@ -883,6 +890,12 @@ components:
         - name
         - category
       type: object
+    ExpenseAttributeListPatchRequest:
+      description: 移動の一覧。前から順に適用します。
+      items:
+        $ref: '#/components/schemas/ExpenseAttributeMoveOperation'
+      maxItems: 100
+      type: array
     ExpenseAttributeListResponse:
       properties:
         expense_attributes:
@@ -893,29 +906,29 @@ components:
       required:
         - expense_attributes
       type: object
-    ExpenseAttributeOrderPutRequest:
+    ExpenseAttributeMoveOperation:
       additionalProperties: false
-      description: 並びの全体。その区分に今ある経費属性の ID を、すべて 1 回ずつ並べます。
+      description: JSON Patch（RFC 6902）の move。`expense_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。
       properties:
-        category:
-          description: 並べ替える区分
-          enum:
-            - 固定費
-            - 変動費
+        from:
+          description: 移動元の要素の JSON Pointer
+          maxLength: 40
+          pattern: ^/expense_attributes/(0|[1-9][0-9]{0,8})$
           type: string
-        ids:
-          description: 並べたい順の経費属性の ID
-          items:
-            format: uuid
-            maxLength: 36
-            pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
-            type: string
-          maxItems: 100
-          type: array
-          uniqueItems: true
+        op:
+          description: 操作（move だけを受け付けます）
+          enum:
+            - move
+          type: string
+        path:
+          description: 移動先の位置の JSON Pointer
+          maxLength: 40
+          pattern: ^/expense_attributes/(0|[1-9][0-9]{0,8}|-)$
+          type: string
       required:
-        - category
-        - ids
+        - op
+        - from
+        - path
       type: object
     ExpenseAttributePostRequest:
       additionalProperties: false
@@ -1075,6 +1088,12 @@ components:
         - id
         - name
       type: object
+    IncomeAttributeListPatchRequest:
+      description: 移動の一覧。前から順に適用します。
+      items:
+        $ref: '#/components/schemas/IncomeAttributeMoveOperation'
+      maxItems: 100
+      type: array
     IncomeAttributeListResponse:
       properties:
         income_attributes:
@@ -1085,22 +1104,29 @@ components:
       required:
         - income_attributes
       type: object
-    IncomeAttributeOrderPutRequest:
+    IncomeAttributeMoveOperation:
       additionalProperties: false
-      description: 並びの全体。今ある収入属性の ID を、すべて 1 回ずつ並べます。
+      description: JSON Patch（RFC 6902）の move。`income_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。
       properties:
-        ids:
-          description: 並べたい順の収入属性の ID
-          items:
-            format: uuid
-            maxLength: 36
-            pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
-            type: string
-          maxItems: 100
-          type: array
-          uniqueItems: true
+        from:
+          description: 移動元の要素の JSON Pointer
+          maxLength: 40
+          pattern: ^/income_attributes/(0|[1-9][0-9]{0,8})$
+          type: string
+        op:
+          description: 操作（move だけを受け付けます）
+          enum:
+            - move
+          type: string
+        path:
+          description: 移動先の位置の JSON Pointer
+          maxLength: 40
+          pattern: ^/income_attributes/(0|[1-9][0-9]{0,8}|-)$
+          type: string
       required:
-        - ids
+        - op
+        - from
+        - path
       type: object
     IncomeAttributePostRequest:
       additionalProperties: false
@@ -1331,17 +1357,6 @@ components:
             status: 404
             title: Not Found
             type: about:blank
-    OrderMismatch:
-      description: '`ids` が今の属性の並びと一致しない（足りない・余分・存在しない ID がある）。最新の一覧を取得して再試行してください。'
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ProblemDetail'
-          example:
-            detail: idsが今の経費属性の並びと一致しません。最新の一覧を取得して再試行してください
-            status: 422
-            title: Unprocessable Content
-            type: about:blank
     PreconditionFailed:
       description: |
         `If-Match` の条件が偽になった（RFC 9110 §13.1.1）。指定したどの entity-tag も、現在の `ETag` と強い比較で一致しません（弱いタグは一致しません）。
@@ -1377,8 +1392,19 @@ components:
             status: 422
             title: Unprocessable Content
             type: about:blank
+    UnprocessablePatch:
+      description: JSON Patch を適用できない（move 以外の操作、対象外のパス、範囲外の位置）。
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: 移動元の位置 12 は範囲外です
+            status: 422
+            title: Unprocessable Content
+            type: about:blank
     UnsupportedMediaType:
-      description: リクエスト本文が application/json で送られていない。
+      description: リクエスト本文の形式が対応していない（PATCH は application/json-patch+json、それ以外は application/json）。
       content:
         application/problem+json:
           schema:
@@ -1413,7 +1439,7 @@ components:
       name: If-Match
       in: header
       description: |
-        個別取得のレスポンスの `ETag` ヘッダー（並べ替えでは一覧の並びの `ETag`）で受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
+        個別取得または一覧のレスポンスの `ETag` ヘッダーで受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
         `*`（条件なし）または `"<ETag>", "<ETag>"` のようなカンマ区切りの一覧を指定できます。
         ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 になります。
       required: true
@@ -1476,19 +1502,19 @@ components:
       schema:
         maxLength: 2048
         type: string
-    Location:
-      description: 登録したリソースの URI
-      schema:
-        maxLength: 2048
-        type: string
-    OrderETag:
+    ListETag:
       description: |
-        並びのダイジェスト。並べ替えの PUT の本文と同じ形のドキュメント（経費属性は `{"category", "ids"}`、収入属性は `{"ids"}`）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です。
-        並べ替え・登録・削除で変わります。並べ替えの PUT では、この値を `If-Match` に指定します。
+        一覧の本文のダイジェスト。レスポンスの本文を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です。
+        並べ替え・登録・削除・名前の変更で変わります。並べ替えの PATCH では、この値を `If-Match` に指定します。
       schema:
         example: '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
         maxLength: 45
         pattern: ^"[A-Za-z0-9_-]{43}"$
+        type: string
+    Location:
+      description: 登録したリソースの URI
+      schema:
+        maxLength: 2048
         type: string
 tags:
   - name: Balance

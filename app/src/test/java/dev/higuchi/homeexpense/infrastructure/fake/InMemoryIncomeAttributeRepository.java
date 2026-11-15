@@ -62,24 +62,20 @@ public class InMemoryIncomeAttributeRepository implements IncomeAttributeReposit
   }
 
   @Override
-  public IncomeAttributeOrder order() {
-    return new IncomeAttributeOrder(
-        store.values().stream()
-            .map(Stored::entity)
-            .map(IncomeAttribute::incomeAttributeIdentifier)
-            .toList());
+  public IncomeAttributeList list() {
+    return new IncomeAttributeList(store.values().stream().map(Stored::entity).toList());
   }
 
   @Override
-  public void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest) {
+  public void verifyList(IncomeAttributeList current, ExpectedDigest expectedDigest) {
     if (!expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void reorder(IncomeAttributeOrder order) {
-    for (IncomeAttributeIdentifier id : order.identifiers()) {
+  public void reorder(IncomeAttributeList list) {
+    for (IncomeAttributeIdentifier id : list.identifiers()) {
       Stored stored = store.remove(id.value());
       if (stored != null) {
         store.put(id.value(), stored);

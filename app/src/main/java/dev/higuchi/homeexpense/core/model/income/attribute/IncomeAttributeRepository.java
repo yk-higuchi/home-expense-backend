@@ -19,9 +19,9 @@ public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
 
   void delete(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest);
 
-  IncomeAttributeOrder order();
+  IncomeAttributeList list();
 
-  void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest);
+  void verifyList(IncomeAttributeList current, ExpectedDigest expectedDigest);
 
-  void reorder(IncomeAttributeOrder order);
+  void reorder(IncomeAttributeList list);
 }

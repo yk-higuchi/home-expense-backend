@@ -20,9 +20,9 @@ public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
 
   void delete(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
 
-  ExpenseAttributeOrder order(ExpenseCategory category);
+  ExpenseAttributeList list(ExpenseCategory category);
 
-  void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest);
+  void verifyList(ExpenseAttributeList current, ExpectedDigest expectedDigest);
 
-  void reorder(ExpenseAttributeOrder order);
+  void reorder(ExpenseAttributeList list);
 }

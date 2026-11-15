@@ -2,24 +2,24 @@ package dev.higuchi.homeexpense.presentation.problem;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import dev.higuchi.homeexpense.core.model.InvalidAttributeMoveException;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseNotFoundException;
 import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeLimitExceededException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeNotFoundException;
-import dev.higuchi.homeexpense.core.model.expense.attribute.InvalidExpenseAttributeOrderException;
 import dev.higuchi.homeexpense.core.model.income.InvalidIncomeAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeAlreadyExistsException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeLimitExceededException;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeNotFoundException;
-import dev.higuchi.homeexpense.core.model.income.attribute.InvalidIncomeAttributeOrderException;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.DataAccessException;
 import dev.higuchi.homeexpense.presentation.api.InvalidIfMatchHeaderException;
 import dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterException;
 import dev.higuchi.homeexpense.presentation.api.PreconditionRequiredException;
+import dev.higuchi.homeexpense.presentation.api.UnsupportedJsonPatchException;
 import dev.higuchi.homeexpense.query.InvalidQueryCriteriaException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
@@ -70,15 +70,15 @@ public class ProblemDetailExceptionMapper {
   }
 
   @ServerExceptionMapper
-  public RestResponse<ProblemDetail> mapInvalidExpenseAttributeOrderException(
-      InvalidExpenseAttributeOrderException e) {
-    return toResponse(422, "Unprocessable Content", "idsが今の経費属性の並びと一致しません。最新の一覧を取得して再試行してください");
+  public RestResponse<ProblemDetail> mapInvalidAttributeMoveException(
+      InvalidAttributeMoveException e) {
+    return toResponse(422, "Unprocessable Content", e.getMessage());
   }
 
   @ServerExceptionMapper
-  public RestResponse<ProblemDetail> mapInvalidIncomeAttributeOrderException(
-      InvalidIncomeAttributeOrderException e) {
-    return toResponse(422, "Unprocessable Content", "idsが今の収入属性の並びと一致しません。最新の一覧を取得して再試行してください");
+  public RestResponse<ProblemDetail> mapUnsupportedJsonPatchException(
+      UnsupportedJsonPatchException e) {
+    return toResponse(422, "Unprocessable Content", e.getMessage());
   }
 
   @ServerExceptionMapper

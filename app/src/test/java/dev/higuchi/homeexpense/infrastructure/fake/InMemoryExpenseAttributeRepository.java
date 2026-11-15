@@ -66,26 +66,25 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   }
 
   @Override
-  public ExpenseAttributeOrder order(ExpenseCategory category) {
-    return new ExpenseAttributeOrder(
+  public ExpenseAttributeList list(ExpenseCategory category) {
+    return new ExpenseAttributeList(
         category,
         store.values().stream()
             .map(Stored::entity)
             .filter(e -> e.expenseCategory() == category)
-            .map(ExpenseAttribute::expenseAttributeIdentifier)
             .toList());
   }
 
   @Override
-  public void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest) {
+  public void verifyList(ExpenseAttributeList current, ExpectedDigest expectedDigest) {
     if (!expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void reorder(ExpenseAttributeOrder order) {
-    for (ExpenseAttributeIdentifier id : order.identifiers()) {
+  public void reorder(ExpenseAttributeList list) {
+    for (ExpenseAttributeIdentifier id : list.identifiers()) {
       Stored stored = store.remove(id.value());
       if (stored != null) {
         store.put(id.value(), stored);

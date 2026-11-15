@@ -181,16 +181,16 @@ class IncomeAttributeDataSourceTest {
             a.incomeAttributeIdentifier(),
             b.incomeAttributeIdentifier(),
             c.incomeAttributeIdentifier()),
-        sut.order().identifiers());
+        sut.list().identifiers());
 
     List<IncomeAttributeIdentifier> reordered =
         List.of(
             b.incomeAttributeIdentifier(),
             c.incomeAttributeIdentifier(),
             a.incomeAttributeIdentifier());
-    sut.reorder(new IncomeAttributeOrder(reordered));
+    sut.reorder(new IncomeAttributeList(List.of(b, c, a)));
 
-    assertEquals(reordered, sut.order().identifiers());
+    assertEquals(reordered, sut.list().identifiers());
   }
 
   private IncomeAttribute createAttribute(String name) {

@@ -1,18 +1,24 @@
 package dev.higuchi.homeexpense.presentation.api.income.attribute;
 
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeDeletionService;
+import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeListPatchService;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeRegistrationService;
-import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeReorderService;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeUpdateService;
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
-import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeOrder;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeList;
+import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
 import dev.higuchi.homeexpense.presentation.api.IfMatchParser;
+import dev.higuchi.homeexpense.presentation.api.JsonPatchMoves;
+import dev.higuchi.homeexpense.presentation.api.JsonPatchOperation;
 import dev.higuchi.homeexpense.presentation.validation.UuidFormat;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeDetail;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeSearchResultQuerier;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -30,28 +36,33 @@ public class IncomeAttributeApi {
   IncomeAttributeUpdateService incomeAttributeUpdateService;
   IncomeAttributeDeletionService incomeAttributeDeletionService;
   IncomeAttributeSearchResultQuerier incomeAttributeSearchResultQuerier;
-  IncomeAttributeReorderService incomeAttributeReorderService;
+  IncomeAttributeListPatchService incomeAttributeListPatchService;
 
   public IncomeAttributeApi(
       IncomeAttributeRegistrationService incomeAttributeRegistrationService,
       IncomeAttributeUpdateService incomeAttributeUpdateService,
       IncomeAttributeDeletionService incomeAttributeDeletionService,
       IncomeAttributeSearchResultQuerier incomeAttributeSearchResultQuerier,
-      IncomeAttributeReorderService incomeAttributeReorderService) {
+      IncomeAttributeListPatchService incomeAttributeListPatchService) {
     this.incomeAttributeRegistrationService = incomeAttributeRegistrationService;
     this.incomeAttributeUpdateService = incomeAttributeUpdateService;
     this.incomeAttributeDeletionService = incomeAttributeDeletionService;
     this.incomeAttributeSearchResultQuerier = incomeAttributeSearchResultQuerier;
-    this.incomeAttributeReorderService = incomeAttributeReorderService;
+    this.incomeAttributeListPatchService = incomeAttributeListPatchService;
   }
 
-  @PUT
-  @Path("order")
+  @PATCH
+  @Consumes(JsonPatchMoves.MEDIA_TYPE)
   @RunOnVirtualThread
-  public Response putOrder(
-      @Valid IncomeAttributeOrderPutRequest request, @HeaderParam("If-Match") String ifMatch) {
+  public Response patch(
+      @NotNull(message = "JSON Patch の本文は必須です")
+          @Size(max = JsonPatchMoves.MAX_OPERATIONS, message = "操作は{max}件以内で指定してください")
+          List<JsonPatchOperation> operations,
+      @HeaderParam("If-Match") String ifMatch) {
+    var expectedDigest = IfMatchParser.parse(ifMatch);
     DocumentDigest digest =
-        incomeAttributeReorderService.reorder(request.toCommand(IfMatchParser.parse(ifMatch)));
+        incomeAttributeListPatchService.move(
+            JsonPatchMoves.parse(operations, "income_attributes"), expectedDigest);
     return Response.noContent().tag(digest.value()).build();
   }
 
@@ -90,8 +101,13 @@ public class IncomeAttributeApi {
   public Response list() {
     List<IncomeAttributeDetail> details = incomeAttributeSearchResultQuerier.list();
     String etag =
-        new IncomeAttributeOrder(
-                details.stream().map(detail -> new IncomeAttributeIdentifier(detail.id())).toList())
+        new IncomeAttributeList(
+                details.stream()
+                    .map(detail ->
+                        new IncomeAttribute(
+                            new IncomeAttributeIdentifier(detail.id()),
+                            new IncomeAttributeName(detail.name())))
+                    .toList())
             .digest()
             .value();
     return Response.ok(IncomeAttributeGetListResponse.from(details)).tag(etag).build();

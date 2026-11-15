@@ -97,34 +97,34 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   }
 
   @Override
-  public ExpenseAttributeOrder order(ExpenseCategory category) {
-    List<ExpenseAttributeIdentifier> identifiers =
+  public ExpenseAttributeList list(ExpenseCategory category) {
+    return new ExpenseAttributeList(
+        category,
         jdbc.queryForList(
             """
-            SELECT id FROM expense.attribute
+            SELECT id, category, name FROM expense.attribute
             WHERE category = ?
             ORDER BY sort_order, id
             FOR UPDATE
             """,
             ParameterBinder.of(category.name()),
-            rs -> new ExpenseAttributeIdentifier(rs.getString("id")));
-    return new ExpenseAttributeOrder(category, identifiers);
+            ExpenseAttributeDataSource::mapExpenseAttribute));
   }
 
   @Override
-  public void verifyOrder(ExpenseAttributeOrder current, ExpectedDigest expectedDigest) {
+  public void verifyList(ExpenseAttributeList current, ExpectedDigest expectedDigest) {
     if (!expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void reorder(ExpenseAttributeOrder order) {
-    List<ExpenseAttributeIdentifier> identifiers = order.identifiers();
+  public void reorder(ExpenseAttributeList list) {
+    List<ExpenseAttributeIdentifier> identifiers = list.identifiers();
     for (int i = 0; i < identifiers.size(); i++) {
       jdbc.update(
           "UPDATE expense.attribute SET sort_order = ? WHERE id = ? AND category = ?",
-          ParameterBinder.of(i + 1, identifiers.get(i).value(), order.category().name()));
+          ParameterBinder.of(i + 1, identifiers.get(i).value(), list.category().name()));
     }
   }
 

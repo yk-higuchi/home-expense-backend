@@ -88,24 +88,24 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
   }
 
   @Override
-  public IncomeAttributeOrder order() {
-    return new IncomeAttributeOrder(
+  public IncomeAttributeList list() {
+    return new IncomeAttributeList(
         jdbc.queryForList(
-            "SELECT id FROM expense.income_attribute ORDER BY sort_order, id FOR UPDATE",
+            "SELECT id, name FROM expense.income_attribute ORDER BY sort_order, id FOR UPDATE",
             ParameterBinder.EMPTY,
-            rs -> new IncomeAttributeIdentifier(rs.getString("id"))));
+            IncomeAttributeDataSource::mapIncomeAttribute));
   }
 
   @Override
-  public void verifyOrder(IncomeAttributeOrder current, ExpectedDigest expectedDigest) {
+  public void verifyList(IncomeAttributeList current, ExpectedDigest expectedDigest) {
     if (!expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void reorder(IncomeAttributeOrder order) {
-    List<IncomeAttributeIdentifier> identifiers = order.identifiers();
+  public void reorder(IncomeAttributeList list) {
+    List<IncomeAttributeIdentifier> identifiers = list.identifiers();
     for (int i = 0; i < identifiers.size(); i++) {
       jdbc.update(
           "UPDATE expense.income_attribute SET sort_order = ? WHERE id = ?",

@@ -44,7 +44,12 @@ def media_type(content_type):
 def main(spec_path, exchanges_path):
     openapi = OpenAPI.from_file_path(
         spec_path,
-        config=Config(extra_media_type_deserializers={"application/problem+json": json.loads}),
+        config=Config(
+            extra_media_type_deserializers={
+                "application/problem+json": json.loads,
+                "application/json-patch+json": json.loads,
+            }
+        ),
     )
     with open(exchanges_path, encoding="utf-8") as f:
         exchanges = [json.loads(line) for line in f if line.strip()]

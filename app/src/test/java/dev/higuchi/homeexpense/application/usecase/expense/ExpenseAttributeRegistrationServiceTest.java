@@ -46,7 +46,7 @@ class ExpenseAttributeRegistrationServiceTest {
 
   @Test
   void 分類ごとに上限の件数まで登録でき_それを超えると例外() {
-    for (int i = 0; i < ExpenseAttributeOrder.MAX_SIZE; i++) {
+    for (int i = 0; i < ExpenseAttributeList.MAX_SIZE; i++) {
       sut.register(
           new ExpenseAttributeRegistrationCommand(
               new ExpenseAttributeName("固定" + i), ExpenseCategory.固定費));
