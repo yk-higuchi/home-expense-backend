@@ -21,6 +21,10 @@ CD は、バージョンと元のコミットの SHA を指定して手動でも
 
 データベースのマイグレーションは、リリースとは別に Flyway CLI で `flyway/migration` を適用します（マイグレーション用のイメージは作りません）。本番の CockroachDB v26.2 には Flyway 13 以上が必要です。
 
+- 本番に当たっているのは V1.1.0 までです。2.1.0 に必要な変更は `V1.2.0__migrate_to_2_1.sql` 1 つにまとめています（本番のデータのダンプで、まとめる前の 7 段階と同じスキーマ・データになることを確認済み）。
+- V1.0.0〜V1.1.0 は本番に記録されたチェックサムと照合されるので、変更しないでください。適用済みのマイグレーションは書き換えず、変更は新しい版として追加します。
+- まとめる前の V1.2.0〜V1.8.0 を当てたローカルの DB は、Flyway がエラーにします。DB を作り直すか、`flyway clean` をしてから当て直してください。
+
 ## API 定義
 
 API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します。
@@ -51,7 +55,7 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   - 収入属性：`name`
 - ダイジェストは各テーブルの `document_digest` 列（SHA-256 の 32 バイト）に保存し、更新・削除の SQL の条件で照合します。内容が変わらない更新では値も変わりません。
 - 本文には版の情報を含めません。一覧から削除する場合は、確認の画面で個別取得をして内容と ETag を得てから削除します。
-- V1.7.0 のマイグレーションは、既存の行の `document_digest` を SQL で計算します。PostgreSQL では pgcrypto の拡張を使います（`CREATE EXTENSION IF NOT EXISTS pgcrypto` を実行できる権限が必要です）。
+- V1.2.0 のマイグレーションは、既存の行の `document_digest` を SQL で計算します。PostgreSQL では pgcrypto の拡張を使います（`CREATE EXTENSION IF NOT EXISTS pgcrypto` を実行できる権限が必要です）。
 
 ### 属性の並び順
 
@@ -81,7 +85,7 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 ## スクリプト
 
 - `scripts/local_development.sh`：ローカル開発用の PostgreSQL を起動し、ユーザー・データベース・スキーマを作って Flyway でマイグレーションする
-- `scripts/setup_test_db.sh`：テスト用の CockroachDB（本番と同じ版）を作り直し、テスト用のスキーマを読み込む
+- `scripts/setup_test_db.sh`：テスト用の CockroachDB（本番と同じ版）を作り直し、Flyway CLI で `flyway/migration` を当てる。テストは本番と同じマイグレーションで作ったスキーマで動くので、マイグレーションが最初から当たることも毎回確かめられる
   - `localhost:${TEST_DB_PORT}`（既定は 26257）で待ち受け、`%test` プロファイルの接続先と一致する
   - ローカルでは Apple の `container`、CI では `CONTAINER_CLI=docker` を指定して使う
 - `scripts/swagger_ui.sh`：`docs/openapi.yaml` を表示する Swagger UI を起動する
