@@ -102,4 +102,33 @@ class SpecConformanceApiTest {
         400,
         "monthを指定する場合はyearも指定してください");
   }
+
+  @Test
+  void リクエストに定義されていないプロパティは400() {
+    given()
+        .contentType("application/json")
+        .body("{\"name\":\"spec-" + UUID.randomUUID() + "\",\"category\":\"変動費\",\"extra\":1}")
+        .post("/v1/expense-attributes")
+        .then()
+        .statusCode(400)
+        .contentType("application/problem+json")
+        .body("status", equalTo(400))
+        .body("detail", equalTo("定義されていないプロパティが含まれています: extra"));
+  }
+
+  @Test
+  void 型が合わない値は400() {
+    given()
+        .contentType("application/json")
+        .body(
+            "{\"description\":\"x\",\"amount\":\"abc\",\"payment_date\":\"2026-02-01\",\"attribute_id\":\""
+                + expenseAttributeId()
+                + "\"}")
+        .post("/v1/expenses")
+        .then()
+        .statusCode(400)
+        .contentType("application/problem+json")
+        .body("status", equalTo(400))
+        .body("detail", equalTo("amountの値の形式が不正です"));
+  }
 }

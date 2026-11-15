@@ -59,6 +59,8 @@ paths:
           description: Successful response
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/balance-statistics:
     get:
       tags:
@@ -94,11 +96,14 @@ paths:
           description: Successful response
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/expense-attributes:
     get:
       tags:
         - Expense Attributes
       summary: Get list of expense attributes
+      description: Retrieve a paginated list of expense attributes, optionally filtered by category. Pagination links are returned in the Link header.
       operationId: getExpenseAttributes
       parameters:
         - description: Filter by category
@@ -123,16 +128,20 @@ paths:
               $ref: '#/components/headers/Link'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Expense Attributes
       summary: Create a new expense attribute
+      description: Create an expense attribute. The name must be unique within its category (409 otherwise). The URI of the created attribute is returned in the Location header.
       operationId: createExpenseAttribute
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePostRequest'
+        description: Expense attribute to create
         required: true
       responses:
         "201":
@@ -144,11 +153,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "409":
           $ref: '#/components/responses/Conflict'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/expense-attributes/{id}:
     get:
       tags:
         - Expense Attributes
       summary: Get expense attribute by ID
+      description: Retrieve an expense attribute. The ETag header carries its version for use in If-Match.
       operationId: getExpenseAttributeById
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -166,10 +178,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
         - Expense Attributes
       summary: Update an expense attribute
+      description: Rename an expense attribute (the category cannot be changed). Requires If-Match with the current ETag; the name must remain unique within its category.
       operationId: updateExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -179,6 +194,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePutRequest'
+        description: New name of the expense attribute
         required: true
       responses:
         "204":
@@ -193,10 +209,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Expense Attributes
       summary: Delete an expense attribute
+      description: Delete an expense attribute. Fails with 409 while any expense refers to it.
       operationId: deleteExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -209,6 +228,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         "409":
           $ref: '#/components/responses/Conflict'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/expenses:
     get:
       tags:
@@ -263,16 +284,20 @@ paths:
               $ref: '#/components/headers/Link'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Expenses
       summary: Create a new expense
+      description: Register an expense. attribute_id must refer to an existing expense attribute (422 otherwise). The URI of the created expense is returned in the Location header.
       operationId: createExpense
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePostRequest'
+        description: Expense to register
         required: true
       responses:
         "201":
@@ -284,11 +309,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/expenses/{id}:
     get:
       tags:
         - Expenses
       summary: Get expense by ID
+      description: Retrieve an expense with its attribute. The ETag header carries its version for use in If-Match.
       operationId: getExpenseById
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -306,10 +334,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
         - Expenses
       summary: Update an expense
+      description: Replace an expense. Requires If-Match with the current ETag; attribute_id must refer to an existing expense attribute.
       operationId: updateExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -319,6 +350,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePutRequest'
+        description: Full representation of the expense
         required: true
       responses:
         "204":
@@ -333,10 +365,13 @@ paths:
           $ref: '#/components/responses/UnprocessableContent'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Expenses
       summary: Delete an expense
+      description: Delete an expense.
       operationId: deleteExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -347,11 +382,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/income-attributes:
     get:
       tags:
         - Income Attributes
       summary: Get list of income attributes
+      description: Retrieve a paginated list of income attributes. Pagination links are returned in the Link header.
       operationId: getIncomeAttributes
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -368,16 +406,20 @@ paths:
               $ref: '#/components/headers/Link'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Income Attributes
       summary: Create a new income attribute
+      description: Create an income attribute. The name must be unique (409 otherwise). The URI of the created attribute is returned in the Location header.
       operationId: createIncomeAttribute
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomeAttributePostRequest'
+        description: Income attribute to create
         required: true
       responses:
         "201":
@@ -389,11 +431,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "409":
           $ref: '#/components/responses/Conflict'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/income-attributes/{id}:
     get:
       tags:
         - Income Attributes
       summary: Get income attribute by ID
+      description: Retrieve an income attribute. The ETag header carries its version for use in If-Match.
       operationId: getIncomeAttributeById
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -411,10 +456,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
         - Income Attributes
       summary: Update an income attribute
+      description: Rename an income attribute. Requires If-Match with the current ETag; the name must remain unique.
       operationId: updateIncomeAttribute
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -424,6 +472,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomeAttributePutRequest'
+        description: New name of the income attribute
         required: true
       responses:
         "204":
@@ -438,10 +487,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Income Attributes
       summary: Delete an income attribute
+      description: Delete an income attribute. Fails with 409 while any income refers to it.
       operationId: deleteIncomeAttribute
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -454,11 +506,14 @@ paths:
           $ref: '#/components/responses/NotFound'
         "409":
           $ref: '#/components/responses/Conflict'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/incomes:
     get:
       tags:
         - Incomes
       summary: Get list of incomes
+      description: Retrieve a paginated list of incomes, optionally filtered by year. Pagination links are returned in the Link header.
       operationId: getIncomes
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -483,16 +538,20 @@ paths:
               $ref: '#/components/headers/Link'
         "400":
           $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Incomes
       summary: Create a new income
+      description: Register an income. attribute_id must refer to an existing income attribute (422 otherwise). The URI of the created income is returned in the Location header.
       operationId: createIncome
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomePostRequest'
+        description: Income to register
         required: true
       responses:
         "201":
@@ -504,11 +563,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "422":
           $ref: '#/components/responses/UnprocessableContent'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /v1/incomes/{id}:
     get:
       tags:
         - Incomes
       summary: Get income by ID
+      description: Retrieve an income with its attribute. The ETag header carries its version for use in If-Match.
       operationId: getIncomeById
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -526,10 +588,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     put:
       tags:
         - Incomes
       summary: Update an income
+      description: Replace an income. Requires If-Match with the current ETag; attribute_id must refer to an existing income attribute.
       operationId: updateIncome
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -539,6 +604,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomePutRequest'
+        description: Full representation of the income
         required: true
       responses:
         "204":
@@ -553,10 +619,13 @@ paths:
           $ref: '#/components/responses/UnprocessableContent'
         "428":
           $ref: '#/components/responses/PreconditionRequired'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Incomes
       summary: Delete an income
+      description: Delete an income.
       operationId: deleteIncome
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -567,6 +636,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         "404":
           $ref: '#/components/responses/NotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
     AttributeAmountResponse:
@@ -726,6 +797,7 @@ components:
         - expense_attributes
       type: object
     ExpenseAttributePostRequest:
+      additionalProperties: false
       properties:
         category:
           enum:
@@ -742,6 +814,7 @@ components:
         - category
       type: object
     ExpenseAttributePutRequest:
+      additionalProperties: false
       description: The category of an expense attribute cannot be changed after creation.
       properties:
         name:
@@ -809,6 +882,7 @@ components:
         - expenses
       type: object
     ExpensePostRequest:
+      additionalProperties: false
       properties:
         amount:
           format: int32
@@ -838,6 +912,7 @@ components:
         - attribute_id
       type: object
     ExpensePutRequest:
+      additionalProperties: false
       properties:
         amount:
           format: int32
@@ -890,6 +965,7 @@ components:
         - income_attributes
       type: object
     IncomeAttributePostRequest:
+      additionalProperties: false
       properties:
         name:
           maxLength: 512
@@ -900,6 +976,7 @@ components:
         - name
       type: object
     IncomeAttributePutRequest:
+      additionalProperties: false
       properties:
         name:
           maxLength: 512
@@ -960,6 +1037,7 @@ components:
         - incomes
       type: object
     IncomePostRequest:
+      additionalProperties: false
       properties:
         amount:
           format: int32
@@ -989,6 +1067,7 @@ components:
         - attribute_id
       type: object
     IncomePutRequest:
+      additionalProperties: false
       properties:
         amount:
           format: int32
@@ -1091,6 +1170,17 @@ components:
             detail: 既に登録されています
             status: 409
             title: Conflict
+            type: about:blank
+    InternalServerError:
+      description: Unexpected server error. Details are not exposed; use trace_id to correlate with server logs.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          example:
+            detail: サーバ内部エラーが発生しました
+            status: 500
+            title: Internal Server Error
             type: about:blank
     NotFound:
       description: Resource not found

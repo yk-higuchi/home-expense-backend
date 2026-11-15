@@ -1,5 +1,7 @@
 package dev.higuchi.homeexpense.presentation.problem;
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseNotFoundException;
 import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeAlreadyExistsException;
@@ -163,6 +165,24 @@ public class ProblemDetailExceptionMapper {
   public RestResponse<ProblemDetail> mapNoSuchElementException(NoSuchElementException e) {
     LOG.error("ドメイン語彙外の値がAPI境界を越えて到達しました（入力検証漏れの可能性）", e);
     return toResponse(Response.Status.INTERNAL_SERVER_ERROR, "サーバ内部エラーが発生しました");
+  }
+
+  /**
+   * JSON 本文がリクエストのスキーマに合わない（未定義のプロパティ、型の不一致など）。Quarkus 既定のマッパーは application/json で返すため、Problem
+   * Details に揃える。
+   */
+  @ServerExceptionMapper
+  public RestResponse<ProblemDetail> mapMismatchedInputException(MismatchedInputException e) {
+    String field =
+        e.getPath().stream()
+            .map(
+                ref -> ref.getFieldName() != null ? ref.getFieldName() : "[" + ref.getIndex() + "]")
+            .collect(Collectors.joining("."));
+    String detail =
+        e instanceof UnrecognizedPropertyException unrecognized
+            ? "定義されていないプロパティが含まれています: " + unrecognized.getPropertyName()
+            : field.isEmpty() ? "リクエストの形式が不正です" : field + "の値の形式が不正です";
+    return toResponse(Response.Status.BAD_REQUEST, detail);
   }
 
   /**

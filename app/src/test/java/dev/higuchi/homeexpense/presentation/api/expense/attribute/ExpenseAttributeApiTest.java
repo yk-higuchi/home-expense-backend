@@ -76,7 +76,7 @@ class ExpenseAttributeApiTest {
         .header("If-Match", etag)
         .body(
             """
-            {"name": "テスト属性A更新", "category": "変動費"}
+            {"name": "テスト属性A更新"}
             """)
         .when()
         .put("/v1/expense-attributes/{id}", createdId)
@@ -140,7 +140,7 @@ class ExpenseAttributeApiTest {
         .header("If-Match", "\"1\"")
         .body(
             """
-            {"name": "テスト", "category": "変動費"}
+            {"name": "テスト"}
             """)
         .when()
         .put("/v1/expense-attributes/{id}", "00000000-0000-0000-0000-000000000000")
@@ -194,7 +194,7 @@ class ExpenseAttributeApiTest {
         .header("If-Match", "\"1\"")
         .body(
             """
-            {"name": "%s", "category": "変動費"}
+            {"name": "%s"}
             """
                 .formatted(longName))
         .when()
