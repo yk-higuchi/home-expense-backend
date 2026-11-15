@@ -2,7 +2,7 @@ openapi: 3.2.0
 info:
   title: Home Expense API
   description: |
-    API for managing home expenses and income.
+    家計の支出と収入を管理する API です。
   contact:
     name: API Support
   license:
@@ -11,18 +11,18 @@ info:
   version: 2.0.0 # x-release-please-version
 servers:
   - url: http://localhost:8080
-    description: Local development server
+    description: ローカル開発用サーバー
     x-internal: true
 paths:
   /v1/balance-series:
     get:
       tags:
         - Balance Series
-      summary: Get balance time series
-      description: Retrieve income, fixed expense, variable expense and net balance aggregated as a time series with the specified granularity. Each bucket covers the whole period that contains from / to (e.g. month granularity with from=2026-04-15 starts at 2026-04-01).
+      summary: 収支の時系列を取得する
+      description: 収入・固定費・変動費・収支差額を、指定した粒度の時系列で集計して返します。各区間は from / to を含む期間全体を対象にします（例：粒度が month で from=2026-04-15 の場合、最初の区間は 2026-04-01 から始まります）。
       operationId: getBalanceSeries
       parameters:
-        - description: Start date of the period (yyyy-MM-dd)
+        - description: 期間の開始日（yyyy-MM-dd）
           in: query
           name: from
           required: true
@@ -30,7 +30,7 @@ paths:
             format: date
             maxLength: 10
             type: string
-        - description: End date of the period (yyyy-MM-dd, inclusive)
+        - description: 期間の終了日（yyyy-MM-dd、この日を含む）
           in: query
           name: to
           required: true
@@ -38,7 +38,7 @@ paths:
             format: date
             maxLength: 10
             type: string
-        - description: Aggregation granularity
+        - description: 集計の粒度
           in: query
           name: granularity
           required: true
@@ -56,7 +56,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceSeriesResponse'
-          description: Successful response
+          description: 成功
         "400":
           $ref: '#/components/responses/BadRequest'
         "500":
@@ -65,11 +65,11 @@ paths:
     get:
       tags:
         - Balance Statistics
-      summary: Get balance statistics
-      description: Retrieve income and expense totals with per-attribute breakdowns for a year, or for a month when month is specified. Breakdowns are sorted by amount in descending order.
+      summary: 収支の統計を取得する
+      description: 指定した年（month を指定した場合はその月）の収入と支出の合計を、属性ごとの内訳とともに返します。内訳は金額の大きい順に並びます。
       operationId: getBalanceStatistics
       parameters:
-        - description: Target year
+        - description: 対象の年
           in: query
           name: year
           required: true
@@ -78,7 +78,7 @@ paths:
             maximum: 2200
             minimum: 1
             type: integer
-        - description: Target month. When omitted, the whole year is aggregated.
+        - description: 対象の月。省略すると 1 年分を集計します。
           in: query
           name: month
           required: false
@@ -93,7 +93,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceStatisticsResponse'
-          description: Successful response
+          description: 成功
         "400":
           $ref: '#/components/responses/BadRequest'
         "500":
@@ -102,11 +102,11 @@ paths:
     get:
       tags:
         - Expense Attributes
-      summary: Get list of expense attributes
-      description: Retrieve a paginated list of expense attributes, optionally filtered by category. Pagination links are returned in the Link header.
+      summary: 経費属性の一覧を取得する
+      description: 経費属性の一覧をページ単位で返します。区分で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
       operationId: getExpenseAttributes
       parameters:
-        - description: Filter by category
+        - description: 区分で絞り込む
           in: query
           name: category
           schema:
@@ -122,7 +122,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExpenseAttributeListResponse'
-          description: Successful response
+          description: 成功
           headers:
             Link:
               $ref: '#/components/headers/Link'
@@ -133,19 +133,19 @@ paths:
     post:
       tags:
         - Expense Attributes
-      summary: Create a new expense attribute
-      description: Create an expense attribute. The name must be unique within its category (409 otherwise). The URI of the created attribute is returned in the Location header.
+      summary: 経費属性を登録する
+      description: 経費属性を登録します。名前は区分の中で重複できません（重複時は 409）。登録した属性の URI は Location ヘッダーで返します。
       operationId: createExpenseAttribute
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePostRequest'
-        description: Expense attribute to create
+        description: 登録する経費属性
         required: true
       responses:
         "201":
-          description: Expense attribute created successfully
+          description: 経費属性を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -161,8 +161,8 @@ paths:
     get:
       tags:
         - Expense Attributes
-      summary: Get expense attribute by ID
-      description: Retrieve an expense attribute. The ETag header carries its version for use in If-Match.
+      summary: ID を指定して経費属性を取得する
+      description: 経費属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getExpenseAttributeById
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -172,7 +172,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExpenseAttributeGetResponse'
-          description: Successful response
+          description: 成功
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
@@ -185,8 +185,8 @@ paths:
     put:
       tags:
         - Expense Attributes
-      summary: Update an expense attribute
-      description: Rename an expense attribute (the category cannot be changed). Requires If-Match with the current ETag; the name must remain unique within its category.
+      summary: 経費属性を更新する
+      description: 経費属性の名前を変更します（区分は変更できません）。現在の ETag を If-Match に指定する必要があります。名前は区分の中で重複できません。
       operationId: updateExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -196,11 +196,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePutRequest'
-        description: New name of the expense attribute
+        description: 経費属性の新しい名前
         required: true
       responses:
         "204":
-          description: Expense attribute updated successfully
+          description: 経費属性を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -218,14 +218,14 @@ paths:
     delete:
       tags:
         - Expense Attributes
-      summary: Delete an expense attribute
-      description: Delete an expense attribute. Fails with 409 while any expense refers to it.
+      summary: 経費属性を削除する
+      description: 経費属性を削除します。この属性を参照している経費がある間は 409 になります。
       operationId: deleteExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
       responses:
         "204":
-          description: Expense attribute deleted successfully
+          description: 経費属性を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -238,13 +238,13 @@ paths:
     get:
       tags:
         - Expenses
-      summary: Get list of expenses
-      description: Retrieve a paginated list of expenses with optional filters
+      summary: 経費の一覧を取得する
+      description: 経費の一覧をページ単位で返します。条件で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
       operationId: getExpenses
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
-        - description: Filter by year
+        - description: 年で絞り込む
           in: query
           name: year
           schema:
@@ -252,7 +252,7 @@ paths:
             maximum: 2200
             minimum: 1
             type: integer
-        - description: Filter by month. Requires year (400 otherwise)
+        - description: 月で絞り込む。year の指定が必要です（ない場合は 400）
           in: query
           name: month
           schema:
@@ -260,7 +260,7 @@ paths:
             maximum: 12
             minimum: 1
             type: integer
-        - description: Filter by expense category
+        - description: 経費の区分で絞り込む
           in: query
           name: category
           schema:
@@ -268,7 +268,7 @@ paths:
               - 固定費
               - 変動費
             type: string
-        - description: Filter by expense attribute ID
+        - description: 経費属性の ID で絞り込む
           in: query
           name: attribute_id
           schema:
@@ -282,7 +282,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExpenseListResponse'
-          description: Successful response
+          description: 成功
           headers:
             Link:
               $ref: '#/components/headers/Link'
@@ -293,19 +293,19 @@ paths:
     post:
       tags:
         - Expenses
-      summary: Create a new expense
-      description: Register an expense. attribute_id must refer to an existing expense attribute (422 otherwise). The URI of the created expense is returned in the Location header.
+      summary: 経費を登録する
+      description: 経費を登録します。attribute_id には存在する経費属性を指定します（存在しない場合は 422）。登録した経費の URI は Location ヘッダーで返します。
       operationId: createExpense
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePostRequest'
-        description: Expense to register
+        description: 登録する経費
         required: true
       responses:
         "201":
-          description: Expense created successfully
+          description: 経費を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -321,8 +321,8 @@ paths:
     get:
       tags:
         - Expenses
-      summary: Get expense by ID
-      description: Retrieve an expense with its attribute. The ETag header carries its version for use in If-Match.
+      summary: ID を指定して経費を取得する
+      description: 経費を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getExpenseById
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -332,7 +332,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExpenseGetResponse'
-          description: Successful response
+          description: 成功
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
@@ -345,8 +345,8 @@ paths:
     put:
       tags:
         - Expenses
-      summary: Update an expense
-      description: Replace an expense. Requires If-Match with the current ETag; attribute_id must refer to an existing expense attribute.
+      summary: 経費を更新する
+      description: 経費を置き換えます。現在の ETag を If-Match に指定する必要があります。attribute_id には存在する経費属性を指定します。
       operationId: updateExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -356,11 +356,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePutRequest'
-        description: Full representation of the expense
+        description: 経費の全項目
         required: true
       responses:
         "204":
-          description: Expense updated successfully
+          description: 経費を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -378,14 +378,14 @@ paths:
     delete:
       tags:
         - Expenses
-      summary: Delete an expense
-      description: Delete an expense.
+      summary: 経費を削除する
+      description: 経費を削除します。
       operationId: deleteExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
       responses:
         "204":
-          description: Expense deleted successfully
+          description: 経費を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -396,8 +396,8 @@ paths:
     get:
       tags:
         - Income Attributes
-      summary: Get list of income attributes
-      description: Retrieve a paginated list of income attributes. Pagination links are returned in the Link header.
+      summary: 収入属性の一覧を取得する
+      description: 収入属性の一覧をページ単位で返します。ページ送りのリンクは Link ヘッダーで返します。
       operationId: getIncomeAttributes
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -408,7 +408,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IncomeAttributeListResponse'
-          description: Successful response
+          description: 成功
           headers:
             Link:
               $ref: '#/components/headers/Link'
@@ -419,19 +419,19 @@ paths:
     post:
       tags:
         - Income Attributes
-      summary: Create a new income attribute
-      description: Create an income attribute. The name must be unique (409 otherwise). The URI of the created attribute is returned in the Location header.
+      summary: 収入属性を登録する
+      description: 収入属性を登録します。名前は重複できません（重複時は 409）。登録した属性の URI は Location ヘッダーで返します。
       operationId: createIncomeAttribute
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomeAttributePostRequest'
-        description: Income attribute to create
+        description: 登録する収入属性
         required: true
       responses:
         "201":
-          description: Income attribute created successfully
+          description: 収入属性を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -447,8 +447,8 @@ paths:
     get:
       tags:
         - Income Attributes
-      summary: Get income attribute by ID
-      description: Retrieve an income attribute. The ETag header carries its version for use in If-Match.
+      summary: ID を指定して収入属性を取得する
+      description: 収入属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getIncomeAttributeById
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -458,7 +458,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IncomeAttributeGetResponse'
-          description: Successful response
+          description: 成功
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
@@ -471,8 +471,8 @@ paths:
     put:
       tags:
         - Income Attributes
-      summary: Update an income attribute
-      description: Rename an income attribute. Requires If-Match with the current ETag; the name must remain unique.
+      summary: 収入属性を更新する
+      description: 収入属性の名前を変更します。現在の ETag を If-Match に指定する必要があります。名前は重複できません。
       operationId: updateIncomeAttribute
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -482,11 +482,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomeAttributePutRequest'
-        description: New name of the income attribute
+        description: 収入属性の新しい名前
         required: true
       responses:
         "204":
-          description: Income attribute updated successfully
+          description: 収入属性を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -504,14 +504,14 @@ paths:
     delete:
       tags:
         - Income Attributes
-      summary: Delete an income attribute
-      description: Delete an income attribute. Fails with 409 while any income refers to it.
+      summary: 収入属性を削除する
+      description: 収入属性を削除します。この属性を参照している収入がある間は 409 になります。
       operationId: deleteIncomeAttribute
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
       responses:
         "204":
-          description: Income attribute deleted successfully
+          description: 収入属性を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -524,13 +524,13 @@ paths:
     get:
       tags:
         - Incomes
-      summary: Get list of incomes
-      description: Retrieve a paginated list of incomes, optionally filtered by year. Pagination links are returned in the Link header.
+      summary: 収入の一覧を取得する
+      description: 収入の一覧をページ単位で返します。年で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。
       operationId: getIncomes
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
-        - description: Filter by year
+        - description: 年で絞り込む
           in: query
           name: year
           schema:
@@ -544,7 +544,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IncomeListResponse'
-          description: Successful response
+          description: 成功
           headers:
             Link:
               $ref: '#/components/headers/Link'
@@ -555,19 +555,19 @@ paths:
     post:
       tags:
         - Incomes
-      summary: Create a new income
-      description: Register an income. attribute_id must refer to an existing income attribute (422 otherwise). The URI of the created income is returned in the Location header.
+      summary: 収入を登録する
+      description: 収入を登録します。attribute_id には存在する収入属性を指定します（存在しない場合は 422）。登録した収入の URI は Location ヘッダーで返します。
       operationId: createIncome
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomePostRequest'
-        description: Income to register
+        description: 登録する収入
         required: true
       responses:
         "201":
-          description: Income created successfully
+          description: 収入を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -583,8 +583,8 @@ paths:
     get:
       tags:
         - Incomes
-      summary: Get income by ID
-      description: Retrieve an income with its attribute. The ETag header carries its version for use in If-Match.
+      summary: ID を指定して収入を取得する
+      description: 収入を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getIncomeById
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -594,7 +594,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IncomeGetResponse'
-          description: Successful response
+          description: 成功
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
@@ -607,8 +607,8 @@ paths:
     put:
       tags:
         - Incomes
-      summary: Update an income
-      description: Replace an income. Requires If-Match with the current ETag; attribute_id must refer to an existing income attribute.
+      summary: 収入を更新する
+      description: 収入を置き換えます。現在の ETag を If-Match に指定する必要があります。attribute_id には存在する収入属性を指定します。
       operationId: updateIncome
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -618,11 +618,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IncomePutRequest'
-        description: Full representation of the income
+        description: 収入の全項目
         required: true
       responses:
         "204":
-          description: Income updated successfully
+          description: 収入を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -640,14 +640,14 @@ paths:
     delete:
       tags:
         - Incomes
-      summary: Delete an income
-      description: Delete an income.
+      summary: 収入を削除する
+      description: 収入を削除します。
       operationId: deleteIncome
       parameters:
         - $ref: '#/components/parameters/IncomeId'
       responses:
         "204":
-          description: Income deleted successfully
+          description: 収入を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -678,12 +678,12 @@ components:
     AttributeBreakdownResponse:
       properties:
         breakdown:
-          description: Per-attribute amounts sorted by amount in descending order. Attributes without data in the period are omitted.
+          description: 属性ごとの金額（金額の大きい順）。期間内にデータがない属性は含みません。
           items:
             $ref: '#/components/schemas/AttributeAmountResponse'
           type: array
         total:
-          description: Sum of breakdown amounts
+          description: 内訳の金額の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
@@ -695,25 +695,25 @@ components:
     BalanceSeriesPointResponse:
       properties:
         expense_total:
-          description: Sum of fixed_expense_total and variable_expense_total
+          description: fixed_expense_total と variable_expense_total の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
         fixed_expense_total:
-          description: Sum of fixed expenses in the bucket
+          description: 区間内の固定費の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
         income_total:
-          description: Sum of incomes in the bucket
+          description: 区間内の収入の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
           type: integer
         net:
-          description: Net balance, income_total minus expense_total (may be negative)
+          description: 収支差額。income_total から expense_total を引いた値（負になることがあります）
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
@@ -721,7 +721,7 @@ components:
         period:
           $ref: '#/components/schemas/PeriodResponse'
         variable_expense_total:
-          description: Sum of variable expenses in the bucket
+          description: 区間内の変動費の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
@@ -756,7 +756,7 @@ components:
     BalanceStatisticsResponse:
       properties:
         expense_total:
-          description: Sum of fixed_expense.total and variable_expense.total
+          description: fixed_expense.total と variable_expense.total の合計
           format: int64
           maximum: 1000000000000
           minimum: 0
@@ -766,7 +766,7 @@ components:
         income:
           $ref: '#/components/schemas/AttributeBreakdownResponse'
         net:
-          description: Net balance, income.total minus expense_total (may be negative)
+          description: 収支差額。income.total から expense_total を引いた値（負になることがあります）
           format: int64
           maximum: 1000000000000
           minimum: -1000000000000
@@ -831,7 +831,7 @@ components:
       type: object
     ExpenseAttributePutRequest:
       additionalProperties: false
-      description: The category of an expense attribute cannot be changed after creation.
+      description: 経費属性の区分は、登録後に変更できません。
       properties:
         name:
           maxLength: 512
@@ -1113,14 +1113,14 @@ components:
         - attribute_id
       type: object
     PeriodResponse:
-      description: Period with inclusive from and to dates
+      description: 期間（from と to の日付を含む）
       properties:
         from:
-          description: Inclusive start date
+          description: 開始日（この日を含む）
           format: date
           type: string
         to:
-          description: Inclusive end date
+          description: 終了日（この日を含む）
           format: date
           type: string
       required:
@@ -1128,33 +1128,33 @@ components:
         - to
       type: object
     ProblemDetail:
-      description: RFC 9457 Problem Details for HTTP APIs. `instance` is not returned; use `trace_id` to correlate an occurrence.
+      description: RFC 9457 の Problem Details 形式のエラー。`instance` は返しません。個々の発生を特定するには `trace_id` を使います。
       properties:
         detail:
-          description: A human-readable explanation specific to this occurrence of the problem
+          description: この発生に固有の、人が読むための説明
           example: descriptionは必須入力です
           maxLength: 1024
           type: string
         status:
-          description: The HTTP status code
+          description: HTTP ステータスコード
           example: 400
           format: int32
           maximum: 599
           minimum: 100
           type: integer
         title:
-          description: A short, human-readable summary of the problem type
+          description: 問題の種類を表す、人が読むための短い要約
           example: Bad Request
           maxLength: 256
           type: string
         trace_id:
-          description: W3C Trace Context trace-id of the request, for correlating the problem with server-side traces (extension member)
+          description: リクエストの W3C Trace Context の trace-id。サーバー側のトレースと突き合わせるために使います（拡張メンバー）
           example: 4bf92f3577b34da6a3ce929d0e0e4736
           maxLength: 32
           pattern: ^[0-9a-f]{32}$
           type: string
         type:
-          description: A URI reference that identifies the problem type
+          description: 問題の種類を識別する URI 参照
           example: about:blank
           format: uri
           maxLength: 2048
@@ -1166,7 +1166,7 @@ components:
       type: object
   responses:
     BadRequest:
-      description: Validation error
+      description: 入力が不正
       content:
         application/problem+json:
           schema:
@@ -1177,7 +1177,7 @@ components:
             title: Bad Request
             type: about:blank
     Conflict:
-      description: Resource conflict
+      description: リソースの競合
       content:
         application/problem+json:
           schema:
@@ -1188,7 +1188,7 @@ components:
             title: Conflict
             type: about:blank
     InternalServerError:
-      description: Unexpected server error. Details are not exposed; use trace_id to correlate with server logs.
+      description: 想定外のサーバーエラー。詳細は返しません。サーバーのログとの突き合わせには trace_id を使います。
       content:
         application/problem+json:
           schema:
@@ -1199,7 +1199,7 @@ components:
             title: Internal Server Error
             type: about:blank
     NotFound:
-      description: Resource not found
+      description: リソースが見つからない
       content:
         application/problem+json:
           schema:
@@ -1211,8 +1211,8 @@ components:
             type: about:blank
     PreconditionFailed:
       description: |
-        The `If-Match` condition evaluated to false (RFC 9110 §13.1.1): no listed entity-tag strongly matches the current `ETag` (weak tags never match).
-        The client should re-fetch the resource to obtain a fresh `ETag` and retry.
+        `If-Match` の条件が偽になった（RFC 9110 §13.1.1）。指定したどの entity-tag も、現在の `ETag` と強い比較で一致しません（弱いタグは一致しません）。
+        クライアントはリソースを取得し直して最新の `ETag` を得てから再試行してください。
       content:
         application/problem+json:
           schema:
@@ -1223,7 +1223,7 @@ components:
             title: Precondition Failed
             type: about:blank
     PreconditionRequired:
-      description: The `If-Match` header is missing (RFC 6585 §3). A malformed `If-Match` results in 400.
+      description: '`If-Match` ヘッダーがない（RFC 6585 §3）。`If-Match` の形式が不正な場合は 400 になります。'
       content:
         application/problem+json:
           schema:
@@ -1234,7 +1234,7 @@ components:
             title: Precondition Required
             type: about:blank
     UnprocessableContent:
-      description: The request refers to an attribute that does not exist (RFC 9110 §15.5.21).
+      description: 存在しない属性を参照している（RFC 9110 §15.5.21）。
       content:
         application/problem+json:
           schema:
@@ -1245,7 +1245,7 @@ components:
             title: Unprocessable Content
             type: about:blank
     UnsupportedMediaType:
-      description: The request body is not sent as application/json.
+      description: リクエスト本文が application/json で送られていない。
       content:
         application/problem+json:
           schema:
@@ -1259,7 +1259,7 @@ components:
     ExpenseAttributeId:
       name: id
       in: path
-      description: Expense attribute ID
+      description: 経費属性の ID
       required: true
       schema:
         format: uuid
@@ -1269,7 +1269,7 @@ components:
     ExpenseId:
       name: id
       in: path
-      description: Expense ID
+      description: 経費の ID
       required: true
       schema:
         format: uuid
@@ -1280,9 +1280,9 @@ components:
       name: If-Match
       in: header
       description: |
-        Entity-tags from a prior `ETag` response header (RFC 9110 §13.1.1), compared with the strong comparison.
-        Accepts `*` (update if the resource exists, regardless of version) or a comma-separated list such as `"3", "4"`.
-        Missing → 428, malformed → 400, no match → 412.
+        以前のレスポンスの `ETag` ヘッダーで受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
+        `*`（バージョンに関係なく、リソースがあれば更新）または `"3", "4"` のようなカンマ区切りの一覧を指定できます。
+        ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 になります。
       required: true
       schema:
         maxLength: 128
@@ -1291,7 +1291,7 @@ components:
     IncomeAttributeId:
       name: id
       in: path
-      description: Income attribute ID
+      description: 収入属性の ID
       required: true
       schema:
         format: uuid
@@ -1301,7 +1301,7 @@ components:
     IncomeId:
       name: id
       in: path
-      description: Income ID
+      description: 収入の ID
       required: true
       schema:
         format: uuid
@@ -1311,7 +1311,7 @@ components:
     Page:
       name: page
       in: query
-      description: Page number
+      description: ページ番号
       schema:
         default: 1
         format: int32
@@ -1321,7 +1321,7 @@ components:
     PerPage:
       name: per_page
       in: query
-      description: Number of items per page
+      description: 1 ページあたりの件数
       schema:
         default: 20
         format: int32
@@ -1331,44 +1331,44 @@ components:
   headers:
     ETag:
       description: |
-        Opaque resource version identifier used for optimistic locking (RFC 9110 §8.8.3).
-        Echo this value in `If-Match` on subsequent `PUT` requests.
+        楽観的ロックに使うリソースのバージョン識別子（RFC 9110 §8.8.3）。中身に意味はありません。
+        以降の `PUT` リクエストでは、この値を `If-Match` に指定します。
       schema:
         maxLength: 128
         type: string
     Link:
-      description: 'Pagination links (RFC 8288). Relation types: `self`, `first`, `last`, and `prev` / `next` when applicable. Links keep the request query parameters (filters) and replace only `page` / `per_page`.'
+      description: ページ送りのリンク（RFC 8288）。関係の種類は `self`、`first`、`last` と、該当する場合の `prev` / `next` です。リンクはリクエストのクエリパラメータ（絞り込み条件）を保ち、`page` / `per_page` だけを置き換えます。
       schema:
         maxLength: 2048
         type: string
     Location:
-      description: URI of the created resource
+      description: 登録したリソースの URI
       schema:
         maxLength: 2048
         type: string
 tags:
   - name: Balance
-    summary: Balance
-    description: Income and expense statistics and time series
+    summary: 収支
+    description: 収入と支出の統計・時系列
   - name: Balance Statistics
-    summary: Statistics
-    description: Operations for income and expense statistics over a period
+    summary: 統計
+    description: 期間内の収入と支出の統計に関する操作
     parent: Balance
   - name: Balance Series
-    summary: Series
-    description: Operations for income and expense time series
+    summary: 時系列
+    description: 収入と支出の時系列に関する操作
     parent: Balance
   - name: Expenses
-    summary: Expenses
-    description: Operations related to expenses
+    summary: 経費
+    description: 経費に関する操作
   - name: Expense Attributes
-    summary: Attributes
-    description: Operations related to expense categories and attributes
+    summary: 属性
+    description: 経費の区分と属性に関する操作
     parent: Expenses
   - name: Incomes
-    summary: Incomes
-    description: Operations related to incomes
+    summary: 収入
+    description: 収入に関する操作
   - name: Income Attributes
-    summary: Attributes
-    description: Operations related to income attributes
+    summary: 属性
+    description: 収入属性に関する操作
     parent: Incomes
