@@ -37,7 +37,6 @@ jobs:
       matrix:
         build-context:
           - app
-          - flyway
     env:
       IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
       VERSION: ${{ inputs.version }}

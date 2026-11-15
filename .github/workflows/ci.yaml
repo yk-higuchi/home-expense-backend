@@ -112,7 +112,6 @@ jobs:
       matrix:
         build-context:
           - app
-          - flyway
     env:
       IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
       PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}

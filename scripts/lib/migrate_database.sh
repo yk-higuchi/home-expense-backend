@@ -1,10 +1,8 @@
 #!/bin/bash
 
-echo "Building Flyway migration container..."
-container build -t flyway-migration ./flyway
-
 container run --rm \
   --name flyway-migration \
+  -v "$(pwd)/flyway/migration:/flyway/sql:ro" \
   -e FLYWAY_URL="jdbc:postgresql://${db_host}:5432/${db_name}" \
   -e FLYWAY_USER="${db_user}" \
   -e FLYWAY_PASSWORD="${db_password}" \
@@ -13,6 +11,6 @@ container run --rm \
   -e FLYWAY_CREATE_SCHEMAS=false \
   -e FLYWAY_BASELINE_VERSION=0.0.0 \
   -e FLYWAY_CONNECT_RETRIES=60 \
-  flyway-migration migrate
+  flyway/flyway:13.12.2 migrate
 
 echo "Flyway migration completed."

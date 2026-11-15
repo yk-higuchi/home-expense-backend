@@ -8,8 +8,8 @@
    - テスト（CockroachDB）
    - テスト中に記録した HTTP のやり取りと `docs/openapi.yaml` の照合
    - リント
-   - `app` と `flyway` のイメージのビルドと脆弱性スキャン
-2. **`main` への push**：CI が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-{app,flyway}:sha-<commit>` として push します。そのあと release-please がリリース PR を更新します。リリース PR では次が更新されます。
+   - アプリのイメージのビルドと脆弱性スキャン
+2. **`main` への push**：CI が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。そのあと release-please がリリース PR を更新します。リリース PR では次が更新されます。
    - `app/build.gradle.kts` のバージョン
    - `docs/openapi.yaml` の `info.version`
    - `CHANGELOG.md`
@@ -18,6 +18,8 @@
    - `docs/openapi.yaml` と `docs/openapi.jtd.json` を GitHub Release に添付する
 
 CD は、バージョンと元のコミットの SHA を指定して手動でも再実行できます（`workflow_dispatch`）。
+
+データベースのマイグレーションは、リリースとは別に Flyway CLI で `flyway/migration` を適用します（マイグレーション用のイメージは作りません）。本番の CockroachDB v26.2 には Flyway 13 以上が必要です。
 
 ## API 定義
 
@@ -67,7 +69,7 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 `scripts/lib/` 配下は、上のスクリプトから `source` で読み込む部品で、単独では実行しません。
 
-- `migrate_database.sh`：`flyway/` のイメージをビルドし、Flyway CLI でマイグレーションする。呼び出し側で `db_host`、`db_user`、`db_password`、`db_name` を定義しておく
+- `migrate_database.sh`：Flyway の公式イメージ（CLI）に `flyway/migration` を読み込ませてマイグレーションする。呼び出し側で `db_host`、`db_user`、`db_password`、`db_name` を定義しておく
 - `setup_postgres.sh`：ローカルの PostgreSQL コンテナを起動する
 - `setup_swagger_ui.sh`：ローカルの Swagger UI コンテナを起動する。呼び出し側で `openapi_dir_host_path`（`openapi.yaml` があるディレクトリの絶対パス）を定義しておく
 
