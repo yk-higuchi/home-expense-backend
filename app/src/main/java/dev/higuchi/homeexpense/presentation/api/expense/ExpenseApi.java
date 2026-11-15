@@ -108,6 +108,6 @@ public class ExpenseApi {
   public Response get(@PathParam("id") @UuidFormat String id) {
     ExpenseDetail detail = expenseSearchResultQuerier.get(new ExpenseIdentifier(id));
     ExpenseGetResponse response = ExpenseGetResponse.from(detail);
-    return Response.ok(response).tag(String.valueOf(detail.version())).build();
+    return Response.ok(response).tag(detail.digest().value()).build();
   }
 }

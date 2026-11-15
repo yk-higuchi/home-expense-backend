@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeConstraintException;
@@ -13,6 +13,7 @@ import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,7 @@ class ExpenseAttributeDeletionServiceTest {
   void 経費属性を削除する() {
     attributeRepository.register(attribute);
 
-    sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(1));
+    sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedDigest.of(attribute.digest()));
 
     assertTrue(attributeRepository.all().isEmpty());
   }
@@ -52,7 +53,9 @@ class ExpenseAttributeDeletionServiceTest {
 
     assertThrows(
         ExpenseAttributeConstraintException.class,
-        () -> sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(1)));
+        () ->
+            sut.delete(
+                new ExpenseAttributeIdentifier("attr-1"), ExpectedDigest.of(attribute.digest())));
     assertEquals(1, attributeRepository.all().size());
   }
 
@@ -62,7 +65,9 @@ class ExpenseAttributeDeletionServiceTest {
 
     assertThrows(
         ConcurrentUpdateException.class,
-        () -> sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedVersion.of(2L)));
+        () ->
+            sut.delete(
+                new ExpenseAttributeIdentifier("attr-1"), ExpectedDigest.of(TestDigests.STALE)));
     assertEquals(1, attributeRepository.all().size());
   }
 }

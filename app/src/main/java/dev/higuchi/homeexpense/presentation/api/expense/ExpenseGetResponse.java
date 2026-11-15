@@ -8,8 +8,7 @@ public record ExpenseGetResponse(
     @JsonProperty("description") String description,
     @JsonProperty("amount") Integer amount,
     @JsonProperty("payment_date") String paymentDate,
-    @JsonProperty("expense_attribute") ExpenseAttributeResponse expenseAttribute,
-    @JsonProperty("version") long version) {
+    @JsonProperty("expense_attribute") ExpenseAttributeResponse expenseAttribute) {
 
   static ExpenseGetResponse from(ExpenseDetail detail) {
     return new ExpenseGetResponse(
@@ -18,7 +17,6 @@ public record ExpenseGetResponse(
         detail.amount(),
         detail.paymentDate().toString(),
         new ExpenseAttributeResponse(
-            detail.attributeId(), detail.attributeName(), detail.category()),
-        detail.version());
+            detail.attributeId(), detail.attributeName(), detail.category()));
   }
 }

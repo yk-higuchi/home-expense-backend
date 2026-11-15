@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS expense.attribute
     id         CHAR(36)                               NOT NULL,
     category   VARCHAR(256)                           NOT NULL,
     name       VARCHAR(512)                           NOT NULL,
-    version    BIGINT                                 NOT NULL DEFAULT 1,
+    document_digest BYTEA                             NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_attribute PRIMARY KEY (id),
     CONSTRAINT uq_attribute_name_category UNIQUE (name, category)
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS expense.expense
     amount       INTEGER                                NOT NULL,
     payment_date DATE                                   NOT NULL,
     attribute_id CHAR(36)                               NOT NULL,
-    version      BIGINT                                 NOT NULL DEFAULT 1,
+    document_digest BYTEA                               NOT NULL,
     created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_expense PRIMARY KEY (id),
     CONSTRAINT ck_expense_amount_positive CHECK (amount > 0),
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS expense.income_attribute
 (
     id         CHAR(36)                               NOT NULL,
     name       VARCHAR(512)                           NOT NULL,
-    version    BIGINT                                 NOT NULL DEFAULT 1,
+    document_digest BYTEA                             NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_income_attribute PRIMARY KEY (id),
     CONSTRAINT uq_income_attribute_name UNIQUE (name)
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS expense.income
     description  VARCHAR(512)                           NOT NULL,
     amount       INTEGER                                NOT NULL,
     receive_date DATE                                   NOT NULL,
-    version      BIGINT                                 NOT NULL DEFAULT 1,
+    document_digest BYTEA                               NOT NULL,
     created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT pk_income PRIMARY KEY (id),
     CONSTRAINT ck_income_amount_positive CHECK (amount > 0),

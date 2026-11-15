@@ -4,12 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -41,12 +42,12 @@ class IncomeUpdateServiceTest {
             new Amount(310000),
             new ReceiveDate(LocalDate.of(2026, 5, 25)),
             new IncomeAttributeIdentifier("attr-1"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     Income updated = incomeRepository.find(new IncomeIdentifier("inc-1")).orElseThrow();
     assertEquals("5月給与", updated.description().value());
     assertEquals(310000, updated.amount().value());
-    assertEquals(2L, incomeRepository.versionOf(new IncomeIdentifier("inc-1")));
+    assertNotEquals(existing.digest(), incomeRepository.digestOf(new IncomeIdentifier("inc-1")));
   }
 
   @Test
@@ -68,11 +69,11 @@ class IncomeUpdateServiceTest {
             new Amount(300000),
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             new IncomeAttributeIdentifier("attr-1"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     Income result = incomeRepository.find(new IncomeIdentifier("inc-1")).orElseThrow();
     assertSame(existing, result);
-    assertEquals(1L, incomeRepository.versionOf(new IncomeIdentifier("inc-1")));
+    assertEquals(existing.digest(), incomeRepository.digestOf(new IncomeIdentifier("inc-1")));
   }
 
   @Test
@@ -89,7 +90,7 @@ class IncomeUpdateServiceTest {
                     new Amount(300000),
                     new ReceiveDate(LocalDate.of(2026, 4, 25)),
                     new IncomeAttributeIdentifier("attr-1"),
-                    ExpectedVersion.of(1L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 
   @Test
@@ -113,7 +114,7 @@ class IncomeUpdateServiceTest {
                     new Amount(310000),
                     new ReceiveDate(LocalDate.of(2026, 5, 25)),
                     new IncomeAttributeIdentifier("not-exist"),
-                    ExpectedVersion.of(1L))));
+                    ExpectedDigest.of(existing.digest()))));
   }
 
   @Test
@@ -138,6 +139,6 @@ class IncomeUpdateServiceTest {
                     new Amount(300000),
                     new ReceiveDate(LocalDate.of(2026, 4, 25)),
                     new IncomeAttributeIdentifier("attr-1"),
-                    ExpectedVersion.of(2L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 }

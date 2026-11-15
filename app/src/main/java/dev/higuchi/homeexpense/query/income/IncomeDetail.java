@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.query.income;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import java.time.LocalDate;
 
 public record IncomeDetail(
@@ -9,4 +10,4 @@ public record IncomeDetail(
     LocalDate receiveDate,
     String attributeId,
     String attributeName,
-    long version) {}
+    DocumentDigest digest) {}

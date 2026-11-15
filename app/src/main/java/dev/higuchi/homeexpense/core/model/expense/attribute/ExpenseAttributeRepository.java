@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.core.model.expense.attribute;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import java.util.Optional;
 
 public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
@@ -13,9 +13,9 @@ public interface ExpenseAttributeRepository extends ExpenseAttributeNameLookup {
     return find(expenseAttributeIdentifier).orElseThrow(ExpenseAttributeNotFoundException::new);
   }
 
-  void update(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion);
+  void update(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
 
-  void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion);
+  void verifyDigest(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
 
-  void delete(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion);
+  void delete(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest);
 }

@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.presentation.api;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -10,19 +11,17 @@ public final class IfMatchParser {
   private static final Pattern ENTITY_TAG =
       Pattern.compile("(W/)?\"([\\x21\\x23-\\x7E\\x80-\\xFF]*)\"");
 
-  private static final Pattern VERSION = Pattern.compile("\\d{1,18}");
-
   private IfMatchParser() {}
 
-  public static ExpectedVersion parse(String headerValue) {
+  public static ExpectedDigest parse(String headerValue) {
     if (headerValue == null || headerValue.isBlank()) {
       throw new PreconditionRequiredException("If-Matchヘッダーは必須です");
     }
     String value = headerValue.strip();
     if (value.equals("*")) {
-      return ExpectedVersion.unconditional();
+      return ExpectedDigest.unconditional();
     }
-    Set<Long> versions = new HashSet<>();
+    Set<DocumentDigest> digests = new HashSet<>();
     boolean hasElement = false;
     for (String element : value.split(",", -1)) {
       String tag = element.strip();
@@ -36,13 +35,13 @@ public final class IfMatchParser {
       hasElement = true;
       boolean weak = matcher.group(1) != null;
       String opaque = matcher.group(2);
-      if (!weak && VERSION.matcher(opaque).matches()) {
-        versions.add(Long.parseLong(opaque));
+      if (!weak) {
+        DocumentDigest.parse(opaque).ifPresent(digests::add);
       }
     }
     if (!hasElement) {
       throw new InvalidIfMatchHeaderException("If-Matchヘッダーの形式が不正です");
     }
-    return ExpectedVersion.oneOf(versions);
+    return ExpectedDigest.oneOf(digests);
   }
 }

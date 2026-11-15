@@ -2,7 +2,7 @@ package dev.higuchi.homeexpense.presentation.api.income.attribute;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeAttributeUpdateCommand;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
 import jakarta.validation.constraints.NotBlank;
@@ -14,8 +14,8 @@ public record IncomeAttributePutRequest(
         @JsonProperty("name")
         String name) {
 
-  IncomeAttributeUpdateCommand toCommand(String id, ExpectedVersion expectedVersion) {
+  IncomeAttributeUpdateCommand toCommand(String id, ExpectedDigest expectedDigest) {
     return new IncomeAttributeUpdateCommand(
-        new IncomeAttributeIdentifier(id), new IncomeAttributeName(name), expectedVersion);
+        new IncomeAttributeIdentifier(id), new IncomeAttributeName(name), expectedDigest);
   }
 }

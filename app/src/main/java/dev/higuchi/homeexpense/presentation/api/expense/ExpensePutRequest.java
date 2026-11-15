@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseUpdateCommand;
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.PaymentDate;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
@@ -34,13 +34,13 @@ public record ExpensePutRequest(
         @JsonProperty("attribute_id")
         String attributeId) {
 
-  ExpenseUpdateCommand toCommand(String id, ExpectedVersion expectedVersion) {
+  ExpenseUpdateCommand toCommand(String id, ExpectedDigest expectedDigest) {
     return new ExpenseUpdateCommand(
         new ExpenseIdentifier(id),
         new Description(description),
         new Amount(amount),
         new PaymentDate(LocalDate.parse(paymentDate)),
         new ExpenseAttributeIdentifier(attributeId),
-        expectedVersion);
+        expectedDigest);
   }
 }

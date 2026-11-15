@@ -2,11 +2,12 @@ package dev.higuchi.homeexpense.application.usecase.expense;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseAttributeRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import org.junit.jupiter.api.Test;
 
 class ExpenseAttributeUpdateServiceTest {
@@ -27,13 +28,14 @@ class ExpenseAttributeUpdateServiceTest {
         new ExpenseAttributeUpdateCommand(
             new ExpenseAttributeIdentifier("attr-1"),
             new ExpenseAttributeName("交通費"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     ExpenseAttribute updated =
         attributeRepository.find(new ExpenseAttributeIdentifier("attr-1")).orElseThrow();
     assertEquals("交通費", updated.expenseAttributeName().value());
     assertEquals(ExpenseCategory.変動費, updated.expenseCategory());
-    assertEquals(2L, attributeRepository.versionOf(new ExpenseAttributeIdentifier("attr-1")));
+    assertNotEquals(
+        existing.digest(), attributeRepository.digestOf(new ExpenseAttributeIdentifier("attr-1")));
   }
 
   @Test
@@ -49,12 +51,13 @@ class ExpenseAttributeUpdateServiceTest {
         new ExpenseAttributeUpdateCommand(
             new ExpenseAttributeIdentifier("attr-1"),
             new ExpenseAttributeName("食費"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     ExpenseAttribute result =
         attributeRepository.find(new ExpenseAttributeIdentifier("attr-1")).orElseThrow();
     assertSame(existing, result);
-    assertEquals(1L, attributeRepository.versionOf(new ExpenseAttributeIdentifier("attr-1")));
+    assertEquals(
+        existing.digest(), attributeRepository.digestOf(new ExpenseAttributeIdentifier("attr-1")));
   }
 
   @Test
@@ -73,6 +76,6 @@ class ExpenseAttributeUpdateServiceTest {
                 new ExpenseAttributeUpdateCommand(
                     new ExpenseAttributeIdentifier("attr-1"),
                     new ExpenseAttributeName("食費"),
-                    ExpectedVersion.of(2L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 }

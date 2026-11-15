@@ -2,10 +2,11 @@ package dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -18,8 +19,6 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class ExpenseAttributeDataSourceTest {
-
-  private static final long INITIAL_VERSION = 1L;
 
   @Inject ExpenseAttributeDataSource sut;
 
@@ -87,7 +86,7 @@ class ExpenseAttributeDataSourceTest {
             fetched.expenseAttributeIdentifier(),
             new ExpenseAttributeName("水道光熱費"),
             ExpenseCategory.変動費);
-    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
+    sut.update(updated, ExpectedDigest.of(attribute.digest()));
 
     ExpenseAttribute result = sut.find(attribute.expenseAttributeIdentifier()).orElseThrow();
     assertEquals("水道光熱費", result.expenseAttributeName().value());
@@ -105,7 +104,8 @@ class ExpenseAttributeDataSourceTest {
             new ExpenseAttributeName("通信費更新"),
             ExpenseCategory.固定費);
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
+        ConcurrentUpdateException.class,
+        () -> sut.update(modified, ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
@@ -113,7 +113,7 @@ class ExpenseAttributeDataSourceTest {
     ExpenseAttribute attribute = createAttribute("交際費", ExpenseCategory.変動費);
     sut.register(attribute);
 
-    sut.delete(attribute, ExpectedVersion.of(1L));
+    sut.delete(attribute, ExpectedDigest.of(attribute.digest()));
     assertTrue(sut.find(attribute.expenseAttributeIdentifier()).isEmpty());
   }
 
@@ -127,7 +127,8 @@ class ExpenseAttributeDataSourceTest {
     sut.register(attribute);
 
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.delete(attribute, ExpectedVersion.of(2L)));
+        ConcurrentUpdateException.class,
+        () -> sut.delete(attribute, ExpectedDigest.of(TestDigests.STALE)));
     assertTrue(sut.find(attribute.expenseAttributeIdentifier()).isPresent());
   }
 }

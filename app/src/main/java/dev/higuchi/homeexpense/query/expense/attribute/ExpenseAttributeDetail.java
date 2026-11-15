@@ -1,3 +1,6 @@
 package dev.higuchi.homeexpense.query.expense.attribute;
 
-public record ExpenseAttributeDetail(String id, String name, String category, long version) {}
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+
+public record ExpenseAttributeDetail(
+    String id, String name, String category, DocumentDigest digest) {}

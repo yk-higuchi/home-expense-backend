@@ -35,9 +35,9 @@ public class ExpenseUpdateService {
             command.paymentDate(),
             attribute.expenseAttributeIdentifier());
     if (current.hasChanges(updated)) {
-      expenseRepository.update(updated, command.expectedVersion());
+      expenseRepository.update(updated, command.expectedDigest());
     } else {
-      expenseRepository.verifyVersion(current, command.expectedVersion());
+      expenseRepository.verifyDigest(current, command.expectedDigest());
     }
   }
 }

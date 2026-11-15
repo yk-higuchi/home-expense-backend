@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.infrastructure.fake;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
@@ -11,15 +12,13 @@ import java.util.Optional;
 
 public class InMemoryExpenseRepository implements ExpenseRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
-  private record Stored(Expense entity, long version) {}
+  private record Stored(Expense entity, DocumentDigest digest) {}
 
   private final Map<String, Stored> store = new LinkedHashMap<>();
 
   @Override
   public void register(Expense expense) {
-    store.put(expense.expenseIdentifier().value(), new Stored(expense, INITIAL_VERSION));
+    store.put(expense.expenseIdentifier().value(), new Stored(expense, expense.digest()));
   }
 
   @Override
@@ -35,28 +34,28 @@ public class InMemoryExpenseRepository implements ExpenseRepository {
   }
 
   @Override
-  public void update(Expense expense, ExpectedVersion expectedVersion) {
+  public void update(Expense expense, ExpectedDigest expectedDigest) {
     String key = expense.expenseIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
-    store.put(key, new Stored(expense, current.version() + 1));
+    store.put(key, new Stored(expense, expense.digest()));
   }
 
   @Override
-  public void verifyVersion(Expense expense, ExpectedVersion expectedVersion) {
+  public void verifyDigest(Expense expense, ExpectedDigest expectedDigest) {
     Stored current = store.get(expense.expenseIdentifier().value());
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void delete(Expense expense, ExpectedVersion expectedVersion) {
+  public void delete(Expense expense, ExpectedDigest expectedDigest) {
     String key = expense.expenseIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
     store.remove(key);
@@ -66,11 +65,11 @@ public class InMemoryExpenseRepository implements ExpenseRepository {
     return store.values().stream().map(Stored::entity).toList();
   }
 
-  public long versionOf(ExpenseIdentifier id) {
+  public DocumentDigest digestOf(ExpenseIdentifier id) {
     Stored s = store.get(id.value());
     if (s == null) {
       throw new IllegalStateException("not found: " + id.value());
     }
-    return s.version();
+    return s.digest();
   }
 }

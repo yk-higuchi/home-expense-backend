@@ -2,7 +2,7 @@ package dev.higuchi.homeexpense.infrastructure.datasource.income;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -17,8 +17,6 @@ import java.util.Optional;
 @ApplicationScoped
 public class IncomeDataSource implements IncomeRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
   private final JdbcOperator jdbc;
 
   public IncomeDataSource(JdbcOperator jdbc) {
@@ -28,22 +26,22 @@ public class IncomeDataSource implements IncomeRepository {
   @Override
   public void register(Income income) {
     jdbc.update(
-        "INSERT INTO expense.income(id, attribute_id, description, amount, receive_date, version) VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO expense.income(id, attribute_id, description, amount, receive_date, document_digest) VALUES (?, ?, ?, ?, ?, ?)",
         ParameterBinder.of(
             income.incomeIdentifier().value(),
             income.incomeAttributeIdentifier().value(),
             income.description().value(),
             income.amount().value(),
             income.receiveDate().value(),
-            INITIAL_VERSION));
+            income.digest().toBytes()));
   }
 
   @Override
-  public void update(Income income, ExpectedVersion expectedVersion) {
+  public void update(Income income, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         """
         UPDATE expense.income
-        SET attribute_id = ?, description = ?, amount = ?, receive_date = ?, version = version + 1
+        SET attribute_id = ?, description = ?, amount = ?, receive_date = ?, document_digest = ?
         WHERE id = ?
         """,
         List.of(
@@ -51,24 +49,25 @@ public class IncomeDataSource implements IncomeRepository {
             income.description().value(),
             income.amount().value(),
             income.receiveDate().value(),
+            income.digest().toBytes(),
             income.incomeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void verifyVersion(Income income, ExpectedVersion expectedVersion) {
-    jdbc.verifyVersion(
+  public void verifyDigest(Income income, ExpectedDigest expectedDigest) {
+    jdbc.verifyDigest(
         "SELECT 1 FROM expense.income WHERE id = ?",
         List.of(income.incomeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void delete(Income income, ExpectedVersion expectedVersion) {
+  public void delete(Income income, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.income WHERE income.id = ?",
         List.of(income.incomeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override

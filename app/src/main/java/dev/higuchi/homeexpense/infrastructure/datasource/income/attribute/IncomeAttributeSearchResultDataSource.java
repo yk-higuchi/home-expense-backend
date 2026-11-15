@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.income.attribute;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -36,7 +37,7 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
   @Override
   public Optional<IncomeAttributeDetail> find(IncomeAttributeIdentifier id) {
     return jdbc.queryForOptional(
-        "SELECT id, name, version FROM expense.income_attribute WHERE id = ?",
+        "SELECT id, name, document_digest FROM expense.income_attribute WHERE id = ?",
         ParameterBinder.of(id.value()),
         IncomeAttributeSearchResultDataSource::mapDetail);
   }
@@ -51,7 +52,7 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
 
   private List<IncomeAttributeDetail> selectBy(IncomeAttributeSearchCriteria criteria) {
     String sql =
-        "SELECT id, name, version FROM expense.income_attribute ORDER BY income_attribute.created_at OFFSET ? ROWS FETCH FIRST ? ROWS ONLY";
+        "SELECT id, name, document_digest FROM expense.income_attribute ORDER BY income_attribute.created_at OFFSET ? ROWS FETCH FIRST ? ROWS ONLY";
     return jdbc.queryForList(
         sql,
         ParameterBinder.of(criteria.offset(), criteria.perPage()),
@@ -60,6 +61,8 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
 
   static IncomeAttributeDetail mapDetail(ResultSet rs) throws SQLException {
     return new IncomeAttributeDetail(
-        rs.getString("id"), rs.getString("name"), rs.getLong("version"));
+        rs.getString("id"),
+        rs.getString("name"),
+        DocumentDigest.fromBytes(rs.getBytes("document_digest")));
   }
 }

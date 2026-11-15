@@ -4,11 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute.ExpenseAttributeDataSource;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -22,8 +23,6 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class ExpenseDataSourceTest {
-
-  private static final long INITIAL_VERSION = 1L;
 
   @Inject ExpenseDataSource sut;
 
@@ -90,7 +89,7 @@ class ExpenseDataSourceTest {
             new Amount(3000),
             new PaymentDate(LocalDate.of(2026, 4, 10)),
             attribute.expenseAttributeIdentifier());
-    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
+    sut.update(updated, ExpectedDigest.of(expense.digest()));
 
     Expense result = sut.find(expense.expenseIdentifier()).orElseThrow();
     assertEquals("ディナー", result.description().value());
@@ -112,7 +111,7 @@ class ExpenseDataSourceTest {
             fetched.amount(),
             new PaymentDate(LocalDate.of(2026, 4, 1)),
             varAttr.expenseAttributeIdentifier());
-    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
+    sut.update(updated, ExpectedDigest.of(expense.digest()));
 
     Expense result = sut.find(expense.expenseIdentifier()).orElseThrow();
     assertEquals(varAttr.expenseAttributeIdentifier(), result.expenseAttributeIdentifier());
@@ -132,7 +131,8 @@ class ExpenseDataSourceTest {
             new PaymentDate(LocalDate.of(2026, 4, 10)),
             attribute.expenseAttributeIdentifier());
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
+        ConcurrentUpdateException.class,
+        () -> sut.update(modified, ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
@@ -141,7 +141,7 @@ class ExpenseDataSourceTest {
     Expense expense = createExpense("おやつ", 200, "2026-04-10", attribute);
     sut.register(expense);
 
-    sut.delete(expense, ExpectedVersion.of(1L));
+    sut.delete(expense, ExpectedDigest.of(expense.digest()));
     assertTrue(sut.find(expense.expenseIdentifier()).isEmpty());
   }
 
@@ -168,7 +168,8 @@ class ExpenseDataSourceTest {
     sut.register(expense);
 
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.delete(expense, ExpectedVersion.of(2L)));
+        ConcurrentUpdateException.class,
+        () -> sut.delete(expense, ExpectedDigest.of(TestDigests.STALE)));
     assertTrue(sut.find(expense.expenseIdentifier()).isPresent());
   }
 }

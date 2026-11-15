@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttribute;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeConstraintException;
@@ -13,6 +13,7 @@ import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeName;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,7 @@ class IncomeAttributeDeletionServiceTest {
   void 収入属性を削除する() {
     attributeRepository.register(attribute);
 
-    sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(1));
+    sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedDigest.of(attribute.digest()));
 
     assertTrue(attributeRepository.all().isEmpty());
   }
@@ -49,7 +50,9 @@ class IncomeAttributeDeletionServiceTest {
 
     assertThrows(
         IncomeAttributeConstraintException.class,
-        () -> sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(1)));
+        () ->
+            sut.delete(
+                new IncomeAttributeIdentifier("attr-1"), ExpectedDigest.of(attribute.digest())));
     assertEquals(1, attributeRepository.all().size());
   }
 
@@ -59,7 +62,9 @@ class IncomeAttributeDeletionServiceTest {
 
     assertThrows(
         ConcurrentUpdateException.class,
-        () -> sut.delete(new IncomeAttributeIdentifier("attr-1"), ExpectedVersion.of(2L)));
+        () ->
+            sut.delete(
+                new IncomeAttributeIdentifier("attr-1"), ExpectedDigest.of(TestDigests.STALE)));
     assertEquals(1, attributeRepository.all().size());
   }
 }

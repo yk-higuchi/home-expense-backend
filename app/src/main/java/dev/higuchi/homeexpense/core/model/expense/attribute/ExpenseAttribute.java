@@ -1,6 +1,8 @@
 package dev.higuchi.homeexpense.core.model.expense.attribute;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -57,6 +59,11 @@ public class ExpenseAttribute {
 
   public ExpenseCategory expenseCategory() {
     return expenseCategory;
+  }
+
+  public DocumentDigest digest() {
+    return DocumentDigest.of(
+        Map.of("category", expenseCategory.name(), "name", expenseAttributeName.value()));
   }
 
   @Override

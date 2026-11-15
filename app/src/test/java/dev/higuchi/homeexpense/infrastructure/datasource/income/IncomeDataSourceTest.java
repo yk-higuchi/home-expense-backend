@@ -4,11 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.income.attribute.IncomeAttributeDataSource;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -22,8 +23,6 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class IncomeDataSourceTest {
-
-  private static final long INITIAL_VERSION = 1L;
 
   @Inject IncomeDataSource sut;
 
@@ -90,7 +89,7 @@ class IncomeDataSourceTest {
             new Amount(350000),
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             attribute.incomeAttributeIdentifier());
-    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
+    sut.update(updated, ExpectedDigest.of(income.digest()));
 
     Income result = sut.find(income.incomeIdentifier()).orElseThrow();
     assertEquals("4月給与（修正）", result.description().value());
@@ -111,7 +110,8 @@ class IncomeDataSourceTest {
             new ReceiveDate(LocalDate.of(2026, 4, 25)),
             attribute.incomeAttributeIdentifier());
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
+        ConcurrentUpdateException.class,
+        () -> sut.update(modified, ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
@@ -120,7 +120,7 @@ class IncomeDataSourceTest {
     Income income = createIncome("4月給与", 300000, "2026-04-25", attribute);
     sut.register(income);
 
-    sut.delete(income, ExpectedVersion.of(1L));
+    sut.delete(income, ExpectedDigest.of(income.digest()));
     assertTrue(sut.find(income.incomeIdentifier()).isEmpty());
   }
 
@@ -146,7 +146,9 @@ class IncomeDataSourceTest {
     Income income = createIncome("4月給与", 300000, "2026-04-25", attribute);
     sut.register(income);
 
-    assertThrows(ConcurrentUpdateException.class, () -> sut.delete(income, ExpectedVersion.of(2L)));
+    assertThrows(
+        ConcurrentUpdateException.class,
+        () -> sut.delete(income, ExpectedDigest.of(TestDigests.STALE)));
     assertTrue(sut.find(income.incomeIdentifier()).isPresent());
   }
 }

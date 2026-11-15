@@ -2,7 +2,7 @@ package dev.higuchi.homeexpense.infrastructure.datasource.expense;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -17,8 +17,6 @@ import java.util.Optional;
 @ApplicationScoped
 public class ExpenseDataSource implements ExpenseRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
   private final JdbcOperator jdbc;
 
   public ExpenseDataSource(JdbcOperator jdbc) {
@@ -28,7 +26,7 @@ public class ExpenseDataSource implements ExpenseRepository {
   @Override
   public void register(Expense expense) {
     jdbc.update(
-        "INSERT INTO expense.expense(id, description, amount, payment_date, attribute_id, version)"
+        "INSERT INTO expense.expense(id, description, amount, payment_date, attribute_id, document_digest)"
             + " VALUES (?, ?, ?, ?, ?, ?)",
         ParameterBinder.of(
             expense.expenseIdentifier().value(),
@@ -36,7 +34,7 @@ public class ExpenseDataSource implements ExpenseRepository {
             expense.amount().value(),
             expense.paymentDate().value(),
             expense.expenseAttributeIdentifier().value(),
-            INITIAL_VERSION));
+            expense.digest().toBytes()));
   }
 
   @Override
@@ -67,11 +65,11 @@ public class ExpenseDataSource implements ExpenseRepository {
   }
 
   @Override
-  public void update(Expense expense, ExpectedVersion expectedVersion) {
+  public void update(Expense expense, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         """
         UPDATE expense.expense
-        SET description = ?, amount = ?, payment_date = ?, attribute_id = ?, version = version + 1
+        SET description = ?, amount = ?, payment_date = ?, attribute_id = ?, document_digest = ?
         WHERE id = ?
         """,
         List.of(
@@ -79,24 +77,25 @@ public class ExpenseDataSource implements ExpenseRepository {
             expense.amount().value(),
             expense.paymentDate().value(),
             expense.expenseAttributeIdentifier().value(),
+            expense.digest().toBytes(),
             expense.expenseIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void verifyVersion(Expense expense, ExpectedVersion expectedVersion) {
-    jdbc.verifyVersion(
+  public void verifyDigest(Expense expense, ExpectedDigest expectedDigest) {
+    jdbc.verifyDigest(
         "SELECT 1 FROM expense.expense WHERE id = ?",
         List.of(expense.expenseIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void delete(Expense expense, ExpectedVersion expectedVersion) {
+  public void delete(Expense expense, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.expense WHERE expense.id = ?",
         List.of(expense.expenseIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   static Expense mapExpense(ResultSet rs) throws SQLException {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.application.usecase.income.IncomeUpdateCommand;
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
 import dev.higuchi.homeexpense.core.model.income.ReceiveDate;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
@@ -34,13 +34,13 @@ public record IncomePutRequest(
         @JsonProperty("attribute_id")
         String attributeId) {
 
-  IncomeUpdateCommand toCommand(String id, ExpectedVersion expectedVersion) {
+  IncomeUpdateCommand toCommand(String id, ExpectedDigest expectedDigest) {
     return new IncomeUpdateCommand(
         new IncomeIdentifier(id),
         new Description(description),
         new Amount(amount),
         new ReceiveDate(LocalDate.parse(receiveDate)),
         new IncomeAttributeIdentifier(attributeId),
-        expectedVersion);
+        expectedDigest);
   }
 }

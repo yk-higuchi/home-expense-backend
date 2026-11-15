@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.infrastructure.fake;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.*;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
@@ -9,40 +10,38 @@ import java.util.Optional;
 
 public class InMemoryIncomeRepository implements IncomeRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
-  private record Stored(Income entity, long version) {}
+  private record Stored(Income entity, DocumentDigest digest) {}
 
   private final Map<String, Stored> store = new LinkedHashMap<>();
 
   @Override
   public void register(Income income) {
-    store.put(income.incomeIdentifier().value(), new Stored(income, INITIAL_VERSION));
+    store.put(income.incomeIdentifier().value(), new Stored(income, income.digest()));
   }
 
   @Override
-  public void update(Income income, ExpectedVersion expectedVersion) {
+  public void update(Income income, ExpectedDigest expectedDigest) {
     String key = income.incomeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
-    store.put(key, new Stored(income, current.version() + 1));
+    store.put(key, new Stored(income, income.digest()));
   }
 
   @Override
-  public void verifyVersion(Income income, ExpectedVersion expectedVersion) {
+  public void verifyDigest(Income income, ExpectedDigest expectedDigest) {
     Stored current = store.get(income.incomeIdentifier().value());
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void delete(Income income, ExpectedVersion expectedVersion) {
+  public void delete(Income income, ExpectedDigest expectedDigest) {
     String key = income.incomeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
     store.remove(key);
@@ -63,11 +62,11 @@ public class InMemoryIncomeRepository implements IncomeRepository {
     return store.values().stream().map(Stored::entity).toList();
   }
 
-  public long versionOf(IncomeIdentifier id) {
+  public DocumentDigest digestOf(IncomeIdentifier id) {
     Stored s = store.get(id.value());
     if (s == null) {
       throw new IllegalStateException("not found: " + id.value());
     }
-    return s.version();
+    return s.digest();
   }
 }

@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.income.attribute;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.UniqueConstraintViolationException;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -14,8 +14,6 @@ import java.util.Optional;
 @ApplicationScoped
 public class IncomeAttributeDataSource implements IncomeAttributeRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
   private final JdbcOperator jdbc;
 
   public IncomeAttributeDataSource(JdbcOperator jdbc) {
@@ -26,40 +24,41 @@ public class IncomeAttributeDataSource implements IncomeAttributeRepository {
   public void register(IncomeAttribute incomeAttribute) {
     try {
       jdbc.update(
-          "INSERT INTO expense.income_attribute(id, name, version) VALUES (?, ?, ?)",
+          "INSERT INTO expense.income_attribute(id, name, document_digest) VALUES (?, ?, ?)",
           ParameterBinder.of(
               incomeAttribute.incomeAttributeIdentifier().value(),
               incomeAttribute.incomeAttributeName().value(),
-              INITIAL_VERSION));
+              incomeAttribute.digest().toBytes()));
     } catch (UniqueConstraintViolationException e) {
       throw new IncomeAttributeAlreadyExistsException();
     }
   }
 
   @Override
-  public void update(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+  public void update(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
-        "UPDATE expense.income_attribute SET name = ?, version = version + 1 WHERE id = ?",
+        "UPDATE expense.income_attribute SET name = ?, document_digest = ? WHERE id = ?",
         List.of(
             incomeAttribute.incomeAttributeName().value(),
+            incomeAttribute.digest().toBytes(),
             incomeAttribute.incomeAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
-    jdbc.verifyVersion(
+  public void verifyDigest(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest) {
+    jdbc.verifyDigest(
         "SELECT 1 FROM expense.income_attribute WHERE id = ?",
         List.of(incomeAttribute.incomeAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void delete(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion) {
+  public void delete(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.income_attribute WHERE id = ?",
         List.of(incomeAttribute.incomeAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override

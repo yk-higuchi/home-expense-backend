@@ -2,7 +2,7 @@ package dev.higuchi.homeexpense.presentation.api.expense.attribute;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.application.usecase.expense.ExpenseAttributeUpdateCommand;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName;
 import jakarta.validation.constraints.NotBlank;
@@ -14,8 +14,8 @@ public record ExpenseAttributePutRequest(
         @JsonProperty("name")
         String name) {
 
-  ExpenseAttributeUpdateCommand toCommand(String id, ExpectedVersion expectedVersion) {
+  ExpenseAttributeUpdateCommand toCommand(String id, ExpectedDigest expectedDigest) {
     return new ExpenseAttributeUpdateCommand(
-        new ExpenseAttributeIdentifier(id), new ExpenseAttributeName(name), expectedVersion);
+        new ExpenseAttributeIdentifier(id), new ExpenseAttributeName(name), expectedDigest);
   }
 }

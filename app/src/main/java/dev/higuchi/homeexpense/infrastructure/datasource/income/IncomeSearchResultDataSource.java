@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.income;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -26,7 +27,7 @@ public class IncomeSearchResultDataSource implements IncomeSearchResultQuerier {
         income.description,
         income.amount,
         income.receive_date,
-        income.version,
+        income.document_digest,
         income_attribute.id   AS attribute_id,
         income_attribute.name AS attribute_name
       FROM expense.income
@@ -105,6 +106,6 @@ public class IncomeSearchResultDataSource implements IncomeSearchResultQuerier {
         rs.getObject("receive_date", LocalDate.class),
         rs.getString("attribute_id"),
         rs.getString("attribute_name"),
-        rs.getLong("version"));
+        DocumentDigest.fromBytes(rs.getBytes("document_digest")));
   }
 }

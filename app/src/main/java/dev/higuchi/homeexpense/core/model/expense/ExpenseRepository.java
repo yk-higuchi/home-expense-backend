@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.core.model.expense;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import java.util.Optional;
 
@@ -16,9 +16,9 @@ public interface ExpenseRepository {
 
   boolean existsByAttributeIdentifier(ExpenseAttributeIdentifier expenseAttributeIdentifier);
 
-  void update(Expense expense, ExpectedVersion expectedVersion);
+  void update(Expense expense, ExpectedDigest expectedDigest);
 
-  void verifyVersion(Expense expense, ExpectedVersion expectedVersion);
+  void verifyDigest(Expense expense, ExpectedDigest expectedDigest);
 
-  void delete(Expense expense, ExpectedVersion expectedVersion);
+  void delete(Expense expense, ExpectedDigest expectedDigest);
 }

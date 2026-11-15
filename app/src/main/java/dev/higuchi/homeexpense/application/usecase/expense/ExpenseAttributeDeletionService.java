@@ -1,7 +1,7 @@
 package dev.higuchi.homeexpense.application.usecase.expense;
 
 import dev.higuchi.homeexpense.application.transaction.RetryOnSerializationFailure;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseRepository;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,11 +22,11 @@ public class ExpenseAttributeDeletionService {
   }
 
   public void delete(
-      ExpenseAttributeIdentifier expenseAttributeIdentifier, ExpectedVersion expectedVersion) {
+      ExpenseAttributeIdentifier expenseAttributeIdentifier, ExpectedDigest expectedDigest) {
     ExpenseAttribute attribute = expenseAttributeRepository.get(expenseAttributeIdentifier);
     if (expenseRepository.existsByAttributeIdentifier(attribute.expenseAttributeIdentifier())) {
       throw new ExpenseAttributeConstraintException();
     }
-    expenseAttributeRepository.delete(attribute, expectedVersion);
+    expenseAttributeRepository.delete(attribute, expectedDigest);
   }
 }

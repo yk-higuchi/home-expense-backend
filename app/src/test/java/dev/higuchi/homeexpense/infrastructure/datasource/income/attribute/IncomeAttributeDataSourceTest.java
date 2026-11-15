@@ -2,9 +2,10 @@ package dev.higuchi.homeexpense.infrastructure.datasource.income.attribute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -18,8 +19,6 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class IncomeAttributeDataSourceTest {
-
-  private static final long INITIAL_VERSION = 1L;
 
   @Inject IncomeAttributeDataSource sut;
 
@@ -75,7 +74,7 @@ class IncomeAttributeDataSourceTest {
     IncomeAttribute fetched = sut.find(attribute.incomeAttributeIdentifier()).orElseThrow();
     IncomeAttribute updated =
         new IncomeAttribute(fetched.incomeAttributeIdentifier(), new IncomeAttributeName("副業収入"));
-    sut.update(updated, ExpectedVersion.of(INITIAL_VERSION));
+    sut.update(updated, ExpectedDigest.of(attribute.digest()));
 
     IncomeAttribute result = sut.find(attribute.incomeAttributeIdentifier()).orElseThrow();
     assertEquals("副業収入", result.incomeAttributeName().value());
@@ -89,7 +88,8 @@ class IncomeAttributeDataSourceTest {
     IncomeAttribute modified =
         new IncomeAttribute(attribute.incomeAttributeIdentifier(), new IncomeAttributeName("配当更新"));
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.update(modified, ExpectedVersion.of(999L)));
+        ConcurrentUpdateException.class,
+        () -> sut.update(modified, ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
@@ -99,7 +99,7 @@ class IncomeAttributeDataSourceTest {
 
     sut.update(
         new IncomeAttribute(attribute.incomeAttributeIdentifier(), new IncomeAttributeName("年金2")),
-        ExpectedVersion.oneOf(Set.of(5L, INITIAL_VERSION, 9L)));
+        ExpectedDigest.oneOf(Set.of(TestDigests.STALE, attribute.digest())));
 
     assertEquals(
         "年金2",
@@ -116,7 +116,7 @@ class IncomeAttributeDataSourceTest {
 
     sut.update(
         new IncomeAttribute(attribute.incomeAttributeIdentifier(), new IncomeAttributeName("利子2")),
-        ExpectedVersion.unconditional());
+        ExpectedDigest.unconditional());
 
     assertEquals(
         "利子2",
@@ -137,7 +137,7 @@ class IncomeAttributeDataSourceTest {
             sut.update(
                 new IncomeAttribute(
                     attribute.incomeAttributeIdentifier(), new IncomeAttributeName("謝礼2")),
-                ExpectedVersion.oneOf(Set.of())));
+                ExpectedDigest.oneOf(Set.of())));
     assertEquals(
         "謝礼",
         sut.find(attribute.incomeAttributeIdentifier())
@@ -151,11 +151,11 @@ class IncomeAttributeDataSourceTest {
     IncomeAttribute attribute = createAttribute("還付");
     sut.register(attribute);
 
-    assertDoesNotThrow(() -> sut.verifyVersion(attribute, ExpectedVersion.of(INITIAL_VERSION)));
-    assertDoesNotThrow(() -> sut.verifyVersion(attribute, ExpectedVersion.unconditional()));
+    assertDoesNotThrow(() -> sut.verifyDigest(attribute, ExpectedDigest.of(attribute.digest())));
+    assertDoesNotThrow(() -> sut.verifyDigest(attribute, ExpectedDigest.unconditional()));
     assertThrows(
         ConcurrentUpdateException.class,
-        () -> sut.verifyVersion(attribute, ExpectedVersion.of(2L)));
+        () -> sut.verifyDigest(attribute, ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
@@ -163,7 +163,7 @@ class IncomeAttributeDataSourceTest {
     IncomeAttribute attribute = createAttribute("その他");
     sut.register(attribute);
 
-    sut.delete(attribute, ExpectedVersion.of(1L));
+    sut.delete(attribute, ExpectedDigest.of(attribute.digest()));
     assertTrue(sut.find(attribute.incomeAttributeIdentifier()).isEmpty());
   }
 
@@ -177,7 +177,8 @@ class IncomeAttributeDataSourceTest {
     sut.register(attribute);
 
     assertThrows(
-        ConcurrentUpdateException.class, () -> sut.delete(attribute, ExpectedVersion.of(2L)));
+        ConcurrentUpdateException.class,
+        () -> sut.delete(attribute, ExpectedDigest.of(TestDigests.STALE)));
     assertTrue(sut.find(attribute.incomeAttributeIdentifier()).isPresent());
   }
 }

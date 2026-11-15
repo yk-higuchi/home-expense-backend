@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.expense;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -26,7 +27,7 @@ public class ExpenseSearchResultDataSource implements ExpenseSearchResultQuerier
         expense.description,
         expense.amount,
         expense.payment_date,
-        expense.version,
+        expense.document_digest,
         attribute.id   AS attribute_id,
         attribute.name AS attribute_name,
         attribute.category
@@ -119,6 +120,6 @@ public class ExpenseSearchResultDataSource implements ExpenseSearchResultQuerier
         rs.getString("attribute_id"),
         rs.getString("attribute_name"),
         rs.getString("category"),
-        rs.getLong("version"));
+        DocumentDigest.fromBytes(rs.getBytes("document_digest")));
   }
 }

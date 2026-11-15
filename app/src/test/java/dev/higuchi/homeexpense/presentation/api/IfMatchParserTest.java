@@ -2,11 +2,20 @@ package dev.higuchi.homeexpense.presentation.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class IfMatchParserTest {
+
+  DocumentDigest a = DocumentDigest.of(Map.of("name", "a"));
+  DocumentDigest b = DocumentDigest.of(Map.of("name", "b"));
+
+  private static String tag(DocumentDigest digest) {
+    return "\"" + digest.value() + "\"";
+  }
 
   @Test
   void 未指定なら428用の例外() {
@@ -15,34 +24,36 @@ class IfMatchParserTest {
   }
 
   @Test
-  void アスタリスクはバージョンを問わない() {
-    assertEquals(ExpectedVersion.unconditional(), IfMatchParser.parse("*"));
+  void アスタリスクは条件なし() {
+    assertEquals(ExpectedDigest.unconditional(), IfMatchParser.parse("*"));
   }
 
   @Test
   void 強いETag1つ() {
-    assertEquals(ExpectedVersion.of(3L), IfMatchParser.parse("\"3\""));
+    assertEquals(ExpectedDigest.of(a), IfMatchParser.parse(tag(a)));
   }
 
   @Test
   void 複数のETagはいずれかとの一致として扱う() {
-    assertEquals(ExpectedVersion.oneOf(Set.of(1L, 9L)), IfMatchParser.parse("\"9\", \"1\""));
+    assertEquals(ExpectedDigest.oneOf(Set.of(a, b)), IfMatchParser.parse(tag(b) + ", " + tag(a)));
   }
 
   @Test
   void 空のリスト要素は無視する() {
-    assertEquals(ExpectedVersion.oneOf(Set.of(1L, 2L)), IfMatchParser.parse("\"1\", , \"2\""));
+    assertEquals(ExpectedDigest.oneOf(Set.of(a, b)), IfMatchParser.parse(tag(a) + ", , " + tag(b)));
   }
 
   @Test
   void 弱いETagは強い比較で一致しないため候補にしない() {
-    assertEquals(ExpectedVersion.oneOf(Set.of()), IfMatchParser.parse("W/\"3\""));
-    assertEquals(ExpectedVersion.oneOf(Set.of(4L)), IfMatchParser.parse("W/\"3\", \"4\""));
+    assertEquals(ExpectedDigest.oneOf(Set.of()), IfMatchParser.parse("W/" + tag(a)));
+    assertEquals(
+        ExpectedDigest.oneOf(Set.of(b)), IfMatchParser.parse("W/" + tag(a) + ", " + tag(b)));
   }
 
   @Test
-  void 数値以外の強いETagはこのAPIの表現と一致しないため候補にしない() {
-    assertEquals(ExpectedVersion.oneOf(Set.of()), IfMatchParser.parse("\"abc\""));
+  void ダイジェストの形式でない強いETagはどの表現とも一致しないため候補にしない() {
+    assertEquals(ExpectedDigest.oneOf(Set.of()), IfMatchParser.parse("\"3\""));
+    assertEquals(ExpectedDigest.oneOf(Set.of()), IfMatchParser.parse("\"abc\""));
   }
 
   @Test

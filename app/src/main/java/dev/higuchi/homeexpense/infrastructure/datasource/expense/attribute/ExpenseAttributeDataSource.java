@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.UniqueConstraintViolationException;
@@ -15,8 +15,6 @@ import java.util.Optional;
 @ApplicationScoped
 public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
   private final JdbcOperator jdbc;
 
   public ExpenseAttributeDataSource(JdbcOperator jdbc) {
@@ -27,12 +25,12 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   public void register(ExpenseAttribute expenseAttribute) {
     try {
       jdbc.update(
-          "INSERT INTO expense.attribute(id, category, name, version) VALUES (?, ?, ?, ?)",
+          "INSERT INTO expense.attribute(id, category, name, document_digest) VALUES (?, ?, ?, ?)",
           ParameterBinder.of(
               expenseAttribute.expenseAttributeIdentifier().value(),
               expenseAttribute.expenseCategory().name(),
               expenseAttribute.expenseAttributeName().value(),
-              INITIAL_VERSION));
+              expenseAttribute.digest().toBytes()));
     } catch (UniqueConstraintViolationException e) {
       throw new ExpenseAttributeAlreadyExistsException();
     }
@@ -64,30 +62,31 @@ public class ExpenseAttributeDataSource implements ExpenseAttributeRepository {
   }
 
   @Override
-  public void update(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+  public void update(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
-        "UPDATE expense.attribute SET category = ?, name = ?, version = version + 1 WHERE id = ?",
+        "UPDATE expense.attribute SET category = ?, name = ?, document_digest = ? WHERE id = ?",
         List.of(
             expenseAttribute.expenseCategory().name(),
             expenseAttribute.expenseAttributeName().value(),
+            expenseAttribute.digest().toBytes(),
             expenseAttribute.expenseAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
-    jdbc.verifyVersion(
+  public void verifyDigest(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
+    jdbc.verifyDigest(
         "SELECT 1 FROM expense.attribute WHERE id = ?",
         List.of(expenseAttribute.expenseAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   @Override
-  public void delete(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+  public void delete(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
     jdbc.updateWithOptimisticLock(
         "DELETE FROM expense.attribute WHERE id = ?",
         List.of(expenseAttribute.expenseAttributeIdentifier().value()),
-        expectedVersion);
+        expectedDigest);
   }
 
   static ExpenseAttribute mapExpenseAttribute(ResultSet rs) throws SQLException {

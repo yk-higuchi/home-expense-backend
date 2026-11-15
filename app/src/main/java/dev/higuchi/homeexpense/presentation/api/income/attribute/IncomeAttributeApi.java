@@ -101,6 +101,6 @@ public class IncomeAttributeApi {
     IncomeAttributeDetail detail =
         incomeAttributeSearchResultQuerier.get(new IncomeAttributeIdentifier(id));
     IncomeAttributeGetResponse response = IncomeAttributeGetResponse.from(detail);
-    return Response.ok(response).tag(String.valueOf(detail.version())).build();
+    return Response.ok(response).tag(detail.digest().value()).build();
   }
 }

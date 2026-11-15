@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.expense.*;
 import dev.higuchi.homeexpense.core.model.expense.InvalidExpenseAttributeReferenceException;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttribute;
@@ -13,6 +13,7 @@ import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeName
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseAttributeRepository;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryExpenseRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
@@ -47,12 +48,12 @@ class ExpenseUpdateServiceTest {
             new Amount(2000),
             new PaymentDate(LocalDate.of(2026, 4, 2)),
             new ExpenseAttributeIdentifier("attr-1"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     Expense updated = expenseRepository.find(new ExpenseIdentifier("exp-1")).orElseThrow();
     assertEquals("ディナー", updated.description().value());
     assertEquals(2000, updated.amount().value());
-    assertEquals(2L, expenseRepository.versionOf(new ExpenseIdentifier("exp-1")));
+    assertNotEquals(existing.digest(), expenseRepository.digestOf(new ExpenseIdentifier("exp-1")));
   }
 
   @Test
@@ -74,11 +75,11 @@ class ExpenseUpdateServiceTest {
             new Amount(1000),
             new PaymentDate(LocalDate.of(2026, 4, 1)),
             new ExpenseAttributeIdentifier("attr-1"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     Expense result = expenseRepository.find(new ExpenseIdentifier("exp-1")).orElseThrow();
     assertSame(existing, result);
-    assertEquals(1L, expenseRepository.versionOf(new ExpenseIdentifier("exp-1")));
+    assertEquals(existing.digest(), expenseRepository.digestOf(new ExpenseIdentifier("exp-1")));
   }
 
   @Test
@@ -95,7 +96,7 @@ class ExpenseUpdateServiceTest {
                     new Amount(1000),
                     new PaymentDate(LocalDate.of(2026, 4, 1)),
                     new ExpenseAttributeIdentifier("attr-1"),
-                    ExpectedVersion.of(1L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 
   @Test
@@ -119,7 +120,7 @@ class ExpenseUpdateServiceTest {
                     new Amount(2000),
                     new PaymentDate(LocalDate.of(2026, 4, 2)),
                     new ExpenseAttributeIdentifier("not-exist"),
-                    ExpectedVersion.of(1L))));
+                    ExpectedDigest.of(existing.digest()))));
   }
 
   @Test
@@ -144,6 +145,6 @@ class ExpenseUpdateServiceTest {
                     new Amount(1000),
                     new PaymentDate(LocalDate.of(2026, 4, 1)),
                     new ExpenseAttributeIdentifier("attr-1"),
-                    ExpectedVersion.of(2L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 }

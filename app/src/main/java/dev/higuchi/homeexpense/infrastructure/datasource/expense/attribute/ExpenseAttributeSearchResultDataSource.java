@@ -1,5 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
 import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
@@ -37,7 +38,7 @@ public class ExpenseAttributeSearchResultDataSource implements ExpenseAttributeS
   @Override
   public Optional<ExpenseAttributeDetail> find(ExpenseAttributeIdentifier id) {
     return jdbc.queryForOptional(
-        "SELECT id, category, name, version FROM expense.attribute WHERE id = ?",
+        "SELECT id, category, name, document_digest FROM expense.attribute WHERE id = ?",
         ParameterBinder.of(id.value()),
         ExpenseAttributeSearchResultDataSource::mapDetail);
   }
@@ -53,7 +54,7 @@ public class ExpenseAttributeSearchResultDataSource implements ExpenseAttributeS
 
   private List<ExpenseAttributeDetail> selectBy(ExpenseAttributeSearchCriteria criteria) {
     StringBuilder sql =
-        new StringBuilder("SELECT id, category, name, version FROM expense.attribute");
+        new StringBuilder("SELECT id, category, name, document_digest FROM expense.attribute");
     List<Object> params = new ArrayList<>();
     appendCategoryFilter(criteria, sql, params);
     sql.append(" ORDER BY attribute.created_at OFFSET ? ROWS FETCH FIRST ? ROWS ONLY");
@@ -75,6 +76,9 @@ public class ExpenseAttributeSearchResultDataSource implements ExpenseAttributeS
 
   static ExpenseAttributeDetail mapDetail(ResultSet rs) throws SQLException {
     return new ExpenseAttributeDetail(
-        rs.getString("id"), rs.getString("name"), rs.getString("category"), rs.getLong("version"));
+        rs.getString("id"),
+        rs.getString("name"),
+        rs.getString("category"),
+        DocumentDigest.fromBytes(rs.getBytes("document_digest")));
   }
 }

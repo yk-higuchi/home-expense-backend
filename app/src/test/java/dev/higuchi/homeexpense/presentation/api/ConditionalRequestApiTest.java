@@ -3,7 +3,9 @@ package dev.higuchi.homeexpense.presentation.api;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import io.quarkus.test.junit.QuarkusTest;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +16,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 class ConditionalRequestApiTest {
 
   private String path;
+  private String name;
 
   @BeforeEach
   void setUp() {
+    name = "cond-" + UUID.randomUUID();
     String location =
         given()
             .contentType("application/json")
-            .body("{\"name\":\"cond-" + UUID.randomUUID() + "\"}")
+            .body("{\"name\":\"" + name + "\"}")
             .post("/v1/income-attributes")
             .then()
             .statusCode(201)
@@ -33,9 +37,22 @@ class ConditionalRequestApiTest {
     return "{\"name\":\"cond-" + UUID.randomUUID() + "\"}";
   }
 
+  private String etag() {
+    return given().get(path).then().statusCode(200).extract().header("ETag");
+  }
+
+  private static String etagOf(String name) {
+    return "\"" + DocumentDigest.of(Map.of("name", name)).value() + "\"";
+  }
+
   @Test
-  void GETは強いETagを返す() {
-    given().get(path).then().statusCode(200).header("ETag", equalTo("\"1\""));
+  void GETはドキュメントのダイジェストを強いETagとして返す() {
+    given().get(path).then().statusCode(200).header("ETag", equalTo(etagOf(name)));
+  }
+
+  @Test
+  void 本文には版の情報を含めない() {
+    given().get(path).then().statusCode(200).body("$", not(hasKey("version")));
   }
 
   @Test
@@ -53,14 +70,47 @@ class ConditionalRequestApiTest {
 
   @Test
   void 一致するETagなら更新でき新しいETagに変わる() {
+    String newName = "cond-" + UUID.randomUUID();
     given()
         .contentType("application/json")
-        .header("If-Match", "\"1\"")
+        .header("If-Match", etag())
+        .body("{\"name\":\"" + newName + "\"}")
+        .put(path)
+        .then()
+        .statusCode(204);
+    given().get(path).then().header("ETag", equalTo(etagOf(newName)));
+  }
+
+  @Test
+  void 内容が変わらない更新ではETagも変わらない() {
+    String before = etag();
+    given()
+        .contentType("application/json")
+        .header("If-Match", before)
+        .body("{\"name\":\"" + name + "\"}")
+        .put(path)
+        .then()
+        .statusCode(204);
+    given().get(path).then().header("ETag", equalTo(before));
+  }
+
+  @Test
+  void 古いETagは412() {
+    String stale = etag();
+    given()
+        .contentType("application/json")
+        .header("If-Match", stale)
         .body(body())
         .put(path)
         .then()
         .statusCode(204);
-    given().get(path).then().header("ETag", equalTo("\"2\""));
+    given()
+        .contentType("application/json")
+        .header("If-Match", stale)
+        .body(body())
+        .put(path)
+        .then()
+        .statusCode(412);
   }
 
   @Test
@@ -79,7 +129,7 @@ class ConditionalRequestApiTest {
   void 弱いETagは強い比較で一致しないため412() {
     given()
         .contentType("application/json")
-        .header("If-Match", "W/\"1\"")
+        .header("If-Match", "W/" + etag())
         .body(body())
         .put(path)
         .then()
@@ -90,7 +140,7 @@ class ConditionalRequestApiTest {
   void ETagのリストはいずれかが一致すれば更新できる() {
     given()
         .contentType("application/json")
-        .header("If-Match", "\"9\", \"1\"")
+        .header("If-Match", "\"9\", " + etag())
         .body(body())
         .put(path)
         .then()
@@ -123,7 +173,6 @@ class ConditionalRequestApiTest {
 
   @Test
   void 内容に変更がなくてもETagが一致しなければ412() {
-    String name = given().get(path).then().extract().path("name");
     given()
         .contentType("application/json")
         .header("If-Match", "\"9\"")
@@ -147,12 +196,12 @@ class ConditionalRequestApiTest {
 
   @Test
   void DELETEで一致するETagなら削除できる() {
-    given().header("If-Match", "\"1\"").delete(path).then().statusCode(204);
+    given().header("If-Match", etag()).delete(path).then().statusCode(204);
     given().get(path).then().statusCode(404);
   }
 
   @Test
-  void DELETEでアスタリスクならバージョンを問わず削除できる() {
+  void DELETEでアスタリスクなら条件なしで削除できる() {
     given().header("If-Match", "*").delete(path).then().statusCode(204);
     given().get(path).then().statusCode(404);
   }
@@ -167,25 +216,5 @@ class ConditionalRequestApiTest {
       })
   void すべてのDELETEでIfMatchが必須(String collection) {
     given().delete(collection + UUID.randomUUID()).then().statusCode(428);
-  }
-
-  @Test
-  void 一覧の各要素のversionは個別取得のETagと一致する() {
-    String id = path.substring(path.lastIndexOf('/') + 1);
-    given()
-        .contentType("application/json")
-        .header("If-Match", "\"1\"")
-        .body(body())
-        .put(path)
-        .then()
-        .statusCode(204);
-    given().get(path).then().header("ETag", equalTo("\"2\"")).body("version", equalTo(2));
-    given()
-        .queryParam("per_page", 100)
-        .queryParam("page", 1)
-        .get("/v1/income-attributes")
-        .then()
-        .statusCode(200)
-        .body("income_attributes.find { it.id == '%s' }.version".formatted(id), equalTo(2));
   }
 }

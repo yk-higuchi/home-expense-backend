@@ -105,6 +105,6 @@ public class ExpenseAttributeApi {
     ExpenseAttributeDetail detail =
         expenseAttributeSearchResultQuerier.get(new ExpenseAttributeIdentifier(id));
     ExpenseAttributeGetResponse response = ExpenseAttributeGetResponse.from(detail);
-    return Response.ok(response).tag(String.valueOf(detail.version())).build();
+    return Response.ok(response).tag(detail.digest().value()).build();
   }
 }

@@ -35,9 +35,9 @@ public class IncomeUpdateService {
             command.receiveDate(),
             attribute.incomeAttributeIdentifier());
     if (current.hasChanges(updated)) {
-      incomeRepository.update(updated, command.expectedVersion());
+      incomeRepository.update(updated, command.expectedDigest());
     } else {
-      incomeRepository.verifyVersion(current, command.expectedVersion());
+      incomeRepository.verifyDigest(current, command.expectedDigest());
     }
   }
 }

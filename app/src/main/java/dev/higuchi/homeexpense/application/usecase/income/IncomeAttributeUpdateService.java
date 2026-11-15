@@ -26,9 +26,9 @@ public class IncomeAttributeUpdateService {
     incomeAttributeNameUniqueness.assertUniqueForUpdate(current, command.incomeAttributeName());
     IncomeAttribute updated = current.updateWith(command.incomeAttributeName());
     if (current.hasChanges(updated)) {
-      incomeAttributeRepository.update(updated, command.expectedVersion());
+      incomeAttributeRepository.update(updated, command.expectedDigest());
     } else {
-      incomeAttributeRepository.verifyVersion(current, command.expectedVersion());
+      incomeAttributeRepository.verifyDigest(current, command.expectedDigest());
     }
   }
 }

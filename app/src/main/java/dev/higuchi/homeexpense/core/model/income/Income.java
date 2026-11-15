@@ -2,7 +2,9 @@ package dev.higuchi.homeexpense.core.model.income;
 
 import dev.higuchi.homeexpense.core.model.Amount;
 import dev.higuchi.homeexpense.core.model.Description;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -71,6 +73,15 @@ public class Income {
 
   public IncomeAttributeIdentifier incomeAttributeIdentifier() {
     return incomeAttributeIdentifier;
+  }
+
+  public DocumentDigest digest() {
+    return DocumentDigest.of(
+        Map.of(
+            "amount", amount.value(),
+            "attribute_id", incomeAttributeIdentifier.value(),
+            "description", description.value(),
+            "receive_date", receiveDate.value().toString()));
   }
 
   @Override

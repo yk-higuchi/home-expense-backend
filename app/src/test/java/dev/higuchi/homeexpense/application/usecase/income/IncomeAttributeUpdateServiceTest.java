@@ -2,10 +2,11 @@ package dev.higuchi.homeexpense.application.usecase.income;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.fake.InMemoryIncomeAttributeRepository;
+import dev.higuchi.homeexpense.testing.TestDigests;
 import org.junit.jupiter.api.Test;
 
 class IncomeAttributeUpdateServiceTest {
@@ -23,12 +24,13 @@ class IncomeAttributeUpdateServiceTest {
         new IncomeAttributeUpdateCommand(
             new IncomeAttributeIdentifier("attr-1"),
             new IncomeAttributeName("賞与"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     IncomeAttribute updated =
         attributeRepository.find(new IncomeAttributeIdentifier("attr-1")).orElseThrow();
     assertEquals("賞与", updated.incomeAttributeName().value());
-    assertEquals(2L, attributeRepository.versionOf(new IncomeAttributeIdentifier("attr-1")));
+    assertNotEquals(
+        existing.digest(), attributeRepository.digestOf(new IncomeAttributeIdentifier("attr-1")));
   }
 
   @Test
@@ -41,12 +43,13 @@ class IncomeAttributeUpdateServiceTest {
         new IncomeAttributeUpdateCommand(
             new IncomeAttributeIdentifier("attr-1"),
             new IncomeAttributeName("給与"),
-            ExpectedVersion.of(1L)));
+            ExpectedDigest.of(existing.digest())));
 
     IncomeAttribute result =
         attributeRepository.find(new IncomeAttributeIdentifier("attr-1")).orElseThrow();
     assertSame(existing, result);
-    assertEquals(1L, attributeRepository.versionOf(new IncomeAttributeIdentifier("attr-1")));
+    assertEquals(
+        existing.digest(), attributeRepository.digestOf(new IncomeAttributeIdentifier("attr-1")));
   }
 
   @Test
@@ -62,6 +65,6 @@ class IncomeAttributeUpdateServiceTest {
                 new IncomeAttributeUpdateCommand(
                     new IncomeAttributeIdentifier("attr-1"),
                     new IncomeAttributeName("給与"),
-                    ExpectedVersion.of(2L))));
+                    ExpectedDigest.of(TestDigests.STALE))));
   }
 }

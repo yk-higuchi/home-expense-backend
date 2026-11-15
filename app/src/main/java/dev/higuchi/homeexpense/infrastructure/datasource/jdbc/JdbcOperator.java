@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.jdbc;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
 import dev.higuchi.homeexpense.infrastructure.datasource.DataAccessException;
 import dev.higuchi.homeexpense.infrastructure.datasource.UniqueConstraintViolationException;
@@ -62,39 +62,39 @@ public class JdbcOperator {
     }
   }
 
-  public void updateWithOptimisticLock(String sql, List<Object> params, ExpectedVersion expected) {
-    VersionCondition condition = VersionCondition.of(params, expected);
+  public void updateWithOptimisticLock(String sql, List<Object> params, ExpectedDigest expected) {
+    DigestCondition condition = DigestCondition.of(params, expected);
     if (update(sql.stripTrailing() + condition.sql(), condition.binder()) == 0) {
       throw new ConcurrentUpdateException();
     }
   }
 
-  public void verifyVersion(String sql, List<Object> params, ExpectedVersion expected) {
-    VersionCondition condition = VersionCondition.of(params, expected);
+  public void verifyDigest(String sql, List<Object> params, ExpectedDigest expected) {
+    DigestCondition condition = DigestCondition.of(params, expected);
     if (queryForOptional(sql.stripTrailing() + condition.sql(), condition.binder(), rs -> true)
         .isEmpty()) {
       throw new ConcurrentUpdateException();
     }
   }
 
-  private record VersionCondition(String sql, List<Object> params) {
+  private record DigestCondition(String sql, List<Object> params) {
 
-    static VersionCondition of(List<Object> baseParams, ExpectedVersion expected) {
+    static DigestCondition of(List<Object> baseParams, ExpectedDigest expected) {
       List<Object> params = new ArrayList<>(baseParams);
       String sql =
           switch (expected) {
-            case ExpectedVersion.Unconditional u -> "";
-            case ExpectedVersion.OneOf oneOf -> {
-              if (oneOf.versions().isEmpty()) {
+            case ExpectedDigest.Unconditional u -> "";
+            case ExpectedDigest.OneOf oneOf -> {
+              if (oneOf.digests().isEmpty()) {
                 throw new ConcurrentUpdateException();
               }
-              params.addAll(oneOf.versions());
-              yield " AND version IN ("
-                  + String.join(", ", Collections.nCopies(oneOf.versions().size(), "?"))
+              oneOf.digests().forEach(digest -> params.add(digest.toBytes()));
+              yield " AND document_digest IN ("
+                  + String.join(", ", Collections.nCopies(oneOf.digests().size(), "?"))
                   + ")";
             }
           };
-      return new VersionCondition(sql, params);
+      return new DigestCondition(sql, params);
     }
 
     ParameterBinder binder() {

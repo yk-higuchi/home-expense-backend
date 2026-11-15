@@ -26,9 +26,9 @@ public class ExpenseAttributeUpdateService {
     expenseAttributeNameUniqueness.assertUniqueForUpdate(current, command.expenseAttributeName());
     ExpenseAttribute updated = current.updateWith(command.expenseAttributeName());
     if (current.hasChanges(updated)) {
-      expenseAttributeRepository.update(updated, command.expectedVersion());
+      expenseAttributeRepository.update(updated, command.expectedDigest());
     } else {
-      expenseAttributeRepository.verifyVersion(current, command.expectedVersion());
+      expenseAttributeRepository.verifyDigest(current, command.expectedDigest());
     }
   }
 }

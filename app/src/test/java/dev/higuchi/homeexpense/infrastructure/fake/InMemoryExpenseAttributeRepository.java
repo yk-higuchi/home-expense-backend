@@ -1,6 +1,7 @@
 package dev.higuchi.homeexpense.infrastructure.fake;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.*;
 import dev.higuchi.homeexpense.infrastructure.datasource.ConcurrentUpdateException;
@@ -11,9 +12,7 @@ import java.util.Optional;
 
 public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepository {
 
-  private static final long INITIAL_VERSION = 1L;
-
-  private record Stored(ExpenseAttribute entity, long version) {}
+  private record Stored(ExpenseAttribute entity, DocumentDigest digest) {}
 
   private final Map<String, Stored> store = new LinkedHashMap<>();
 
@@ -21,7 +20,7 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   public void register(ExpenseAttribute expenseAttribute) {
     store.put(
         expenseAttribute.expenseAttributeIdentifier().value(),
-        new Stored(expenseAttribute, INITIAL_VERSION));
+        new Stored(expenseAttribute, expenseAttribute.digest()));
   }
 
   @Override
@@ -39,28 +38,28 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
   }
 
   @Override
-  public void update(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+  public void update(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
     String key = expenseAttribute.expenseAttributeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
-    store.put(key, new Stored(expenseAttribute, current.version() + 1));
+    store.put(key, new Stored(expenseAttribute, expenseAttribute.digest()));
   }
 
   @Override
-  public void verifyVersion(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+  public void verifyDigest(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
     Stored current = store.get(expenseAttribute.expenseAttributeIdentifier().value());
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
   }
 
   @Override
-  public void delete(ExpenseAttribute expenseAttribute, ExpectedVersion expectedVersion) {
+  public void delete(ExpenseAttribute expenseAttribute, ExpectedDigest expectedDigest) {
     String key = expenseAttribute.expenseAttributeIdentifier().value();
     Stored current = store.get(key);
-    if (current == null || !expectedVersion.matches(current.version())) {
+    if (current == null || !expectedDigest.matches(current.digest())) {
       throw new ConcurrentUpdateException();
     }
     store.remove(key);
@@ -70,11 +69,11 @@ public class InMemoryExpenseAttributeRepository implements ExpenseAttributeRepos
     return store.values().stream().map(Stored::entity).toList();
   }
 
-  public long versionOf(ExpenseAttributeIdentifier id) {
+  public DocumentDigest digestOf(ExpenseAttributeIdentifier id) {
     Stored s = store.get(id.value());
     if (s == null) {
       throw new IllegalStateException("not found: " + id.value());
     }
-    return s.version();
+    return s.digest();
   }
 }

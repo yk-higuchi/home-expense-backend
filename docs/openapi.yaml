@@ -219,7 +219,7 @@ paths:
       tags:
         - Expense Attributes
       summary: 経費属性を削除する
-      description: 経費属性を削除します。現在の ETag（または一覧の version）を If-Match に指定する必要があります。この属性を参照している経費がある間は 409 になります。
+      description: 経費属性を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。この属性を参照している経費がある間は 409 になります。
       operationId: deleteExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -384,7 +384,7 @@ paths:
       tags:
         - Expenses
       summary: 経費を削除する
-      description: 経費を削除します。現在の ETag（または一覧の version）を If-Match に指定する必要があります。
+      description: 経費を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。
       operationId: deleteExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -515,7 +515,7 @@ paths:
       tags:
         - Income Attributes
       summary: 収入属性を削除する
-      description: 収入属性を削除します。現在の ETag（または一覧の version）を If-Match に指定する必要があります。この属性を参照している収入がある間は 409 になります。
+      description: 収入属性を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。この属性を参照している収入がある間は 409 になります。
       operationId: deleteIncomeAttribute
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -656,7 +656,7 @@ paths:
       tags:
         - Incomes
       summary: 収入を削除する
-      description: 収入を削除します。現在の ETag（または一覧の version）を If-Match に指定する必要があります。
+      description: 収入を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。
       operationId: deleteIncome
       parameters:
         - $ref: '#/components/parameters/IncomeId'
@@ -817,18 +817,10 @@ components:
         name:
           maxLength: 512
           type: string
-        version:
-          description: 'データのバージョン。個別取得の ETag と同じ値です。更新・削除のときは `If-Match: "<version>"` の形で指定します。'
-          example: 1
-          format: int64
-          maximum: 9223372036854775807
-          minimum: 1
-          type: integer
       required:
         - id
         - name
         - category
-        - version
       type: object
     ExpenseAttributeListResponse:
       properties:
@@ -908,20 +900,12 @@ components:
           format: date
           maxLength: 10
           type: string
-        version:
-          description: 'データのバージョン。個別取得の ETag と同じ値です。更新・削除のときは `If-Match: "<version>"` の形で指定します。'
-          example: 1
-          format: int64
-          maximum: 9223372036854775807
-          minimum: 1
-          type: integer
       required:
         - id
         - description
         - amount
         - payment_date
         - expense_attribute
-        - version
       type: object
     ExpenseListResponse:
       properties:
@@ -1002,17 +986,9 @@ components:
         name:
           maxLength: 512
           type: string
-        version:
-          description: 'データのバージョン。個別取得の ETag と同じ値です。更新・削除のときは `If-Match: "<version>"` の形で指定します。'
-          example: 1
-          format: int64
-          maximum: 9223372036854775807
-          minimum: 1
-          type: integer
       required:
         - id
         - name
-        - version
       type: object
     IncomeAttributeListResponse:
       properties:
@@ -1079,20 +1055,12 @@ components:
           format: date
           maxLength: 10
           type: string
-        version:
-          description: 'データのバージョン。個別取得の ETag と同じ値です。更新・削除のときは `If-Match: "<version>"` の形で指定します。'
-          example: 1
-          format: int64
-          maximum: 9223372036854775807
-          minimum: 1
-          type: integer
       required:
         - id
         - description
         - amount
         - receive_date
         - income_attribute
-        - version
       type: object
     IncomeListResponse:
       properties:
@@ -1332,8 +1300,8 @@ components:
       name: If-Match
       in: header
       description: |
-        以前のレスポンスの `ETag` ヘッダー、または一覧の `version` で受け取った値の entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
-        `*`（バージョンに関係なく、リソースがあれば更新・削除）または `"3", "4"` のようなカンマ区切りの一覧を指定できます。
+        個別取得のレスポンスの `ETag` ヘッダーで受け取った entity-tag（RFC 9110 §13.1.1）。強い比較で照合します。
+        `*`（リソースがあれば条件なしで更新・削除）または `"<ETag>", "<ETag>"` のようなカンマ区切りの一覧を指定できます。
         ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 になります。
       required: true
       schema:
@@ -1383,10 +1351,12 @@ components:
   headers:
     ETag:
       description: |
-        楽観的ロックに使うリソースのバージョン識別子（RFC 9110 §8.8.3）。本文の `version` と同じ値です。
-        以降の `PUT` / `DELETE` リクエストでは、この値を `If-Match` に指定します。
+        リソースのドキュメントのダイジェスト。ドキュメント（PUT の本文と同じ項目）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です（RFC 9110 §8.8.3）。
+        内容が変わらなければ値も変わりません。以降の `PUT` / `DELETE` リクエストでは、この値を `If-Match` に指定します。
       schema:
-        maxLength: 128
+        example: '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
+        maxLength: 45
+        pattern: ^"[A-Za-z0-9_-]{43}"$
         type: string
     Link:
       description: ページ送りのリンク（RFC 8288）。関係の種類は `self`、`first`、`last` と、該当する場合の `prev` / `next` です。リンクはリクエストのクエリパラメータ（絞り込み条件）を保ち、`page` / `per_page` だけを置き換えます。

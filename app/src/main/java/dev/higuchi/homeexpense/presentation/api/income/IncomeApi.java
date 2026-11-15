@@ -98,6 +98,6 @@ public class IncomeApi {
   public Response get(@PathParam("id") @UuidFormat String id) {
     IncomeDetail detail = incomeSearchResultQuerier.get(new IncomeIdentifier(id));
     IncomeGetResponse response = IncomeGetResponse.from(detail);
-    return Response.ok(response).tag(String.valueOf(detail.version())).build();
+    return Response.ok(response).tag(detail.digest().value()).build();
   }
 }

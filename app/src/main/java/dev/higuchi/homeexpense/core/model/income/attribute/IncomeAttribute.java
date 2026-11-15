@@ -1,5 +1,7 @@
 package dev.higuchi.homeexpense.core.model.income.attribute;
 
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -40,6 +42,10 @@ public class IncomeAttribute {
 
   public IncomeAttributeName incomeAttributeName() {
     return incomeAttributeName;
+  }
+
+  public DocumentDigest digest() {
+    return DocumentDigest.of(Map.of("name", incomeAttributeName.value()));
   }
 
   @Override

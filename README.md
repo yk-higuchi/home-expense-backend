@@ -41,6 +41,18 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   node scripts/validate_jtd_exchanges.mjs docs/openapi.yaml docs/openapi.jtd.json app/build/openapi-exchanges/exchanges.jsonl
   ```
 
+### 楽観ロック（ETag / If-Match）
+
+- PUT と DELETE には、個別取得で受け取った `ETag` を `If-Match` に指定します。ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 です。
+- ETag は、リソースの「ドキュメント」のダイジェストです。ドキュメント（PUT の本文と同じ項目）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表します。
+  - 経費：`amount`、`attribute_id`、`description`、`payment_date`
+  - 収入：`amount`、`attribute_id`、`description`、`receive_date`
+  - 経費属性：`category`、`name`
+  - 収入属性：`name`
+- ダイジェストは各テーブルの `document_digest` 列（SHA-256 の 32 バイト）に保存し、更新・削除の SQL の条件で照合します。内容が変わらない更新では値も変わりません。
+- 本文には版の情報を含めません。一覧から削除する場合は、確認の画面で個別取得をして内容と ETag を得てから削除します。
+- V1.7.0 のマイグレーションは、既存の行の `document_digest` を SQL で計算します。PostgreSQL では pgcrypto の拡張を使います（`CREATE EXTENSION IF NOT EXISTS pgcrypto` を実行できる権限が必要です）。
+
 ### OpenAPI から JTD への変換のルール
 
 - `components.schemas` のうち、リクエスト本文またはレスポンス本文で直接使っているスキーマごとに、参照を展開した JTD を出力する

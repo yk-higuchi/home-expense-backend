@@ -1,6 +1,6 @@
 package dev.higuchi.homeexpense.core.model.income.attribute;
 
-import dev.higuchi.homeexpense.core.model.ExpectedVersion;
+import dev.higuchi.homeexpense.core.model.ExpectedDigest;
 import java.util.Optional;
 
 public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
@@ -13,9 +13,9 @@ public interface IncomeAttributeRepository extends IncomeAttributeNameLookup {
     return find(incomeAttributeIdentifier).orElseThrow(IncomeAttributeNotFoundException::new);
   }
 
-  void update(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
+  void update(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest);
 
-  void verifyVersion(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
+  void verifyDigest(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest);
 
-  void delete(IncomeAttribute incomeAttribute, ExpectedVersion expectedVersion);
+  void delete(IncomeAttribute incomeAttribute, ExpectedDigest expectedDigest);
 }
