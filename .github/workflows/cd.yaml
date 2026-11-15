@@ -65,8 +65,8 @@ jobs:
           echo "### ${IMAGE}:${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
           echo "promoted from \`${source}\` (\`${source_digest}\`)" >> "${GITHUB_STEP_SUMMARY}"
   # フロントエンドなどの API 利用側が版を固定して取得できるよう、リリースした版の
-  # OpenAPI 定義を GitHub Release に添付する
-  # （https://github.com/<repo>/releases/download/v<version>/openapi.yaml）。
+  # OpenAPI 定義と、そこから生成した JTD を GitHub Release に添付する
+  # （https://github.com/<repo>/releases/download/v<version>/openapi.yaml, openapi.jtd.json）。
   publish-spec:
     runs-on: ubuntu-latest
     permissions:
@@ -89,5 +89,5 @@ jobs:
           [ "${spec_version}" = "${VERSION}" ] || { echo "info.version ${spec_version} != ${VERSION}"; exit 1; }
       - name: Attach openapi.yaml to the release
         run: |
-          gh release upload "v${VERSION}" docs/openapi.yaml --clobber --repo "${GITHUB_REPOSITORY}"
-          echo "### openapi.yaml attached to v${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+          gh release upload "v${VERSION}" docs/openapi.yaml docs/openapi.jtd.json --clobber --repo "${GITHUB_REPOSITORY}"
+          echo "### openapi.yaml / openapi.jtd.json attached to v${VERSION}" >> "${GITHUB_STEP_SUMMARY}"

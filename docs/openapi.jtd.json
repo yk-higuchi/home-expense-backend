@@ -1,0 +1,450 @@
+{
+	"BalanceSeriesResponse": {
+		"properties": {
+			"granularity": {
+				"enum": ["day", "week", "month", "quarter", "year"]
+			},
+			"items": {
+				"elements": {
+					"properties": {
+						"expense_total": {
+							"type": "float64"
+						},
+						"fixed_expense_total": {
+							"type": "float64"
+						},
+						"income_total": {
+							"type": "float64"
+						},
+						"net": {
+							"type": "float64"
+						},
+						"period": {
+							"properties": {
+								"from": {
+									"type": "string"
+								},
+								"to": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						},
+						"variable_expense_total": {
+							"type": "float64"
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		},
+		"additionalProperties": true
+	},
+	"BalanceStatisticsResponse": {
+		"properties": {
+			"expense_total": {
+				"type": "float64"
+			},
+			"fixed_expense": {
+				"properties": {
+					"breakdown": {
+						"elements": {
+							"properties": {
+								"amount": {
+									"type": "float64"
+								},
+								"attribute_id": {
+									"type": "string"
+								},
+								"attribute_name": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						}
+					},
+					"total": {
+						"type": "float64"
+					}
+				},
+				"additionalProperties": true
+			},
+			"income": {
+				"properties": {
+					"breakdown": {
+						"elements": {
+							"properties": {
+								"amount": {
+									"type": "float64"
+								},
+								"attribute_id": {
+									"type": "string"
+								},
+								"attribute_name": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						}
+					},
+					"total": {
+						"type": "float64"
+					}
+				},
+				"additionalProperties": true
+			},
+			"net": {
+				"type": "float64"
+			},
+			"period": {
+				"properties": {
+					"from": {
+						"type": "string"
+					},
+					"to": {
+						"type": "string"
+					}
+				},
+				"additionalProperties": true
+			},
+			"variable_expense": {
+				"properties": {
+					"breakdown": {
+						"elements": {
+							"properties": {
+								"amount": {
+									"type": "float64"
+								},
+								"attribute_id": {
+									"type": "string"
+								},
+								"attribute_name": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						}
+					},
+					"total": {
+						"type": "float64"
+					}
+				},
+				"additionalProperties": true
+			}
+		},
+		"additionalProperties": true
+	},
+	"ExpenseAttributeGetResponse": {
+		"properties": {
+			"category": {
+				"enum": ["固定費", "変動費"]
+			},
+			"id": {
+				"type": "string"
+			},
+			"name": {
+				"type": "string"
+			}
+		},
+		"additionalProperties": true
+	},
+	"ExpenseAttributeListResponse": {
+		"properties": {
+			"expense_attributes": {
+				"elements": {
+					"properties": {
+						"category": {
+							"enum": ["固定費", "変動費"]
+						},
+						"id": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		},
+		"additionalProperties": true
+	},
+	"ExpenseAttributePostRequest": {
+		"properties": {
+			"category": {
+				"enum": ["固定費", "変動費"]
+			},
+			"name": {
+				"type": "string"
+			}
+		}
+	},
+	"ExpenseAttributePutRequest": {
+		"properties": {
+			"name": {
+				"type": "string"
+			}
+		}
+	},
+	"ExpenseGetResponse": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"description": {
+				"type": "string"
+			},
+			"expense_attribute": {
+				"properties": {
+					"category": {
+						"enum": ["固定費", "変動費"]
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"additionalProperties": true
+			},
+			"id": {
+				"type": "string"
+			},
+			"payment_date": {
+				"type": "string"
+			}
+		},
+		"additionalProperties": true
+	},
+	"ExpenseListResponse": {
+		"properties": {
+			"expenses": {
+				"elements": {
+					"properties": {
+						"amount": {
+							"type": "int32"
+						},
+						"description": {
+							"type": "string"
+						},
+						"expense_attribute": {
+							"properties": {
+								"category": {
+									"enum": ["固定費", "変動費"]
+								},
+								"id": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						},
+						"id": {
+							"type": "string"
+						},
+						"payment_date": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		},
+		"additionalProperties": true
+	},
+	"ExpensePostRequest": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"attribute_id": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"payment_date": {
+				"type": "string"
+			}
+		}
+	},
+	"ExpensePutRequest": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"attribute_id": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"payment_date": {
+				"type": "string"
+			}
+		}
+	},
+	"IncomeAttributeGetResponse": {
+		"properties": {
+			"id": {
+				"type": "string"
+			},
+			"name": {
+				"type": "string"
+			}
+		},
+		"additionalProperties": true
+	},
+	"IncomeAttributeListResponse": {
+		"properties": {
+			"income_attributes": {
+				"elements": {
+					"properties": {
+						"id": {
+							"type": "string"
+						},
+						"name": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		},
+		"additionalProperties": true
+	},
+	"IncomeAttributePostRequest": {
+		"properties": {
+			"name": {
+				"type": "string"
+			}
+		}
+	},
+	"IncomeAttributePutRequest": {
+		"properties": {
+			"name": {
+				"type": "string"
+			}
+		}
+	},
+	"IncomeGetResponse": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"description": {
+				"type": "string"
+			},
+			"id": {
+				"type": "string"
+			},
+			"income_attribute": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"additionalProperties": true
+			},
+			"receive_date": {
+				"type": "string"
+			}
+		},
+		"additionalProperties": true
+	},
+	"IncomeListResponse": {
+		"properties": {
+			"incomes": {
+				"elements": {
+					"properties": {
+						"amount": {
+							"type": "int32"
+						},
+						"description": {
+							"type": "string"
+						},
+						"id": {
+							"type": "string"
+						},
+						"income_attribute": {
+							"properties": {
+								"id": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": true
+						},
+						"receive_date": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": true
+				}
+			}
+		},
+		"additionalProperties": true
+	},
+	"IncomePostRequest": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"attribute_id": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"receive_date": {
+				"type": "string"
+			}
+		}
+	},
+	"IncomePutRequest": {
+		"properties": {
+			"amount": {
+				"type": "int32"
+			},
+			"attribute_id": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"receive_date": {
+				"type": "string"
+			}
+		}
+	},
+	"ProblemDetail": {
+		"properties": {
+			"status": {
+				"type": "int32"
+			},
+			"title": {
+				"type": "string"
+			},
+			"type": {
+				"type": "string"
+			}
+		},
+		"optionalProperties": {
+			"detail": {
+				"type": "string"
+			},
+			"trace_id": {
+				"type": "string"
+			}
+		},
+		"additionalProperties": true
+	}
+}

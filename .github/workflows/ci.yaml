@@ -41,6 +41,14 @@ jobs:
         run: |
           pip install -r scripts/requirements-openapi.txt
           python scripts/validate_openapi_exchanges.py docs/openapi.yaml app/build/openapi-exchanges/exchanges.jsonl
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate API exchanges against JTD
+        run: node scripts/validate_jtd_exchanges.mjs docs/openapi.yaml docs/openapi.jtd.json app/build/openapi-exchanges/exchanges.jsonl
   openapi-lint:
     runs-on: ubuntu-latest
     steps:
@@ -53,6 +61,16 @@ jobs:
           sudo install -m 0755 vacuum /usr/local/bin/vacuum
       - name: Lint OpenAPI
         run: vacuum lint -r .vacuum.yaml -d docs/openapi.yaml
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check JTD is generated from OpenAPI
+        run: |
+          pnpm gen:jtd
+          git diff --exit-code docs/openapi.jtd.json || { echo "docs/openapi.jtd.json が古いままです。pnpm gen:jtd を実行してコミットしてください"; exit 1; }
   frontend-lint:
     runs-on: ubuntu-latest
     steps:
