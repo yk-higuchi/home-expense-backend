@@ -81,59 +81,18 @@ jobs:
         run: |
           pnpm gen:jtd
           git diff --exit-code docs/openapi.jtd.json || { echo "docs/openapi.jtd.json が古いままです。pnpm gen:jtd を実行してコミットしてください"; exit 1; }
-  lint:
+  migration-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Biome check
-        run: pnpm biome check .
-      - name: Install actionlint
-        env:
-          ACTIONLINT_VERSION: 1.7.12
-          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
-        run: |
-          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
-          curl -fsSLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
-          echo "${ACTIONLINT_SHA256}  ${archive}" | sha256sum -c -
-          tar -xzf "${archive}" actionlint
-          sudo install -m 0755 actionlint /usr/local/bin/actionlint
-      - name: Lint workflows (actionlint)
-        run: actionlint -color
-      - name: Install hadolint
-        env:
-          HADOLINT_VERSION: 2.15.1
-          HADOLINT_SHA256: c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507
-        run: |
-          curl -fsSL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
-          echo "${HADOLINT_SHA256}  hadolint" | sha256sum -c -
-          sudo install -m 0755 hadolint /usr/local/bin/hadolint
-      - name: Lint Dockerfile (hadolint)
-        run: hadolint app/Dockerfile
-      - name: Lint YAML (yamllint)
-        env:
-          YAMLLINT_VERSION: 1.38.0
-        run: pipx run "yamllint==${YAMLLINT_VERSION}" --strict --format github .
-  commitlint:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Lint commits
-        run: pnpm commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Lint migrations (sqlfluff)
+        run: sqlfluff lint --format github-annotation-native flyway/migration
   # イメージは CI で一度だけビルドしてスキャンする。main への push ではテスト済みのイメージを
   # sha-<commit> タグで GHCR に置き、リリース時は CD がそれを作り直さずに昇格させる。
   image:
@@ -156,6 +115,16 @@ jobs:
       - name: Read version
         id: version
         run: echo "version=$(sed -nE 's/^version = "([^"]+)".*x-release-please-version.*/\1/p' app/build.gradle.kts)" >> "${GITHUB_OUTPUT}"
+      - name: Install hadolint
+        env:
+          HADOLINT_VERSION: 2.15.1
+          HADOLINT_SHA256: c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507
+        run: |
+          curl -fsSL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
+          echo "${HADOLINT_SHA256}  hadolint" | sha256sum -c -
+          sudo install -m 0755 hadolint /usr/local/bin/hadolint
+      - name: Lint ${{ matrix.build-context }}/Dockerfile
+        run: hadolint "${{ matrix.build-context }}/Dockerfile"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build ${{ matrix.build-context }}
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -196,7 +165,7 @@ jobs:
     needs:
       - test
       - openapi-lint
-      - lint
+      - migration-lint
       - image
     runs-on: ubuntu-latest
     permissions:

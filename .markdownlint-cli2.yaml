@@ -1,0 +1,9 @@
+config:
+  MD013: false
+globs:
+  - "**/*.md"
+ignores:
+  - node_modules/**
+  - venv/**
+  - app/build/**
+  - CHANGELOG.md

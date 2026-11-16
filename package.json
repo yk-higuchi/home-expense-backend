@@ -10,6 +10,7 @@
 		"@commitlint/config-conventional": "21.2.4",
 		"ajv": "8.20.0",
 		"ajv-formats": "3.0.1",
+		"markdownlint-cli2": "0.24.0",
 		"yaml": "2.9.1"
 	}
 }

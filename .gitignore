@@ -38,3 +38,4 @@ Temporary Items
 *.iml
 node_modules
 .venv
+.ruff_cache/

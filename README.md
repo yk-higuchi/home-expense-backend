@@ -7,7 +7,7 @@
 1. **プルリクエスト**：CI で次を実行します。イメージはまだ push しません。
    - テスト（CockroachDB）
    - テスト中に記録した HTTP のやり取りと `docs/openapi.yaml` の照合
-   - リント（vacuum、Biome、actionlint、hadolint、yamllint、commitlint）
+   - アプリに関わるリント（OpenAPI の vacuum、マイグレーションの sqlfluff、Dockerfile の hadolint）
    - アプリのイメージのビルドと脆弱性スキャン
 2. **`main` への push**：CI が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。そのあと release-please がリリース PR を更新します。リリース PR では次が更新されます。
    - `app/build.gradle.kts` のバージョン
@@ -95,12 +95,40 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 - 最大長・パターン・最小値・最大値などの制約は JTD で表せないので出力しない
 - `oneOf` / `anyOf` / `allOf`、再帰的な参照、同じスキーマのリクエストとレスポンスの両方での利用は、生成時にエラーにする
 
+## ワークフローとリント
+
+| ワークフロー | ファイル | 内容 |
+| --- | --- | --- |
+| Continuous Integration | `.github/workflows/ci.yaml` | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン、リリース |
+| Continuous Delivery | `.github/workflows/cd.yaml` | イメージの昇格、API 定義の GitHub Release への添付（CI から呼ばれる） |
+| Lint | `.github/workflows/lint.yaml` | アプリに直接関わらないファイルのリント |
+
+アプリに関わるリントは CI に置き、通らなければリリースしません。それ以外は Lint に置きます。
+
+| 対象 | ツール | 設定 | ワークフロー |
+| --- | --- | --- | --- |
+| `docs/openapi.yaml` | vacuum | `.vacuum.yaml` | CI |
+| `flyway/migration/*.sql` | sqlfluff | `.sqlfluff`、`.sqlfluffignore` | CI |
+| `app/Dockerfile` | hadolint | 既定の規則 | CI |
+| Java、`*.gradle.kts` | Spotless | `app/build.gradle.kts` | CI（`gradle check`） |
+| JSON、`scripts/*.mjs` | Biome | `biome.json` | Lint |
+| `.github/workflows/*.yaml` | actionlint | 既定の規則 | Lint |
+| YAML | yamllint | `.yamllint` | Lint |
+| Markdown | markdownlint-cli2 | `.markdownlint-cli2.yaml` | Lint |
+| Python | ruff（lint と format） | `ruff.toml` | Lint |
+| シェルスクリプト | ShellCheck | 既定の規則 | Lint |
+| コミットメッセージ | commitlint | `.commitlintrc.json` | Lint（PR のみ） |
+
+- sqlfluff は V1.2.0 以降だけを検査します。V1.0.0〜V1.1.0 は本番のチェックサムと照合されるので直せず、`.sqlfluffignore` で対象から外しています。
+- yamllint は生成物（`node_modules/`、`pnpm-lock.yaml` など）を対象外にし、行の長さは検査しません。markdownlint も行の長さは検査しません。いずれも日本語の説明や URL が長くなるためです。
+- 手元で Python のツールを使うときは、`pip install -r requirements.txt` で CI と同じ版を入れます。
+
 ## CI の依存の固定
 
 - GitHub Actions の `uses:` は、すべてコミットのハッシュで固定し、行末に版をコメントで書きます（例：`actions/checkout@<40 文字のハッシュ> # v7.0.1`）。タグは付け替えられるため、版の指定だけにはしません。
-- CI でダウンロードするツール（vacuum、actionlint、hadolint）は、版と SHA-256 を `env` に書き、ダウンロードしたファイルを `sha256sum -c` で検証してから使います。yamllint は `pipx run "yamllint==<版>"` で版を固定します。
+- CI でダウンロードするツール（vacuum、actionlint、hadolint、ShellCheck）は、版と SHA-256 を `env` に書き、ダウンロードしたファイルを `sha256sum -c` で検証してから使います。
+- Python のツール（sqlfluff、yamllint、ruff）は `requirements.txt`、Node のツール（Biome、markdownlint-cli2、commitlint）は `package.json` と `pnpm-lock.yaml` で版を固定します。
 - 版を上げるときは、ハッシュ（またはチェックサム）と版のコメントを必ず一緒に変えてください。
-- リントの設定：yamllint は `.yamllint`（`node_modules/` などの生成物と `pnpm-lock.yaml` は対象外、行の長さは検査しない）、vacuum は `.vacuum.yaml` です。hadolint は既定の規則で `app/Dockerfile` を検査します。
 
 ## スクリプト
 
