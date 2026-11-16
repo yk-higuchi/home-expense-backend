@@ -30,5 +30,5 @@ WORKDIR /app
 COPY --from=builder /project/build/*-runner /app/application
 
 EXPOSE 8080
-USER nonroot
+USER 65532:65532
 ENTRYPOINT ["/app/application"]
