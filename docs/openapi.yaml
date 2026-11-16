@@ -1070,7 +1070,8 @@ components:
           pattern: \S
           type: string
         payment_date:
-          example: "2026-04-10"
+          examples:
+            - "2026-04-10"
           format: date
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
@@ -1100,7 +1101,8 @@ components:
           pattern: \S
           type: string
         payment_date:
-          example: "2026-04-10"
+          examples:
+            - "2026-04-10"
           format: date
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
@@ -1255,7 +1257,8 @@ components:
           pattern: \S
           type: string
         receive_date:
-          example: "2026-04-25"
+          examples:
+            - "2026-04-25"
           format: date
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
@@ -1285,7 +1288,8 @@ components:
           pattern: \S
           type: string
         receive_date:
-          example: "2026-04-25"
+          examples:
+            - "2026-04-25"
           format: date
           maxLength: 10
           pattern: ^\d{4}-\d{2}-\d{2}$
@@ -1316,30 +1320,35 @@ components:
       properties:
         detail:
           description: この発生に固有の、人が読むための説明
-          example: descriptionは必須入力です
+          examples:
+            - descriptionは必須入力です
           maxLength: 1024
           type: string
         status:
           description: HTTP ステータスコード
-          example: 400
+          examples:
+            - 400
           format: int32
           maximum: 599
           minimum: 100
           type: integer
         title:
           description: 問題の種類を表す、人が読むための短い要約
-          example: Bad Request
+          examples:
+            - Bad Request
           maxLength: 256
           type: string
         trace_id:
           description: リクエストの W3C Trace Context の trace-id。サーバー側のトレースと突き合わせるために使います（拡張メンバー）
-          example: 4bf92f3577b34da6a3ce929d0e0e4736
+          examples:
+            - 4bf92f3577b34da6a3ce929d0e0e4736
           maxLength: 32
           pattern: ^[0-9a-f]{32}$
           type: string
         type:
           description: 問題の種類を識別する URI 参照
-          example: about:blank
+          examples:
+            - about:blank
           format: uri
           maxLength: 2048
           type: string
@@ -1552,13 +1561,15 @@ components:
     AcceptPatch:
       description: PATCH で受け付けるパッチの形式（RFC 5789 §3.1）。
       schema:
-        example: application/json-patch+json
+        examples:
+          - application/json-patch+json
         maxLength: 64
         type: string
     Allow:
       description: このリソースで使えるメソッド（RFC 9110 §10.2.1）。
       schema:
-        example: GET, HEAD, OPTIONS, PATCH, POST
+        examples:
+          - GET, HEAD, OPTIONS, PATCH, POST
         maxLength: 128
         type: string
     ETag:
@@ -1566,7 +1577,8 @@ components:
         リソースのドキュメントのダイジェスト。ドキュメント（PUT の本文と同じ項目）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です（RFC 9110 §8.8.3）。
         内容が変わらなければ値も変わりません。以降の `PUT` / `DELETE` リクエストでは、この値を `If-Match` に指定します。
       schema:
-        example: '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
+        examples:
+          - '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
         maxLength: 45
         pattern: ^"[A-Za-z0-9_-]{43}"$
         type: string
@@ -1580,7 +1592,8 @@ components:
         一覧の本文のダイジェスト。レスポンスの本文を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表した強い ETag です。
         並べ替え・登録・削除・名前の変更で変わります。並べ替えの PATCH では、この値を `If-Match` に指定します。
       schema:
-        example: '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
+        examples:
+          - '"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"'
         maxLength: 45
         pattern: ^"[A-Za-z0-9_-]{43}"$
         type: string
