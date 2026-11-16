@@ -97,27 +97,27 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 ## ワークフローとリント
 
-| ワークフロー | ファイル | 内容 |
-| --- | --- | --- |
-| Continuous Integration | `.github/workflows/ci.yaml` | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン、リリース |
-| Continuous Delivery | `.github/workflows/cd.yaml` | イメージの昇格、API 定義の GitHub Release への添付（CI から呼ばれる） |
-| Lint | `.github/workflows/lint.yaml` | アプリに直接関わらないファイルのリント |
+| ワークフロー           | ファイル                      | 内容                                                                                           |
+| ---------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| Continuous Integration | `.github/workflows/ci.yaml`   | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン、リリース |
+| Continuous Delivery    | `.github/workflows/cd.yaml`   | イメージの昇格、API 定義の GitHub Release への添付（CI から呼ばれる）                          |
+| Lint                   | `.github/workflows/lint.yaml` | アプリに直接関わらないファイルのリント                                                         |
 
 アプリに関わるリントは CI に置き、通らなければリリースしません。それ以外は Lint に置きます。
 
-| 対象 | ツール | 設定 | ワークフロー |
-| --- | --- | --- | --- |
-| `docs/openapi.yaml` | vacuum | `.vacuum.yaml` | CI |
-| `flyway/migration/*.sql` | sqlfluff | `.sqlfluff`、`.sqlfluffignore` | CI |
-| `app/Dockerfile` | hadolint | 既定の規則 | CI |
-| Java、`*.gradle.kts` | Spotless | `app/build.gradle.kts` | CI（`gradle check`） |
-| JSON、`scripts/*.mjs` | Biome | `biome.json` | Lint |
-| `.github/workflows/*.yaml` | actionlint | 既定の規則 | Lint |
-| YAML | yamllint | `.yamllint` | Lint |
-| Markdown | markdownlint-cli2 | `.markdownlint-cli2.yaml` | Lint |
-| Python | ruff（lint と format） | `ruff.toml` | Lint |
-| シェルスクリプト | ShellCheck | 既定の規則 | Lint |
-| コミットメッセージ | commitlint | `.commitlintrc.json` | Lint（PR のみ） |
+| 対象                       | ツール                 | 設定                           | ワークフロー         |
+| -------------------------- | ---------------------- | ------------------------------ | -------------------- |
+| `docs/openapi.yaml`        | vacuum                 | `.vacuum.yaml`                 | CI                   |
+| `flyway/migration/*.sql`   | sqlfluff               | `.sqlfluff`、`.sqlfluffignore` | CI                   |
+| `app/Dockerfile`           | hadolint               | 既定の規則                     | CI                   |
+| Java、`*.gradle.kts`       | Spotless               | `app/build.gradle.kts`         | CI（`gradle check`） |
+| JSON、`scripts/*.mjs`      | Biome                  | `biome.json`                   | Lint                 |
+| `.github/workflows/*.yaml` | actionlint             | 既定の規則                     | Lint                 |
+| YAML                       | yamllint               | `.yamllint`                    | Lint                 |
+| Markdown                   | markdownlint-cli2      | `.markdownlint-cli2.yaml`      | Lint                 |
+| Python                     | ruff（lint と format） | `ruff.toml`                    | Lint                 |
+| シェルスクリプト           | ShellCheck             | 既定の規則                     | Lint                 |
+| コミットメッセージ         | commitlint             | `.commitlintrc.json`           | Lint（PR のみ）      |
 
 - sqlfluff は V1.2.0 以降だけを検査します。V1.0.0〜V1.1.0 は本番のチェックサムと照合されるので直せず、`.sqlfluffignore` で対象から外しています。
 - yamllint は生成物（`node_modules/`、`pnpm-lock.yaml` など）を対象外にし、行の長さは検査しません。markdownlint も行の長さは検査しません。いずれも日本語の説明や URL が長くなるためです。
