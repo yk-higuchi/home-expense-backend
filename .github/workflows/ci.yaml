@@ -96,13 +96,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        build-context:
-          - app
     env:
-      IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
+      IMAGE: ghcr.io/${{ github.repository }}-app
       PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -117,22 +112,22 @@ jobs:
           curl -fsSL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
           echo "${HADOLINT_SHA256}  hadolint" | sha256sum -c -
           sudo install -m 0755 hadolint /usr/local/bin/hadolint
-      - name: Lint ${{ matrix.build-context }}/Dockerfile
-        run: hadolint "${{ matrix.build-context }}/Dockerfile"
+      - name: Lint app/Dockerfile
+        run: hadolint "app/Dockerfile"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Build ${{ matrix.build-context }}
+      - name: Build app
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: ./${{ matrix.build-context }}
+          context: ./app
           platforms: linux/amd64
           load: true
           tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
             GIT_SHA=${{ github.sha }}
-          cache-from: type=gha,scope=${{ matrix.build-context }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.build-context }}
-      - name: Scan ${{ matrix.build-context }} with Trivy
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+      - name: Scan app with Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}:sha-${{ github.sha }}

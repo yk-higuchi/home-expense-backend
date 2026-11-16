@@ -65,13 +65,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        build-context:
-          - app
     env:
-      IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
+      IMAGE: ghcr.io/${{ github.repository }}-app
       VERSION: ${{ needs.resolve.outputs.version }}
       SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
     steps:
