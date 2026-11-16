@@ -128,9 +128,11 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 ```sh
 pnpm install
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-brew install actionlint hadolint shellcheck vacuum
-pnpm lefthook install
+brew install lefthook actionlint hadolint shellcheck vacuum
+lefthook install
 ```
+
+lefthook は npm のパッケージではなく、CLI（Homebrew など）で入れます。
 
 yamllint・sqlfluff・ruff は `.venv/bin` にあるので、コミットするときは `.venv` を有効にしておくか、`.venv/bin` を `PATH` に入れてください。
 
