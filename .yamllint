@@ -1,7 +1,17 @@
 extends: default
 
+ignore: |
+  node_modules/
+  venv/
+  .venv/
+  app/build/
+  pnpm-lock.yaml
+
 rules:
   document-start: disable
-  line-length:
-    max: 80
-    level: warning
+  line-length: disable
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    allowed-values: ["true", "false", "off"]
+    check-keys: false

@@ -79,7 +79,7 @@ jobs:
         run: |
           [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${VERSION}"; exit 1; }
           [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${SOURCE_SHA}"; exit 1; }
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source-sha }}
       - name: Check info.version

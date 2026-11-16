@@ -7,7 +7,7 @@
 1. **プルリクエスト**：CI で次を実行します。イメージはまだ push しません。
    - テスト（CockroachDB）
    - テスト中に記録した HTTP のやり取りと `docs/openapi.yaml` の照合
-   - リント
+   - リント（vacuum、Biome、actionlint、hadolint、yamllint、commitlint）
    - アプリのイメージのビルドと脆弱性スキャン
 2. **`main` への push**：CI が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。そのあと release-please がリリース PR を更新します。リリース PR では次が更新されます。
    - `app/build.gradle.kts` のバージョン
@@ -94,6 +94,13 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   - `type` に `null` を含む場合は `nullable: true`
 - 最大長・パターン・最小値・最大値などの制約は JTD で表せないので出力しない
 - `oneOf` / `anyOf` / `allOf`、再帰的な参照、同じスキーマのリクエストとレスポンスの両方での利用は、生成時にエラーにする
+
+## CI の依存の固定
+
+- GitHub Actions の `uses:` は、すべてコミットのハッシュで固定し、行末に版をコメントで書きます（例：`actions/checkout@<40 文字のハッシュ> # v7.0.1`）。タグは付け替えられるため、版の指定だけにはしません。
+- CI でダウンロードするツール（vacuum、actionlint、hadolint）は、版と SHA-256 を `env` に書き、ダウンロードしたファイルを `sha256sum -c` で検証してから使います。yamllint は `pipx run "yamllint==<版>"` で版を固定します。
+- 版を上げるときは、ハッシュ（またはチェックサム）と版のコメントを必ず一緒に変えてください。
+- リントの設定：yamllint は `.yamllint`（`node_modules/` などの生成物と `pnpm-lock.yaml` は対象外、行の長さは検査しない）、vacuum は `.vacuum.yaml` です。hadolint は既定の規則で `app/Dockerfile` を検査します。
 
 ## スクリプト
 
