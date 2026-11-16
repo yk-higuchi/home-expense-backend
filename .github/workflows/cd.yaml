@@ -1,5 +1,5 @@
 name: Continuous Delivery
-run-name: CD · ${{ inputs.version }}
+run-name: Continuous Delivery · ${{ inputs.version }}
 on:
   workflow_call:
     inputs:
