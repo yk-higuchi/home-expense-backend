@@ -1,3 +1,9 @@
 [sqlfluff]
 dialect = postgres
-exclude_rules = ST06
+exclude_rules = ST06, LT05
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:references.keywords]
+ignore_words = position

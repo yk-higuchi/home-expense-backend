@@ -1,0 +1,3 @@
+flyway/migration/V1.0.0__initial.sql
+flyway/migration/V1.0.1__add_index.sql
+flyway/migration/V1.1.0__income.sql
