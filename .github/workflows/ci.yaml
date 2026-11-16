@@ -49,8 +49,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Validate API exchanges against JSON Schema
         run: node scripts/validate_json_schema_exchanges.mjs docs/openapi.yaml docs/openapi.schema.json app/build/openapi-exchanges/exchanges.jsonl
-      - name: Validate API exchanges against JTD
-        run: node scripts/validate_jtd_exchanges.mjs docs/openapi.yaml docs/openapi.jtd.json app/build/openapi-exchanges/exchanges.jsonl
   openapi-lint:
     runs-on: ubuntu-latest
     steps:
@@ -77,10 +75,6 @@ jobs:
         run: |
           pnpm gen:schema
           git diff --exit-code docs/openapi.schema.json || { echo "docs/openapi.schema.json が古いままです。pnpm gen:schema を実行してコミットしてください"; exit 1; }
-      - name: Check JTD is generated from OpenAPI
-        run: |
-          pnpm gen:jtd
-          git diff --exit-code docs/openapi.jtd.json || { echo "docs/openapi.jtd.json が古いままです。pnpm gen:jtd を実行してコミットしてください"; exit 1; }
   migration-lint:
     runs-on: ubuntu-latest
     steps:

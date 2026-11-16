@@ -1,7 +1,6 @@
 {
 	"packageManager": "pnpm@12.18.0",
 	"scripts": {
-		"gen:jtd": "node scripts/generate_jtd.mjs docs/openapi.yaml docs/openapi.jtd.json && biome format --write docs/openapi.jtd.json",
 		"gen:schema": "node scripts/generate_json_schema.mjs docs/openapi.yaml docs/openapi.schema.json && biome format --write docs/openapi.schema.json"
 	},
 	"devDependencies": {
