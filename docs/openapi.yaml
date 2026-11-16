@@ -102,8 +102,8 @@ paths:
     get:
       tags:
         - Expense Attributes
-      summary: 経費属性の一覧を取得する
-      description: 経費属性を全件、並び順で返します（ページ送りはありません）。区分を指定した場合はその区分の並びを、指定しない場合は固定費の並びのあとに変動費の並びを返します。一覧の ETag を付けます。
+      summary: 支出属性の一覧を取得する
+      description: 支出属性を全件、並び順で返します（ページ送りはありません）。区分を指定した場合はその区分の並びを、指定しない場合は固定費の並びのあとに変動費の並びを返します。一覧の ETag を付けます。
       operationId: getExpenseAttributes
       parameters:
         - description: 区分で絞り込む（並べ替えの画面では必ず指定する）
@@ -131,19 +131,19 @@ paths:
     post:
       tags:
         - Expense Attributes
-      summary: 経費属性を登録する
-      description: 経費属性を登録します。登録した属性は、その区分の並びの末尾に入ります。名前は区分の中で重複できません（重複時は 409）。区分ごとに 100 件まで登録でき、超える場合も 409 です。登録した属性の URI は Location ヘッダーで返します。
+      summary: 支出属性を登録する
+      description: 支出属性を登録します。登録した属性は、その区分の並びの末尾に入ります。名前は区分の中で重複できません（重複時は 409）。区分ごとに 100 件まで登録でき、超える場合も 409 です。登録した属性の URI は Location ヘッダーで返します。
       operationId: createExpenseAttribute
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePostRequest'
-        description: 登録する経費属性
+        description: 登録する支出属性
         required: true
       responses:
         "201":
-          description: 経費属性を登録した
+          description: 支出属性を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -158,7 +158,7 @@ paths:
     options:
       tags:
         - Expense Attributes
-      summary: 経費属性の一覧で使える操作を取得する
+      summary: 支出属性の一覧で使える操作を取得する
       description: 使えるメソッドを Allow ヘッダーで、PATCH で受け付けるパッチの形式を Accept-Patch ヘッダーで返します（RFC 5789 §3.1）。
       operationId: optionsExpenseAttributes
       responses:
@@ -174,8 +174,8 @@ paths:
     patch:
       tags:
         - Expense Attributes
-      summary: 経費属性を並べ替える
-      description: 区分を指定した経費属性の一覧に、JSON Patch（RFC 6902）の move を適用して並べ替えます。一覧で受け取った ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
+      summary: 支出属性を並べ替える
+      description: 区分を指定した支出属性の一覧に、JSON Patch（RFC 6902）の move を適用して並べ替えます。一覧で受け取った ETag を If-Match に指定する必要があります。並べ替えても、属性ごとの ETag は変わりません。
       operationId: reorderExpenseAttributes
       parameters:
         - description: 並べ替える区分
@@ -219,8 +219,8 @@ paths:
     get:
       tags:
         - Expense Attributes
-      summary: ID を指定して経費属性を取得する
-      description: 経費属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      summary: ID を指定して支出属性を取得する
+      description: 支出属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getExpenseAttributeById
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -243,8 +243,8 @@ paths:
     put:
       tags:
         - Expense Attributes
-      summary: 経費属性を更新する
-      description: 経費属性の名前を変更します（区分は変更できません）。現在の ETag を If-Match に指定する必要があります。名前は区分の中で重複できません。
+      summary: 支出属性を更新する
+      description: 支出属性の名前を変更します（区分は変更できません）。現在の ETag を If-Match に指定する必要があります。名前は区分の中で重複できません。
       operationId: updateExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -254,11 +254,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpenseAttributePutRequest'
-        description: 経費属性の新しい名前
+        description: 支出属性の新しい名前
         required: true
       responses:
         "204":
-          description: 経費属性を更新した
+          description: 支出属性を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -276,15 +276,15 @@ paths:
     delete:
       tags:
         - Expense Attributes
-      summary: 経費属性を削除する
-      description: 経費属性を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。この属性を参照している経費がある間は 409 になります。
+      summary: 支出属性を削除する
+      description: 支出属性を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。この属性を参照している支出がある間は 409 になります。
       operationId: deleteExpenseAttribute
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
         - $ref: '#/components/parameters/IfMatch'
       responses:
         "204":
-          description: 経費属性を削除した
+          description: 支出属性を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -301,8 +301,8 @@ paths:
     get:
       tags:
         - Expenses
-      summary: 経費の一覧を取得する
-      description: 経費の一覧をページ単位で返します。条件で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。並び順は、区分の降順（変動費、固定費の順）、支払日の新しい順、同じ日の中は登録の新しい順で、最後に ID の順です。並び順が一意に決まるので、同じ条件でページを順に取得すると、どの経費もちょうど 1 回ずつ現れます（取得の間に登録や削除がない場合）。
+      summary: 支出の一覧を取得する
+      description: 支出の一覧をページ単位で返します。条件で絞り込めます。ページ送りのリンクは Link ヘッダーで返します。並び順は、区分の降順（変動費、固定費の順）、支払日の新しい順、同じ日の中は登録の新しい順で、最後に ID の順です。並び順が一意に決まるので、同じ条件でページを順に取得すると、どの支出もちょうど 1 回ずつ現れます（取得の間に登録や削除がない場合）。
       operationId: getExpenses
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -323,7 +323,7 @@ paths:
             maximum: 12
             minimum: 1
             type: integer
-        - description: 経費の区分で絞り込む
+        - description: 支出の区分で絞り込む
           in: query
           name: category
           schema:
@@ -331,7 +331,7 @@ paths:
               - 固定費
               - 変動費
             type: string
-        - description: 経費属性の ID で絞り込む
+        - description: 支出属性の ID で絞り込む
           in: query
           name: attribute_id
           schema:
@@ -356,19 +356,19 @@ paths:
     post:
       tags:
         - Expenses
-      summary: 経費を登録する
-      description: 経費を登録します。attribute_id には存在する経費属性を指定します（存在しない場合は 422）。登録した経費の URI は Location ヘッダーで返します。
+      summary: 支出を登録する
+      description: 支出を登録します。attribute_id には存在する支出属性を指定します（存在しない場合は 422）。登録した支出の URI は Location ヘッダーで返します。
       operationId: createExpense
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePostRequest'
-        description: 登録する経費
+        description: 登録する支出
         required: true
       responses:
         "201":
-          description: 経費を登録した
+          description: 支出を登録した
           headers:
             Location:
               $ref: '#/components/headers/Location'
@@ -384,8 +384,8 @@ paths:
     get:
       tags:
         - Expenses
-      summary: ID を指定して経費を取得する
-      description: 経費を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      summary: ID を指定して支出を取得する
+      description: 支出を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
       operationId: getExpenseById
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -408,8 +408,8 @@ paths:
     put:
       tags:
         - Expenses
-      summary: 経費を更新する
-      description: 経費を置き換えます。現在の ETag を If-Match に指定する必要があります。attribute_id には存在する経費属性を指定します。
+      summary: 支出を更新する
+      description: 支出を置き換えます。現在の ETag を If-Match に指定する必要があります。attribute_id には存在する支出属性を指定します。
       operationId: updateExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -419,11 +419,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpensePutRequest'
-        description: 経費の全項目
+        description: 支出の全項目
         required: true
       responses:
         "204":
-          description: 経費を更新した
+          description: 支出を更新した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -441,15 +441,15 @@ paths:
     delete:
       tags:
         - Expenses
-      summary: 経費を削除する
-      description: 経費を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。
+      summary: 支出を削除する
+      description: 支出を削除します。個別取得で得た現在の ETag を If-Match に指定する必要があります。
       operationId: deleteExpense
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
         - $ref: '#/components/parameters/IfMatch'
       responses:
         "204":
-          description: 経費を削除した
+          description: 支出を削除した
         "400":
           $ref: '#/components/responses/BadRequest'
         "404":
@@ -985,7 +985,7 @@ components:
       type: object
     ExpenseAttributePutRequest:
       additionalProperties: false
-      description: 経費属性の区分は、登録後に変更できません。
+      description: 支出属性の区分は、登録後に変更できません。
       properties:
         name:
           maxLength: 512
@@ -1389,7 +1389,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
           example:
-            detail: 経費が見つかりません
+            detail: 支出が見つかりません
             status: 404
             title: Not Found
             type: about:blank
@@ -1435,7 +1435,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetail'
           example:
-            detail: 指定された経費属性が存在しません
+            detail: 指定された支出属性が存在しません
             status: 422
             title: Unprocessable Content
             type: about:blank
@@ -1479,7 +1479,7 @@ components:
     ExpenseAttributeId:
       name: id
       in: path
-      description: 経費属性の ID
+      description: 支出属性の ID
       required: true
       schema:
         format: uuid
@@ -1489,7 +1489,7 @@ components:
     ExpenseId:
       name: id
       in: path
-      description: 経費の ID
+      description: 支出の ID
       required: true
       schema:
         format: uuid
@@ -1602,11 +1602,11 @@ tags:
     description: 収入と支出の時系列に関する操作
     parent: Balance
   - name: Expenses
-    summary: 経費
-    description: 経費に関する操作
+    summary: 支出
+    description: 支出に関する操作
   - name: Expense Attributes
     summary: 属性
-    description: 経費の区分と属性に関する操作
+    description: 支出の区分と属性に関する操作
     parent: Expenses
   - name: Incomes
     summary: 収入

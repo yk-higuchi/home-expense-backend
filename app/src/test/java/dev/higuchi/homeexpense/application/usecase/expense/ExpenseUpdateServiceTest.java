@@ -30,7 +30,7 @@ class ExpenseUpdateServiceTest {
           ExpenseCategory.変動費);
 
   @Test
-  void 経費を更新する() {
+  void 支出を更新する() {
     Expense existing =
         new Expense(
             new ExpenseIdentifier("exp-1"),
@@ -83,7 +83,7 @@ class ExpenseUpdateServiceTest {
   }
 
   @Test
-  void 存在しない経費を更新すると例外をスローする() {
+  void 存在しない支出を更新すると例外をスローする() {
     attributeRepository.register(attribute);
 
     assertThrows(

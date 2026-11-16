@@ -43,7 +43,7 @@ class ExpenseDataSourceTest {
   }
 
   @Test
-  void 経費を登録して取得できる() {
+  void 支出を登録して取得できる() {
     ExpenseAttribute attribute = registerAttribute("家賃", ExpenseCategory.固定費);
     Expense expense = createExpense("4月家賃", 80000, "2026-04-01", attribute);
     sut.register(expense);
@@ -62,7 +62,7 @@ class ExpenseDataSourceTest {
   }
 
   @Test
-  void 属性で経費の存在を確認できる() {
+  void 属性で支出の存在を確認できる() {
     ExpenseAttribute attribute = registerAttribute("交通費", ExpenseCategory.変動費);
     Expense expense1 = createExpense("電車", 500, "2026-04-01", attribute);
     Expense expense2 = createExpense("バス", 300, "2026-04-02", attribute);
@@ -76,7 +76,7 @@ class ExpenseDataSourceTest {
   }
 
   @Test
-  void 経費を更新できる() {
+  void 支出を更新できる() {
     ExpenseAttribute attribute = registerAttribute("食費3", ExpenseCategory.変動費);
     Expense expense = createExpense("ランチ", 1000, "2026-04-10", attribute);
     sut.register(expense);
@@ -136,7 +136,7 @@ class ExpenseDataSourceTest {
   }
 
   @Test
-  void 経費を削除できる() {
+  void 支出を削除できる() {
     ExpenseAttribute attribute = registerAttribute("食費5", ExpenseCategory.変動費);
     Expense expense = createExpense("おやつ", 200, "2026-04-10", attribute);
     sut.register(expense);
@@ -162,7 +162,7 @@ class ExpenseDataSourceTest {
   }
 
   @Test
-  void バージョンが一致しない経費は削除せず例外をスローする() {
+  void バージョンが一致しない支出は削除せず例外をスローする() {
     ExpenseAttribute attribute = registerAttribute("食費5", ExpenseCategory.変動費);
     Expense expense = createExpense("おやつ", 200, "2026-04-10", attribute);
     sut.register(expense);

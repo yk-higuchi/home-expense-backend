@@ -50,7 +50,7 @@ class AttributeListApiTest {
   }
 
   @Test
-  void 経費属性の一覧は分類を指定するとページ送りなしで全件を並び順で返し一覧のETagを付ける() {
+  void 支出属性の一覧は分類を指定するとページ送りなしで全件を並び順で返し一覧のETagを付ける() {
     String prefix = "list-" + UUID.randomUUID();
     List<String> created = new ArrayList<>();
     for (int i = 0; i < 25; i++) {
@@ -69,7 +69,7 @@ class AttributeListApiTest {
   }
 
   @Test
-  void 分類を指定しない経費属性の一覧は固定費の後に変動費を返す() {
+  void 分類を指定しない支出属性の一覧は固定費の後に変動費を返す() {
     String prefix = "mixed-" + UUID.randomUUID();
     createExpenseAttribute(prefix + "-v", "変動費");
     createExpenseAttribute(prefix + "-f", "固定費");

@@ -48,7 +48,7 @@ class SpecConformanceApiTest {
   }
 
   @Test
-  void 経費の参照先属性が存在しなければ422() {
+  void 支出の参照先属性が存在しなければ422() {
     assertProblem(
         given()
             .contentType("application/json")
@@ -59,7 +59,7 @@ class SpecConformanceApiTest {
             .post("/v1/expenses")
             .then(),
         422,
-        "指定された経費属性が存在しません");
+        "指定された支出属性が存在しません");
   }
 
   @Test

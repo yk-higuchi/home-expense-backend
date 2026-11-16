@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class EntityDocumentTest {
 
   @Test
-  void 経費のドキュメントはPUTの本文と同じ項目() {
+  void 支出のドキュメントはPUTの本文と同じ項目() {
     Expense expense =
         new Expense(
             new ExpenseIdentifier("exp-1"),
@@ -55,7 +55,7 @@ class EntityDocumentTest {
   }
 
   @Test
-  void 経費属性のドキュメントは区分と名前() {
+  void 支出属性のドキュメントは区分と名前() {
     ExpenseAttribute attribute =
         new ExpenseAttribute(
             new ExpenseAttributeIdentifier("attr-1"),

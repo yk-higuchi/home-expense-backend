@@ -14,7 +14,7 @@ class ExpenseAttributeRegistrationServiceTest {
       new ExpenseAttributeRegistrationService(attributeRepository);
 
   @Test
-  void 経費属性を作成して登録する() {
+  void 支出属性を作成して登録する() {
     ExpenseAttributeIdentifier result =
         sut.register(
             new ExpenseAttributeRegistrationCommand(
@@ -28,7 +28,7 @@ class ExpenseAttributeRegistrationServiceTest {
   }
 
   @Test
-  void 同名の経費属性が存在する場合は例外をスローする() {
+  void 同名の支出属性が存在する場合は例外をスローする() {
     ExpenseAttribute existing =
         new ExpenseAttribute(
             new ExpenseAttributeIdentifier("attr-1"),
@@ -59,7 +59,7 @@ class ExpenseAttributeRegistrationServiceTest {
                 sut.register(
                     new ExpenseAttributeRegistrationCommand(
                         new ExpenseAttributeName("超過"), ExpenseCategory.固定費)));
-    assertEquals("固定費の経費属性は100件まで登録できます", e.getMessage());
+    assertEquals("固定費の支出属性は100件まで登録できます", e.getMessage());
     assertDoesNotThrow(() ->
         sut.register(
             new ExpenseAttributeRegistrationCommand(

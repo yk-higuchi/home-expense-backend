@@ -16,7 +16,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(0)
-  void セットアップ_経費属性を作成する() {
+  void セットアップ_支出属性を作成する() {
     String location =
         given()
             .contentType(ContentType.JSON)
@@ -35,7 +35,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(1)
-  void POST_経費を登録できる() {
+  void POST_支出を登録できる() {
     String location =
         given()
             .contentType(ContentType.JSON)
@@ -57,7 +57,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(2)
-  void GET_登録した経費を取得できる() {
+  void GET_登録した支出を取得できる() {
     given()
         .when()
         .get("/v1/expenses/{id}", expenseId)
@@ -75,7 +75,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(3)
-  void GET_経費一覧を取得できる() {
+  void GET_支出一覧を取得できる() {
     given()
         .when()
         .get("/v1/expenses")
@@ -86,7 +86,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(4)
-  void PUT_経費を更新できる() {
+  void PUT_支出を更新できる() {
     String etag =
         given()
             .when()
@@ -120,7 +120,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(5)
-  void DELETE_経費を削除できる() {
+  void DELETE_支出を削除できる() {
     given()
         .header("If-Match", given().get("/v1/expenses/{id}", expenseId).header("ETag"))
         .when()
@@ -132,7 +132,7 @@ class ExpenseApiTest {
 
   @Test
   @Order(6)
-  void クリーンアップ_経費属性を削除する() {
+  void クリーンアップ_支出属性を削除する() {
     given()
         .header("If-Match", given().get("/v1/expense-attributes/{id}", attributeId).header("ETag"))
         .when()
@@ -143,7 +143,7 @@ class ExpenseApiTest {
   }
 
   @Test
-  void GET_存在しない経費を取得すると404エラー() {
+  void GET_存在しない支出を取得すると404エラー() {
     given()
         .when()
         .get("/v1/expenses/{id}", "00000000-0000-0000-0000-000000000000")
@@ -153,11 +153,11 @@ class ExpenseApiTest {
         .body("type", equalTo("about:blank"))
         .body("title", equalTo("Not Found"))
         .body("status", equalTo(404))
-        .body("detail", equalTo("経費が見つかりません"));
+        .body("detail", equalTo("支出が見つかりません"));
   }
 
   @Test
-  void PUT_存在しない経費を更新すると404エラー() {
+  void PUT_存在しない支出を更新すると404エラー() {
     given()
         .contentType(ContentType.JSON)
         .header("If-Match", "\"1\"")
@@ -171,11 +171,11 @@ class ExpenseApiTest {
         .statusCode(404)
         .contentType("application/problem+json")
         .body("status", equalTo(404))
-        .body("detail", equalTo("経費が見つかりません"));
+        .body("detail", equalTo("支出が見つかりません"));
   }
 
   @Test
-  void POST_存在しない属性IDで経費を登録すると422エラー() {
+  void POST_存在しない属性IDで支出を登録すると422エラー() {
     given()
         .contentType(ContentType.JSON)
         .body(
@@ -188,7 +188,7 @@ class ExpenseApiTest {
         .statusCode(422)
         .contentType("application/problem+json")
         .body("status", equalTo(422))
-        .body("detail", equalTo("指定された経費属性が存在しません"));
+        .body("detail", equalTo("指定された支出属性が存在しません"));
   }
 
   @Test

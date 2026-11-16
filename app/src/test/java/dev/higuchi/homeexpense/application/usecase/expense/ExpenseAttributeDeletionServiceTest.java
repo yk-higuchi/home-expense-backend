@@ -31,7 +31,7 @@ class ExpenseAttributeDeletionServiceTest {
           ExpenseCategory.変動費);
 
   @Test
-  void 経費属性を削除する() {
+  void 支出属性を削除する() {
     attributeRepository.register(attribute);
 
     sut.delete(new ExpenseAttributeIdentifier("attr-1"), ExpectedDigest.of(attribute.digest()));
@@ -40,7 +40,7 @@ class ExpenseAttributeDeletionServiceTest {
   }
 
   @Test
-  void 参照する経費がある場合は例外をスローする() {
+  void 参照する支出がある場合は例外をスローする() {
     attributeRepository.register(attribute);
     Expense expense =
         new Expense(
@@ -60,7 +60,7 @@ class ExpenseAttributeDeletionServiceTest {
   }
 
   @Test
-  void バージョンが一致しない経費属性は削除せず例外をスローする() {
+  void バージョンが一致しない支出属性は削除せず例外をスローする() {
     attributeRepository.register(attribute);
 
     assertThrows(

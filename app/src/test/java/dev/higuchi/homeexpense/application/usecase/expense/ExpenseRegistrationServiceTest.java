@@ -22,7 +22,7 @@ class ExpenseRegistrationServiceTest {
       new ExpenseRegistrationService(expenseRepository, attributeRepository);
 
   @Test
-  void 経費を作成して登録する() {
+  void 支出を作成して登録する() {
     ExpenseAttribute attribute =
         new ExpenseAttribute(
             new ExpenseAttributeIdentifier("attr-1"),

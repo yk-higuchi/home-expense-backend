@@ -16,7 +16,7 @@ class ExpenseAttributeUpdateServiceTest {
   ExpenseAttributeUpdateService sut = new ExpenseAttributeUpdateService(attributeRepository);
 
   @Test
-  void 経費属性の名前を更新する() {
+  void 支出属性の名前を更新する() {
     ExpenseAttribute existing =
         new ExpenseAttribute(
             new ExpenseAttributeIdentifier("attr-1"),

@@ -4,6 +4,6 @@ import java.util.Objects;
 
 public record ExpenseAttributeIdentifier(String value) {
   public ExpenseAttributeIdentifier {
-    Objects.requireNonNull(value, "経費属性識別子は必須です");
+    Objects.requireNonNull(value, "支出属性識別子は必須です");
   }
 }

@@ -25,12 +25,12 @@ public class Expense {
       Amount amount,
       PaymentDate paymentDate,
       ExpenseAttributeIdentifier expenseAttributeIdentifier) {
-    this.expenseIdentifier = Objects.requireNonNull(expenseIdentifier, "経費識別子は必須です");
+    this.expenseIdentifier = Objects.requireNonNull(expenseIdentifier, "支出識別子は必須です");
     this.description = Objects.requireNonNull(description, "説明は必須です");
     this.amount = Objects.requireNonNull(amount, "金額は必須です");
     this.paymentDate = Objects.requireNonNull(paymentDate, "支払日は必須です");
     this.expenseAttributeIdentifier =
-        Objects.requireNonNull(expenseAttributeIdentifier, "経費属性識別子は必須です");
+        Objects.requireNonNull(expenseAttributeIdentifier, "支出属性識別子は必須です");
   }
 
   public static Expense create(

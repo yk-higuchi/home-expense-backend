@@ -48,13 +48,13 @@ public class ProblemDetailExceptionMapper {
 
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapExpenseNotFoundException(ExpenseNotFoundException e) {
-    return toResponse(Response.Status.NOT_FOUND, "経費が見つかりません");
+    return toResponse(Response.Status.NOT_FOUND, "支出が見つかりません");
   }
 
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapExpenseAttributeNotFoundException(
       ExpenseAttributeNotFoundException e) {
-    return toResponse(Response.Status.NOT_FOUND, "経費属性が見つかりません");
+    return toResponse(Response.Status.NOT_FOUND, "支出属性が見つかりません");
   }
 
   @ServerExceptionMapper
@@ -84,7 +84,7 @@ public class ProblemDetailExceptionMapper {
   @ServerExceptionMapper
   public RestResponse<ProblemDetail> mapInvalidExpenseAttributeReferenceException(
       InvalidExpenseAttributeReferenceException e) {
-    return toResponse(422, "Unprocessable Content", "指定された経費属性が存在しません");
+    return toResponse(422, "Unprocessable Content", "指定された支出属性が存在しません");
   }
 
   @ServerExceptionMapper

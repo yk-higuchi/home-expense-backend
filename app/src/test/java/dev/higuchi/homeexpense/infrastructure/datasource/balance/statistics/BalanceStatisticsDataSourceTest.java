@@ -164,7 +164,7 @@ class BalanceStatisticsDataSourceTest {
   }
 
   @Test
-  void 経費の内訳は固定費と変動費に分かれて属性の並び順で返る() {
+  void 支出の内訳は固定費と変動費に分かれて属性の並び順で返る() {
     ExpenseAttribute insurance = registerExpenseAttribute("保険", ExpenseCategory.固定費);
     ExpenseAttribute rent = registerExpenseAttribute("家賃", ExpenseCategory.固定費);
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
@@ -199,7 +199,7 @@ class BalanceStatisticsDataSourceTest {
     IncomeAttribute salary = registerIncomeAttribute("給与");
     registerIncomeAttribute("未使用の収入属性");
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
-    registerExpenseAttribute("未使用の経費属性", ExpenseCategory.固定費);
+    registerExpenseAttribute("未使用の支出属性", ExpenseCategory.固定費);
     registerIncome(300000, "2026-04-25", salary);
     registerExpense(3000, "2026-05-10", food);
 

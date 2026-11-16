@@ -38,7 +38,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void 登録した経費属性を取得できる() {
+  void 登録した支出属性を取得できる() {
     ExpenseAttribute attribute = createAttribute("テスト食費", ExpenseCategory.変動費);
     sut.register(attribute);
 
@@ -77,7 +77,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void 経費属性を更新できる() {
+  void 支出属性を更新できる() {
     ExpenseAttribute attribute = createAttribute("光熱費", ExpenseCategory.固定費);
     sut.register(attribute);
 
@@ -110,7 +110,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void 経費属性を削除できる() {
+  void 支出属性を削除できる() {
     ExpenseAttribute attribute = createAttribute("交際費", ExpenseCategory.変動費);
     sut.register(attribute);
 
@@ -119,7 +119,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void 登録した経費属性は分類ごとの並びの末尾に入る() {
+  void 登録した支出属性は分類ごとの並びの末尾に入る() {
     ExpenseAttribute first = createAttribute("住居", ExpenseCategory.固定費);
     ExpenseAttribute second = createAttribute("通信", ExpenseCategory.固定費);
     ExpenseAttribute variable = createAttribute("食費", ExpenseCategory.変動費);
@@ -161,7 +161,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void 並べ替えたあとに登録した経費属性も末尾に入る() {
+  void 並べ替えたあとに登録した支出属性も末尾に入る() {
     ExpenseAttribute a = createAttribute("住居", ExpenseCategory.固定費);
     ExpenseAttribute b = createAttribute("通信", ExpenseCategory.固定費);
     sut.register(a);
@@ -183,7 +183,7 @@ class ExpenseAttributeDataSourceTest {
   }
 
   @Test
-  void バージョンが一致しない経費属性は削除せず例外をスローする() {
+  void バージョンが一致しない支出属性は削除せず例外をスローする() {
     ExpenseAttribute attribute = createAttribute("交際費", ExpenseCategory.変動費);
     sut.register(attribute);
 

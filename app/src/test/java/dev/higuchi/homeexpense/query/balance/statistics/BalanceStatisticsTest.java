@@ -29,28 +29,28 @@ class BalanceStatisticsTest {
   }
 
   @Test
-  void 経費合計は固定費と変動費の和() {
+  void 支出合計は固定費と変動費の和() {
     BalanceStatistics statistics = statistics(500000L, 100000L, 200000L);
 
     assertEquals(300000L, statistics.expenseTotal());
   }
 
   @Test
-  void 純収支は収入から経費を引いた値() {
+  void 純収支は収入から支出を引いた値() {
     BalanceStatistics statistics = statistics(500000L, 100000L, 200000L);
 
     assertEquals(200000L, statistics.net());
   }
 
   @Test
-  void 経費超過なら純収支はマイナス() {
+  void 支出超過なら純収支はマイナス() {
     BalanceStatistics statistics = statistics(0L, 80000L, 20000L);
 
     assertEquals(-100000L, statistics.net());
   }
 
   @Test
-  void 経費合計でオーバーフロー時に例外() {
+  void 支出合計でオーバーフロー時に例外() {
     BalanceStatistics statistics = statistics(0L, Long.MAX_VALUE, 1L);
 
     assertThrows(ArithmeticException.class, statistics::expenseTotal);

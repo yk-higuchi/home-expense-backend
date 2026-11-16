@@ -35,7 +35,7 @@ class AttributeLimitApiTest {
   }
 
   @Test
-  void 経費属性は分類ごとに100件を超えて登録すると409() {
+  void 支出属性は分類ごとに100件を超えて登録すると409() {
     String path = "/v1/expense-attributes";
     int existing =
         given().queryParam("category", "変動費").get(path).path("expense_attributes.size()");
@@ -51,7 +51,7 @@ class AttributeLimitApiTest {
           .then()
           .statusCode(409)
           .contentType("application/problem+json")
-          .body("detail", equalTo("変動費の経費属性は100件まで登録できます"));
+          .body("detail", equalTo("変動費の支出属性は100件まで登録できます"));
       created.add(
           create(path, Map.of("name", "limit-other-" + UUID.randomUUID(), "category", "固定費")));
     } finally {

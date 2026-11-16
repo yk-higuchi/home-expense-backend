@@ -95,7 +95,7 @@ class ExpenseSearchResultDataSourceTest {
   void ページネーションが正しく動作する() {
     ExpenseAttribute attribute = registerAttribute("食費3", ExpenseCategory.変動費);
     for (int i = 1; i <= 5; i++) {
-      registerExpense("経費" + i, i * 100, "2026-04-%02d".formatted(i), attribute);
+      registerExpense("支出" + i, i * 100, "2026-04-%02d".formatted(i), attribute);
     }
 
     Pagination pagination = new Pagination(1, 2);
@@ -117,7 +117,7 @@ class ExpenseSearchResultDataSourceTest {
   }
 
   @Test
-  void 同じ日の経費は登録の新しい順で_登録日時も同じならIDの順に並ぶ() throws SQLException {
+  void 同じ日の支出は登録の新しい順で_登録日時も同じならIDの順に並ぶ() throws SQLException {
     ExpenseAttribute attribute = registerAttribute("食費並び", ExpenseCategory.変動費);
     String oldest =
         registerExpenseAt(
@@ -140,7 +140,7 @@ class ExpenseSearchResultDataSourceTest {
   }
 
   @Test
-  void ページを順に取得すると同じ日の経費もちょうど1回ずつ出る() throws SQLException {
+  void ページを順に取得すると同じ日の支出もちょうど1回ずつ出る() throws SQLException {
     ExpenseAttribute attribute = registerAttribute("食費ページ", ExpenseCategory.変動費);
     List<String> registered = new ArrayList<>();
     for (int i = 0; i < 17; i++) {

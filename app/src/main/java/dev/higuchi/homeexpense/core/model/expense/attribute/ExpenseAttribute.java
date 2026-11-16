@@ -16,9 +16,9 @@ public class ExpenseAttribute {
       ExpenseAttributeName expenseAttributeName,
       ExpenseCategory expenseCategory) {
     this.expenseAttributeIdentifier =
-        Objects.requireNonNull(expenseAttributeIdentifier, "経費属性識別子は必須です");
-    this.expenseAttributeName = Objects.requireNonNull(expenseAttributeName, "経費属性名は必須です");
-    this.expenseCategory = Objects.requireNonNull(expenseCategory, "経費分類は必須です");
+        Objects.requireNonNull(expenseAttributeIdentifier, "支出属性識別子は必須です");
+    this.expenseAttributeName = Objects.requireNonNull(expenseAttributeName, "支出属性名は必須です");
+    this.expenseCategory = Objects.requireNonNull(expenseCategory, "支出の区分は必須です");
   }
 
   public static ExpenseAttribute create(

@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Documented
 public @interface ExpenseCategory {
-  String message() default "経費分類が正しくありません";
+  String message() default "支出の区分が正しくありません";
 
   Class<?>[] groups() default {};
 

@@ -19,7 +19,7 @@ class ExpenseDeletionServiceTest {
   ExpenseDeletionService sut = new ExpenseDeletionService(expenseRepository);
 
   @Test
-  void 経費を削除する() {
+  void 支出を削除する() {
     Expense existing =
         new Expense(
             new ExpenseIdentifier("exp-1"),
@@ -35,14 +35,14 @@ class ExpenseDeletionServiceTest {
   }
 
   @Test
-  void 存在しない経費を削除すると例外をスローする() {
+  void 存在しない支出を削除すると例外をスローする() {
     assertThrows(
         ExpenseNotFoundException.class,
         () -> sut.delete(new ExpenseIdentifier("not-exist"), ExpectedDigest.of(TestDigests.STALE)));
   }
 
   @Test
-  void バージョンが一致しない経費は削除せず例外をスローする() {
+  void バージョンが一致しない支出は削除せず例外をスローする() {
     Expense existing =
         new Expense(
             new ExpenseIdentifier("exp-1"),

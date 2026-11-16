@@ -15,7 +15,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(1)
-  void POST_経費属性を登録できる() {
+  void POST_支出属性を登録できる() {
     String location =
         given()
             .contentType(ContentType.JSON)
@@ -36,7 +36,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(2)
-  void GET_登録した経費属性を取得できる() {
+  void GET_登録した支出属性を取得できる() {
     given()
         .when()
         .get("/v1/expense-attributes/{id}", createdId)
@@ -50,7 +50,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(3)
-  void GET_経費属性一覧を取得できる() {
+  void GET_支出属性一覧を取得できる() {
     given()
         .when()
         .get("/v1/expense-attributes")
@@ -61,7 +61,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(4)
-  void PUT_経費属性を更新できる() {
+  void PUT_支出属性を更新できる() {
     String etag =
         given()
             .when()
@@ -93,7 +93,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(5)
-  void POST_同名の経費属性を登録すると409エラー() {
+  void POST_同名の支出属性を登録すると409エラー() {
     given()
         .contentType(ContentType.JSON)
         .body(
@@ -114,7 +114,7 @@ class ExpenseAttributeApiTest {
 
   @Test
   @Order(6)
-  void DELETE_経費属性を削除できる() {
+  void DELETE_支出属性を削除できる() {
     given()
         .header("If-Match", given().get("/v1/expense-attributes/{id}", createdId).header("ETag"))
         .when()
@@ -125,7 +125,7 @@ class ExpenseAttributeApiTest {
   }
 
   @Test
-  void GET_存在しない経費属性を取得すると404エラー() {
+  void GET_存在しない支出属性を取得すると404エラー() {
     given()
         .when()
         .get("/v1/expense-attributes/{id}", "00000000-0000-0000-0000-000000000000")
@@ -135,11 +135,11 @@ class ExpenseAttributeApiTest {
         .body("type", equalTo("about:blank"))
         .body("title", equalTo("Not Found"))
         .body("status", equalTo(404))
-        .body("detail", equalTo("経費属性が見つかりません"));
+        .body("detail", equalTo("支出属性が見つかりません"));
   }
 
   @Test
-  void PUT_存在しない経費属性を更新すると404エラー() {
+  void PUT_存在しない支出属性を更新すると404エラー() {
     given()
         .contentType(ContentType.JSON)
         .header("If-Match", "\"1\"")
@@ -153,7 +153,7 @@ class ExpenseAttributeApiTest {
         .statusCode(404)
         .contentType("application/problem+json")
         .body("status", equalTo(404))
-        .body("detail", equalTo("経費属性が見つかりません"));
+        .body("detail", equalTo("支出属性が見つかりません"));
   }
 
   @Test

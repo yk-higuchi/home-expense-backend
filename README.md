@@ -49,9 +49,9 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 - PUT と DELETE には、個別取得で受け取った `ETag` を `If-Match` に指定します。ない場合は 428、形式が不正な場合は 400、一致しない場合は 412 です。
 - ETag は、リソースの「ドキュメント」のダイジェストです。ドキュメント（PUT の本文と同じ項目）を JCS（RFC 8785）で正規化し、SHA-256 を base64url（パディングなし）で表します。
-  - 経費：`amount`、`attribute_id`、`description`、`payment_date`
+  - 支出：`amount`、`attribute_id`、`description`、`payment_date`
   - 収入：`amount`、`attribute_id`、`description`、`receive_date`
-  - 経費属性：`category`、`name`
+  - 支出属性：`category`、`name`
   - 収入属性：`name`
 - ダイジェストは各テーブルの `document_digest` 列（SHA-256 の 32 バイト）に保存し、更新・削除の SQL の条件で照合します。内容が変わらない更新では値も変わりません。
 - 本文には版の情報を含めません。一覧から削除する場合は、確認の画面で個別取得をして内容と ETag を得てから削除します。
@@ -59,10 +59,10 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 ### 属性の並び順
 
-- 経費属性は区分（固定費・変動費）ごと、収入属性は全体で 1 つの並びを持ちます（各テーブルの `sort_order` 列）。並びの単位ごとに 100 件まで登録でき、超えると 409 です。
-- 属性の一覧はページ送りなしで全件を並び順で返します。区分を指定しない経費属性の一覧は、固定費の並びのあとに変動費の並びです。収支の統計の内訳も、この並び順です。
+- 支出属性は区分（固定費・変動費）ごと、収入属性は全体で 1 つの並びを持ちます（各テーブルの `sort_order` 列）。並びの単位ごとに 100 件まで登録でき、超えると 409 です。
+- 属性の一覧はページ送りなしで全件を並び順で返します。区分を指定しない支出属性の一覧は、固定費の並びのあとに変動費の並びです。収支の統計の内訳も、この並び順です。
 - 一覧の ETag は、一覧の本文（名前を含む）の JCS のダイジェストです。保存はせず、返すたびに計算します。並べ替え・登録・削除・名前の変更で変わります。
-- 並べ替えは、一覧に対する PATCH（JSON Patch の `move`、`application/json-patch+json`）です。経費属性は区分の指定が必要です（`PATCH /v1/expense-attributes?category=固定費`）。
+- 並べ替えは、一覧に対する PATCH（JSON Patch の `move`、`application/json-patch+json`）です。支出属性は区分の指定が必要です（`PATCH /v1/expense-attributes?category=固定費`）。
   - 一覧の ETag を `If-Match` に指定します（一致しなければ 412）。
   - `move` 以外の操作・対象外のパスは 422、範囲外の位置は 409 です。操作で定義されていない項目は無視します（RFC 6902 §4）。複数の `move` は前から順に適用し、途中で失敗したら何も変えません。
   - `application/json-patch+json` 以外で送ると 415 で、受け付ける形式を `Accept-Patch` ヘッダーで返します。一覧の OPTIONS にも `Accept-Patch` を付けます（RFC 5789）。

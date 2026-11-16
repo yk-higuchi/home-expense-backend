@@ -110,7 +110,7 @@ class BalanceSeriesDataSourceTest {
   }
 
   @Test
-  void MONTH粒度_同じ月に収入と経費が複数件あっても合計が水増しされない() {
+  void MONTH粒度_同じ月に収入と支出が複数件あっても合計が水増しされない() {
     IncomeAttribute salary = registerIncomeAttribute("給与");
     ExpenseAttribute rent = registerExpenseAttribute("家賃", ExpenseCategory.固定費);
     ExpenseAttribute food = registerExpenseAttribute("食費", ExpenseCategory.変動費);
@@ -129,7 +129,7 @@ class BalanceSeriesDataSourceTest {
   }
 
   @Test
-  void MONTH粒度_収入のみの月と経費のみの月() {
+  void MONTH粒度_収入のみの月と支出のみの月() {
     IncomeAttribute bonus = registerIncomeAttribute("賞与");
     ExpenseAttribute insurance = registerExpenseAttribute("保険", ExpenseCategory.固定費);
     registerIncome(500000, "2026-06-30", bonus);
