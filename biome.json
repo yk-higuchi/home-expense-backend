@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!.release-please-manifest.json"]
+		"includes": ["**", "!.release-please-manifest.json", "!CHANGELOG.md"]
 	},
 	"json": {
 		"linter": {
