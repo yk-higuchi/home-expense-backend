@@ -15,7 +15,7 @@
    - `CHANGELOG.md`
 3. **リリース PR のマージ**：release-please が `vX.Y.Z` のタグと GitHub Release を作ります。続いて CD が次を行います。
    - テスト済みの `sha-<commit>` のイメージを、作り直さずに digest のまま `X.Y.Z` と `latest` に昇格させる
-   - `docs/openapi.yaml` と `docs/openapi.jtd.json` を GitHub Release に添付する
+   - `docs/openapi.yaml`、`docs/openapi.schema.json`、`docs/openapi.jtd.json` を GitHub Release に添付する
 
 CD は、バージョンと元のコミットの SHA を指定して手動でも再実行できます（`workflow_dispatch`）。
 
@@ -29,19 +29,23 @@ CD は、バージョンと元のコミットの SHA を指定して手動でも
 
 API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します。
 
-- **JTD**：フロントエンドは JTD（RFC 8927）で JSON の解析と生成を行います。そのための JTD スキーマ `docs/openapi.jtd.json` は、`pnpm gen:jtd` で OpenAPI から生成します。手で編集しないでください。CI で、生成し直した結果とコミット済みのファイルが一致するかを検査します。
+- **JSON Schema**：`docs/openapi.schema.json` は、OpenAPI の `components.schemas` を JSON Schema 2020-12 の文書（`$id` は `urn:home-expense:openapi`、スキーマは `$defs` の下）にしたものです。`pnpm gen:schema` で生成します。フロントエンドはこれを ajv（`Ajv2020`）で使い、長さ・パターン・範囲・`format` などの制約もそのまま検査します。
+- **JTD**：`docs/openapi.jtd.json` は、フロントエンドが JSON Schema に移るまでの間だけ残している JTD（RFC 8927）のスキーマです。`pnpm gen:jtd` で生成します。移行が終わったら削除します。
+- どちらも手で編集しないでください。CI で、生成し直した結果とコミット済みのファイルが一致するかを検査します。
 - **利用側**（フロントエンドなど）：使う版を固定し、その版の定義を GitHub Release から取得します。型や検証処理は手で書かず、これらの定義から作ってください。
   - `https://github.com/<repo>/releases/download/vX.Y.Z/openapi.yaml`
+  - `https://github.com/<repo>/releases/download/vX.Y.Z/openapi.schema.json`
   - `https://github.com/<repo>/releases/download/vX.Y.Z/openapi.jtd.json`
 - **実装と定義の一致の確認**：
   - `./gradlew test` を実行すると、REST Assured で送受信したやり取りがすべて `app/build/openapi-exchanges/exchanges.jsonl` に記録されます。
-  - CI ではテストのあとに、記録を OpenAPI と JTD の両方と照合します。
+  - CI ではテストのあとに、記録を OpenAPI・JSON Schema・JTD と照合します。
   - ローカルで照合する場合は次のとおりです。
 
   ```sh
   python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements-openapi.txt
   .venv/bin/python scripts/validate_openapi_exchanges.py docs/openapi.yaml app/build/openapi-exchanges/exchanges.jsonl
   pnpm install
+  node scripts/validate_json_schema_exchanges.mjs docs/openapi.yaml docs/openapi.schema.json app/build/openapi-exchanges/exchanges.jsonl
   node scripts/validate_jtd_exchanges.mjs docs/openapi.yaml docs/openapi.jtd.json app/build/openapi-exchanges/exchanges.jsonl
   ```
 
@@ -68,6 +72,15 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   - `application/json-patch+json` 以外で送ると 415 で、受け付ける形式を `Accept-Patch` ヘッダーで返します。一覧の OPTIONS にも `Accept-Patch` を付けます（RFC 5789）。
   - 成功すると 204 と新しい一覧の ETag を返します。属性ごとの ETag は並べ替えでは変わりません。
 
+### OpenAPI から JSON Schema への変換のルール
+
+- `components.schemas` のすべてのスキーマを、名前の順に `$defs` へ出力する
+- `#/components/schemas/X` の参照は `#/$defs/X` に書き換える。それ以外の参照は生成時にエラーにする
+- スキーマの中身は変えない。OpenAPI 3.2 のスキーマは JSON Schema 2020-12 なので、そのまま使える
+- OpenAPI 独自のキーワード（`discriminator`、`xml`、`externalDocs`、非推奨の `example`）があれば生成時にエラーにする。例は JSON Schema の `examples` で書く
+- `jsonSchemaDialect` で 2020-12 以外の方言を宣言していたら、生成時にエラーにする
+- レスポンスのスキーマは `additionalProperties` を書かない（項目の追加を許す）。リクエストのスキーマは `additionalProperties: false` で、バックエンドと同じく定義にないプロパティを拒否する
+
 ### OpenAPI から JTD への変換のルール
 
 - `components.schemas` のうち、リクエスト本文またはレスポンス本文で直接使っているスキーマごとに、参照を展開した JTD を出力する
@@ -90,8 +103,10 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
   - ローカルでは Apple の `container`、CI では `CONTAINER_CLI=docker` を指定して使う
 - `scripts/swagger_ui.sh`：`docs/openapi.yaml` を表示する Swagger UI を起動する
 - `scripts/sort_openapi.sh <openapi.yaml>`：OpenAPI のキーを並べ替える。まず全体をアルファベット順にし、そのあと OpenAPI 3.2 仕様のフィールド順に並べ直す。`x-` で始まる拡張は残す
+- `scripts/generate_json_schema.mjs <openapi.yaml> <出力先.json>`：OpenAPI から JSON Schema を生成する（通常は `pnpm gen:schema` から使う）
 - `scripts/generate_jtd.mjs <openapi.yaml> <出力先.json>`：OpenAPI から JTD を生成する（通常は `pnpm gen:jtd` から使う）
 - `scripts/validate_openapi_exchanges.py <openapi.yaml> <exchanges.jsonl>`：テストで記録したやり取りを OpenAPI と照合する
+- `scripts/validate_json_schema_exchanges.mjs <openapi.yaml> <openapi.schema.json> <exchanges.jsonl>`：テストで記録したレスポンスと、正常に処理されたリクエストを JSON Schema と照合する。フロントエンドに勧めているのと同じ設定（ajv の `Ajv2020`、strict モード、`ajv-formats` で `date`・`uuid`・`uri`・`int32`・`int64` を検査）を使う
 - `scripts/validate_jtd_exchanges.mjs <openapi.yaml> <openapi.jtd.json> <exchanges.jsonl>`：テストで記録したレスポンスを JTD で解析できるか、正常に処理されたリクエストが JTD と一致するかを確かめる。フロントエンドと同じ ajv の JTD の解析処理を使う
 
 `scripts/lib/` 配下は、上のスクリプトから `source` で読み込む部品で、単独では実行しません。

@@ -1,0 +1,655 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:home-expense:openapi",
+	"title": "Home Expense API",
+	"description": "docs/openapi.yaml の components.schemas から生成した JSON Schema です。手で編集しないでください。",
+	"$defs": {
+		"AttributeAmountResponse": {
+			"properties": {
+				"amount": {
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				},
+				"attribute_id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"attribute_name": {
+					"maxLength": 512,
+					"type": "string"
+				}
+			},
+			"required": ["attribute_id", "attribute_name", "amount"],
+			"type": "object"
+		},
+		"AttributeBreakdownResponse": {
+			"properties": {
+				"breakdown": {
+					"description": "属性ごとの金額（属性の並び順）。期間内にデータがない属性は含みません。",
+					"items": {
+						"$ref": "#/$defs/AttributeAmountResponse"
+					},
+					"type": "array"
+				},
+				"total": {
+					"description": "内訳の金額の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				}
+			},
+			"required": ["total", "breakdown"],
+			"type": "object"
+		},
+		"BalanceSeriesPointResponse": {
+			"properties": {
+				"expense_total": {
+					"description": "fixed_expense_total と variable_expense_total の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				},
+				"fixed_expense_total": {
+					"description": "区間内の固定費の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				},
+				"income_total": {
+					"description": "区間内の収入の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				},
+				"net": {
+					"description": "収支差額。income_total から expense_total を引いた値（負になることがあります）",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": -1000000000000,
+					"type": "integer"
+				},
+				"period": {
+					"$ref": "#/$defs/PeriodResponse"
+				},
+				"variable_expense_total": {
+					"description": "区間内の変動費の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				}
+			},
+			"required": [
+				"period",
+				"income_total",
+				"fixed_expense_total",
+				"variable_expense_total",
+				"expense_total",
+				"net"
+			],
+			"type": "object"
+		},
+		"BalanceSeriesResponse": {
+			"properties": {
+				"granularity": {
+					"enum": ["day", "week", "month", "quarter", "year"],
+					"type": "string"
+				},
+				"items": {
+					"items": {
+						"$ref": "#/$defs/BalanceSeriesPointResponse"
+					},
+					"maxItems": 366,
+					"type": "array"
+				}
+			},
+			"required": ["granularity", "items"],
+			"type": "object"
+		},
+		"BalanceStatisticsResponse": {
+			"properties": {
+				"expense_total": {
+					"description": "fixed_expense.total と variable_expense.total の合計",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": 0,
+					"type": "integer"
+				},
+				"fixed_expense": {
+					"$ref": "#/$defs/AttributeBreakdownResponse"
+				},
+				"income": {
+					"$ref": "#/$defs/AttributeBreakdownResponse"
+				},
+				"net": {
+					"description": "収支差額。income.total から expense_total を引いた値（負になることがあります）",
+					"format": "int64",
+					"maximum": 1000000000000,
+					"minimum": -1000000000000,
+					"type": "integer"
+				},
+				"period": {
+					"$ref": "#/$defs/PeriodResponse"
+				},
+				"variable_expense": {
+					"$ref": "#/$defs/AttributeBreakdownResponse"
+				}
+			},
+			"required": [
+				"period",
+				"income",
+				"fixed_expense",
+				"variable_expense",
+				"expense_total",
+				"net"
+			],
+			"type": "object"
+		},
+		"ExpenseAttributeGetResponse": {
+			"properties": {
+				"category": {
+					"enum": ["固定費", "変動費"],
+					"type": "string"
+				},
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"name": {
+					"maxLength": 512,
+					"type": "string"
+				}
+			},
+			"required": ["id", "name", "category"],
+			"type": "object"
+		},
+		"ExpenseAttributeListPatchRequest": {
+			"description": "移動の一覧。前から順に適用します。",
+			"items": {
+				"$ref": "#/$defs/ExpenseAttributeMoveOperation"
+			},
+			"maxItems": 100,
+			"type": "array"
+		},
+		"ExpenseAttributeListResponse": {
+			"properties": {
+				"expense_attributes": {
+					"items": {
+						"$ref": "#/$defs/ExpenseAttributeGetResponse"
+					},
+					"maxItems": 100,
+					"type": "array"
+				}
+			},
+			"required": ["expense_attributes"],
+			"type": "object"
+		},
+		"ExpenseAttributeMoveOperation": {
+			"additionalProperties": true,
+			"description": "JSON Patch（RFC 6902）の move。`expense_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。操作で定義されていない項目は無視します（RFC 6902 §4）。",
+			"properties": {
+				"from": {
+					"description": "移動元の要素の JSON Pointer",
+					"maxLength": 40,
+					"pattern": "^/expense_attributes/(0|[1-9][0-9]{0,8})$",
+					"type": "string"
+				},
+				"op": {
+					"description": "操作（move だけを受け付けます）",
+					"enum": ["move"],
+					"type": "string"
+				},
+				"path": {
+					"description": "移動先の位置の JSON Pointer",
+					"maxLength": 40,
+					"pattern": "^/expense_attributes/(0|[1-9][0-9]{0,8}|-)$",
+					"type": "string"
+				}
+			},
+			"required": ["op", "from", "path"],
+			"type": "object"
+		},
+		"ExpenseAttributePostRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"category": {
+					"enum": ["固定費", "変動費"],
+					"type": "string"
+				},
+				"name": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				}
+			},
+			"required": ["name", "category"],
+			"type": "object"
+		},
+		"ExpenseAttributePutRequest": {
+			"additionalProperties": false,
+			"description": "支出属性の区分は、登録後に変更できません。",
+			"properties": {
+				"name": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				}
+			},
+			"required": ["name"],
+			"type": "object"
+		},
+		"ExpenseAttributeResponse": {
+			"properties": {
+				"category": {
+					"enum": ["固定費", "変動費"],
+					"type": "string"
+				},
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"name": {
+					"maxLength": 512,
+					"type": "string"
+				}
+			},
+			"required": ["id", "name", "category"],
+			"type": "object"
+		},
+		"ExpenseGetResponse": {
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"description": {
+					"maxLength": 512,
+					"type": "string"
+				},
+				"expense_attribute": {
+					"$ref": "#/$defs/ExpenseAttributeResponse"
+				},
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"payment_date": {
+					"format": "date",
+					"maxLength": 10,
+					"type": "string"
+				}
+			},
+			"required": [
+				"id",
+				"description",
+				"amount",
+				"payment_date",
+				"expense_attribute"
+			],
+			"type": "object"
+		},
+		"ExpenseListResponse": {
+			"properties": {
+				"expenses": {
+					"items": {
+						"$ref": "#/$defs/ExpenseGetResponse"
+					},
+					"maxItems": 100,
+					"type": "array"
+				}
+			},
+			"required": ["expenses"],
+			"type": "object"
+		},
+		"ExpensePostRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"attribute_id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+					"type": "string"
+				},
+				"description": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				},
+				"payment_date": {
+					"examples": ["2026-04-10"],
+					"format": "date",
+					"maxLength": 10,
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+					"type": "string"
+				}
+			},
+			"required": ["description", "amount", "payment_date", "attribute_id"],
+			"type": "object"
+		},
+		"ExpensePutRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"attribute_id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+					"type": "string"
+				},
+				"description": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				},
+				"payment_date": {
+					"examples": ["2026-04-10"],
+					"format": "date",
+					"maxLength": 10,
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+					"type": "string"
+				}
+			},
+			"required": ["description", "amount", "payment_date", "attribute_id"],
+			"type": "object"
+		},
+		"IncomeAttributeGetResponse": {
+			"properties": {
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"name": {
+					"maxLength": 512,
+					"type": "string"
+				}
+			},
+			"required": ["id", "name"],
+			"type": "object"
+		},
+		"IncomeAttributeListPatchRequest": {
+			"description": "移動の一覧。前から順に適用します。",
+			"items": {
+				"$ref": "#/$defs/IncomeAttributeMoveOperation"
+			},
+			"maxItems": 100,
+			"type": "array"
+		},
+		"IncomeAttributeListResponse": {
+			"properties": {
+				"income_attributes": {
+					"items": {
+						"$ref": "#/$defs/IncomeAttributeGetResponse"
+					},
+					"maxItems": 100,
+					"type": "array"
+				}
+			},
+			"required": ["income_attributes"],
+			"type": "object"
+		},
+		"IncomeAttributeMoveOperation": {
+			"additionalProperties": true,
+			"description": "JSON Patch（RFC 6902）の move。`income_attributes` の要素を、from の位置から path の位置へ移動します（`-` は末尾）。操作で定義されていない項目は無視します（RFC 6902 §4）。",
+			"properties": {
+				"from": {
+					"description": "移動元の要素の JSON Pointer",
+					"maxLength": 40,
+					"pattern": "^/income_attributes/(0|[1-9][0-9]{0,8})$",
+					"type": "string"
+				},
+				"op": {
+					"description": "操作（move だけを受け付けます）",
+					"enum": ["move"],
+					"type": "string"
+				},
+				"path": {
+					"description": "移動先の位置の JSON Pointer",
+					"maxLength": 40,
+					"pattern": "^/income_attributes/(0|[1-9][0-9]{0,8}|-)$",
+					"type": "string"
+				}
+			},
+			"required": ["op", "from", "path"],
+			"type": "object"
+		},
+		"IncomeAttributePostRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				}
+			},
+			"required": ["name"],
+			"type": "object"
+		},
+		"IncomeAttributePutRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"name": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				}
+			},
+			"required": ["name"],
+			"type": "object"
+		},
+		"IncomeAttributeResponse": {
+			"properties": {
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"name": {
+					"maxLength": 512,
+					"type": "string"
+				}
+			},
+			"required": ["id", "name"],
+			"type": "object"
+		},
+		"IncomeGetResponse": {
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"description": {
+					"maxLength": 512,
+					"type": "string"
+				},
+				"id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"type": "string"
+				},
+				"income_attribute": {
+					"$ref": "#/$defs/IncomeAttributeResponse"
+				},
+				"receive_date": {
+					"format": "date",
+					"maxLength": 10,
+					"type": "string"
+				}
+			},
+			"required": [
+				"id",
+				"description",
+				"amount",
+				"receive_date",
+				"income_attribute"
+			],
+			"type": "object"
+		},
+		"IncomeListResponse": {
+			"properties": {
+				"incomes": {
+					"items": {
+						"$ref": "#/$defs/IncomeGetResponse"
+					},
+					"maxItems": 100,
+					"type": "array"
+				}
+			},
+			"required": ["incomes"],
+			"type": "object"
+		},
+		"IncomePostRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"attribute_id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+					"type": "string"
+				},
+				"description": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				},
+				"receive_date": {
+					"examples": ["2026-04-25"],
+					"format": "date",
+					"maxLength": 10,
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+					"type": "string"
+				}
+			},
+			"required": ["description", "amount", "receive_date", "attribute_id"],
+			"type": "object"
+		},
+		"IncomePutRequest": {
+			"additionalProperties": false,
+			"properties": {
+				"amount": {
+					"format": "int32",
+					"maximum": 1000000000,
+					"minimum": 1,
+					"type": "integer"
+				},
+				"attribute_id": {
+					"format": "uuid",
+					"maxLength": 36,
+					"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+					"type": "string"
+				},
+				"description": {
+					"maxLength": 512,
+					"minLength": 1,
+					"pattern": "\\S",
+					"type": "string"
+				},
+				"receive_date": {
+					"examples": ["2026-04-25"],
+					"format": "date",
+					"maxLength": 10,
+					"pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+					"type": "string"
+				}
+			},
+			"required": ["description", "amount", "receive_date", "attribute_id"],
+			"type": "object"
+		},
+		"PeriodResponse": {
+			"description": "期間（from と to の日付を含む）",
+			"properties": {
+				"from": {
+					"description": "開始日（この日を含む）",
+					"format": "date",
+					"type": "string"
+				},
+				"to": {
+					"description": "終了日（この日を含む）",
+					"format": "date",
+					"type": "string"
+				}
+			},
+			"required": ["from", "to"],
+			"type": "object"
+		},
+		"ProblemDetail": {
+			"description": "RFC 9457 の Problem Details 形式のエラー。`instance` は返しません。個々の発生を特定するには `trace_id` を使います。",
+			"properties": {
+				"detail": {
+					"description": "この発生に固有の、人が読むための説明",
+					"examples": ["descriptionは必須入力です"],
+					"maxLength": 1024,
+					"type": "string"
+				},
+				"status": {
+					"description": "HTTP ステータスコード",
+					"examples": [400],
+					"format": "int32",
+					"maximum": 599,
+					"minimum": 100,
+					"type": "integer"
+				},
+				"title": {
+					"description": "問題の種類を表す、人が読むための短い要約",
+					"examples": ["Bad Request"],
+					"maxLength": 256,
+					"type": "string"
+				},
+				"trace_id": {
+					"description": "リクエストの W3C Trace Context の trace-id。サーバー側のトレースと突き合わせるために使います（拡張メンバー）",
+					"examples": ["4bf92f3577b34da6a3ce929d0e0e4736"],
+					"maxLength": 32,
+					"pattern": "^[0-9a-f]{32}$",
+					"type": "string"
+				},
+				"type": {
+					"description": "問題の種類を識別する URI 参照",
+					"examples": ["about:blank"],
+					"format": "uri",
+					"maxLength": 2048,
+					"type": "string"
+				}
+			},
+			"required": ["type", "title", "status"],
+			"type": "object"
+		}
+	}
+}
