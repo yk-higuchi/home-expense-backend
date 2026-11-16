@@ -5,6 +5,7 @@ import sys
 from urllib.parse import parse_qsl, urlsplit
 
 from openapi_core import Config, OpenAPI
+from openapi_core.exceptions import OpenAPIError
 from openapi_core.templating.paths.exceptions import (
     OperationNotFound,
     PathNotFound,
@@ -19,12 +20,18 @@ UNDOCUMENTED_ROUTE_STATUSES = {404, 405}
 FRAMEWORK_METHODS = {"OPTIONS", "HEAD"}
 NON_API_PATH_PREFIX = "/q/"
 LENIENT_INPUT_TESTS = {
-    "dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterApiTest#空文字の任意パラメータは未指定として扱う":
-        "空の任意パラメータは未指定として扱う",
-    "dev.higuchi.homeexpense.presentation.api.balance.series.BalanceSeriesApiTest#GET_granularity大文字でも受け入れる":
-        "granularity は大文字・小文字を区別しない",
+    "dev.higuchi.homeexpense.presentation.api.InvalidQueryParameterApiTest#空文字の任意パラメータは未指定として扱う": "空の任意パラメータは未指定として扱う",
+    "dev.higuchi.homeexpense.presentation.api.balance.series.BalanceSeriesApiTest#GET_granularity大文字でも受け入れる": "granularity は大文字・小文字を区別しない",
 }
-IGNORED_REQUEST_HEADERS = {"accept", "accept-encoding", "content-type", "content-length", "host", "user-agent", "connection"}
+IGNORED_REQUEST_HEADERS = {
+    "accept",
+    "accept-encoding",
+    "content-type",
+    "content-length",
+    "host",
+    "user-agent",
+    "connection",
+}
 
 
 def describe(ex):
@@ -88,14 +95,14 @@ def main(spec_path, exchanges_path):
                 skipped += 1
                 continue
             errors.append("route: " + describe(ex))
-        except Exception as ex:
+        except OpenAPIError as ex:
             if e["test"] in LENIENT_INPUT_TESTS:
                 unused_lenient.discard(e["test"])
             elif e["status"] not in REJECTED_ON_PURPOSE:
                 errors.append("request: " + describe(ex))
         try:
             openapi.validate_response(request, response)
-        except Exception as ex:
+        except OpenAPIError as ex:
             errors.append("response: " + describe(ex))
         if errors:
             failures += 1
@@ -106,7 +113,9 @@ def main(spec_path, exchanges_path):
 
     for test in sorted(unused_lenient):
         failures += 1
-        print(f"--- LENIENT_INPUT_TESTS の項目が使われていません（テスト名の変更や削除がないか確認してください）: {test}")
+        print(
+            f"--- LENIENT_INPUT_TESTS の項目が使われていません（テスト名の変更や削除がないか確認してください）: {test}"
+        )
 
     print(f"{len(exchanges)} 件を照合: 失敗 {failures} 件、対象外 {skipped} 件")
     return 1 if failures else 0

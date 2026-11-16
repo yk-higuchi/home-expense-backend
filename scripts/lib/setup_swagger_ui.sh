@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+: "${openapi_dir_host_path:?}"
+
 swagger_ui_container_name="${SWAGGER_UI_CONTAINER_NAME:-my_swagger_ui}"
 swagger_ui_image="${SWAGGER_UI_IMAGE:-swaggerapi/swagger-ui:latest}"
 swagger_ui_host_port="${SWAGGER_UI_HOST_PORT:-8081}"

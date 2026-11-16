@@ -1,5 +1,7 @@
 #!/bin/bash
 
+: "${db_host:?}" "${db_name:?}" "${db_user:?}" "${db_password:?}"
+
 container run --rm \
   --name flyway-migration \
   -v "$(pwd)/flyway/migration:/flyway/sql:ro" \
