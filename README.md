@@ -4,20 +4,27 @@
 
 バージョンとタグは、Conventional Commits をもとに [release-please](https://github.com/googleapis/release-please) で管理しています。
 
-1. **プルリクエスト**：CI で次を実行します。イメージはまだ push しません。
+1. **プルリクエスト**：Continuous Integration で次を実行します。イメージはまだ push しません。
    - テスト（CockroachDB）
    - テスト中に記録した HTTP のやり取りと `docs/openapi.yaml` の照合
    - アプリに関わるリント（OpenAPI の vacuum、マイグレーションの sqlfluff、Dockerfile の hadolint）
    - アプリのイメージのビルドと脆弱性スキャン
-2. **`main` への push**：CI が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。そのあと release-please がリリース PR を更新します。リリース PR では次が更新されます。
-   - `app/build.gradle.kts` のバージョン
-   - `docs/openapi.yaml` の `info.version`
-   - `CHANGELOG.md`
-3. **リリース PR のマージ**：release-please が `vX.Y.Z` のタグと GitHub Release を作ります。続いて CD が次を行います。
+2. **`main` への push**：
+   - Continuous Integration が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。
+   - 同時に Release が release-please を実行し、リリース PR を作るか更新します。リリース PR では `app/build.gradle.kts` のバージョン、`docs/openapi.yaml` の `info.version`、`CHANGELOG.md` が更新されます。
+3. **リリース PR のマージ**：Release が `vX.Y.Z` のタグと GitHub Release を作ります。GitHub Release の公開をきっかけに、Continuous Delivery が次を行います。
+   - タグのコミットで Continuous Integration が成功するのを待つ（失敗したら止まる）
    - テスト済みの `sha-<commit>` のイメージを、作り直さずに digest のまま `X.Y.Z` と `latest` に昇格させる
    - `docs/openapi.yaml`、`docs/openapi.schema.json`、`docs/openapi.jtd.json` を GitHub Release に添付する
 
-CD は、バージョンと元のコミットの SHA を指定して手動でも再実行できます（`workflow_dispatch`）。
+Continuous Delivery は、バージョンを指定して手動でも再実行できます（`workflow_dispatch`）。
+
+### release-please の GitHub App
+
+`GITHUB_TOKEN` で作った PR・タグ・リリースは、ほかのワークフローを起動しません。そのままでは、リリース PR で Continuous Integration が動かず（必須チェックがそろわない）、GitHub Release を作っても Continuous Delivery が動きません。そのため、release-please は GitHub App のトークンで動かします。
+
+- GitHub App の権限：Contents（Read and write）、Pull requests（Read and write）、Issues（Read and write）。このリポジトリにだけインストールします。
+- リポジトリの Variables に `RELEASE_APP_CLIENT_ID`（App の Client ID）、Secrets に `RELEASE_APP_PRIVATE_KEY`（App の秘密鍵）を登録します。
 
 データベースのマイグレーションは、リリースとは別に Flyway CLI で `flyway/migration` を適用します（マイグレーション用のイメージは作りません）。本番の CockroachDB v26.2 には Flyway 13 以上が必要です。
 
@@ -97,13 +104,14 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 ## ワークフローとリント
 
-| ワークフロー           | ファイル                      | 内容                                                                                           |
-| ---------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| Continuous Integration | `.github/workflows/ci.yaml`   | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン、リリース |
-| Continuous Delivery    | `.github/workflows/cd.yaml`   | イメージの昇格、API 定義の GitHub Release への添付（CI から呼ばれる）                          |
-| Lint                   | `.github/workflows/lint.yaml` | アプリに直接関わらないファイルのリント                                                         |
+| ワークフロー           | ファイル                         | 内容                                                                                 |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| Continuous Integration | `.github/workflows/ci.yaml`      | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン |
+| Release                | `.github/workflows/release.yaml` | release-please（リリース PR、タグ、GitHub Release）                                  |
+| Continuous Delivery    | `.github/workflows/cd.yaml`      | イメージの昇格、API 定義の GitHub Release への添付（GitHub Release の公開で動く）    |
+| Lint                   | `.github/workflows/lint.yaml`    | アプリに直接関わらないファイルのリント                                               |
 
-アプリに関わるリントは CI に置き、通らなければリリースしません。それ以外は Lint に置きます。
+アプリに関わるリントは Continuous Integration に置き、通らなければ Continuous Delivery が昇格させません。それ以外は Lint に置きます。
 
 | 対象                       | ツール                 | 設定                           | ワークフロー         |
 | -------------------------- | ---------------------- | ------------------------------ | -------------------- |

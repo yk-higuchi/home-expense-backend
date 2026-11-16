@@ -1,37 +1,68 @@
 name: Continuous Delivery
-run-name: Continuous Delivery · ${{ inputs.version }}
+run-name: Continuous Delivery · ${{ inputs.version || github.event.release.tag_name }}
 on:
-  workflow_call:
-    inputs:
-      version:
-        description: Release version (X.Y.Z)
-        required: true
-        type: string
-      source-sha:
-        description: Commit SHA whose tested image (sha-<commit>) is promoted
-        required: true
-        type: string
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
       version:
         description: Release version (X.Y.Z)
         required: true
         type: string
-      source-sha:
-        description: Commit SHA whose tested image (sha-<commit>) is promoted
-        required: true
-        type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.version }}
+  group: ${{ github.workflow }}-${{ inputs.version || github.event.release.tag_name }}
   cancel-in-progress: false
 permissions:
   contents: read
-  packages: write
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      source-sha: ${{ steps.release.outputs.source-sha }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      INPUT_VERSION: ${{ inputs.version }}
+      TAG_NAME: ${{ github.event.release.tag_name }}
+    steps:
+      - id: release
+        name: Resolve the release
+        run: |
+          version="${INPUT_VERSION:-${TAG_NAME#v}}"
+          [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${version}"; exit 1; }
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/v${version}" --jq .sha)
+          [[ "${sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${sha}"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "source-sha=${sha}" >> "${GITHUB_OUTPUT}"
+      - name: Wait for Continuous Integration on the release commit
+        env:
+          SOURCE_SHA: ${{ steps.release.outputs.source-sha }}
+        run: |
+          for _ in $(seq 1 120); do
+            result=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yaml/runs?head_sha=${SOURCE_SHA}&event=push&branch=main" \
+              --jq '[.workflow_runs[] | {status, conclusion}] | first // {} | "\(.status // "missing") \(.conclusion // "")"')
+            echo "ci: ${result}"
+            case "${result}" in
+              "completed success") exit 0 ;;
+              completed*) echo "Continuous Integration did not succeed on ${SOURCE_SHA}"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "timed out waiting for Continuous Integration on ${SOURCE_SHA}"
+          exit 1
   # CI でテスト・スキャン済みのイメージ（sha-<commit>）を、作り直さずに digest のまま
   # バージョンタグと latest に昇格させる。
   promote:
+    needs:
+      - resolve
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -39,13 +70,9 @@ jobs:
           - app
     env:
       IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.build-context }}
-      VERSION: ${{ inputs.version }}
-      SOURCE_SHA: ${{ inputs.source-sha }}
+      VERSION: ${{ needs.resolve.outputs.version }}
+      SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
     steps:
-      - name: Validate inputs
-        run: |
-          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${VERSION}"; exit 1; }
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${SOURCE_SHA}"; exit 1; }
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Login to GitHub Container Registry
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -67,21 +94,19 @@ jobs:
   # OpenAPI 定義と、そこから生成した JSON Schema・JTD を GitHub Release に添付する
   # （https://github.com/<repo>/releases/download/v<version>/openapi.yaml, openapi.schema.json, openapi.jtd.json）。
   publish-spec:
+    needs:
+      - resolve
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      VERSION: ${{ inputs.version }}
-      SOURCE_SHA: ${{ inputs.source-sha }}
+      VERSION: ${{ needs.resolve.outputs.version }}
+      SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Validate inputs
-        run: |
-          [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${VERSION}"; exit 1; }
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${SOURCE_SHA}"; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-sha }}
+          ref: ${{ needs.resolve.outputs.source-sha }}
       - name: Check info.version
         run: |
           spec_version=$(yq '.info.version' docs/openapi.yaml)
