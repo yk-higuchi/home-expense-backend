@@ -8,14 +8,6 @@
 	"files": {
 		"includes": ["**", "!.release-please-manifest.json"]
 	},
-	"html": {
-		"linter": {
-			"enabled": true
-		},
-		"formatter": {
-			"enabled": true
-		}
-	},
 	"json": {
 		"linter": {
 			"enabled": true

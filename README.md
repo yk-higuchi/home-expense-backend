@@ -116,6 +116,24 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 - yamllint は生成物（`node_modules/`、`pnpm-lock.yaml` など）を対象外にし、行の長さは検査しません。markdownlint も行の長さは検査しません。いずれも日本語の説明や URL が長くなるためです。
 - 手元で Python のツールを使うときは、`pip install -r requirements.txt` で CI と同じ版を入れます。
 
+### 手元での検査（lefthook）
+
+`lefthook.yaml` で、コミットの前に CI・Lint と同じ検査を、変更したファイルだけに行います。
+
+- コミットの前（pre-commit）：Biome（JSON・JavaScript・Markdown）、markdownlint、yamllint、actionlint、hadolint、sqlfluff、ruff、ShellCheck、Spotless。`docs/openapi.yaml` を変えたときは、並べ替え・`docs/openapi.schema.json` の生成・vacuum を続けて行います。自動で直せるもの（Biome、ruff、Spotless、OpenAPI の並べ替えと生成）は、直した結果をコミットに含めます。
+- コミットメッセージ（commit-msg）：commitlint
+
+使う前に、ツールを入れてフックを登録します。
+
+```sh
+pnpm install
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+brew install actionlint hadolint shellcheck vacuum
+pnpm lefthook install
+```
+
+yamllint・sqlfluff・ruff は `.venv/bin` にあるので、コミットするときは `.venv` を有効にしておくか、`.venv/bin` を `PATH` に入れてください。
+
 ## CI の依存の固定
 
 - GitHub Actions の `uses:` は、すべてコミットのハッシュで固定し、行末に版をコメントで書きます（例：`actions/checkout@<40 文字のハッシュ> # v7.0.1`）。タグは付け替えられるため、版の指定だけにはしません。
