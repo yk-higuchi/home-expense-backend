@@ -1,9 +1,12 @@
 name: Continuous Delivery
-run-name: Continuous Delivery · ${{ inputs.version || github.event.release.tag_name }}
+run-name: Continuous Delivery · ${{ inputs.version }}
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      version:
+        description: Release version (X.Y.Z)
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -11,7 +14,7 @@ on:
         required: true
         type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.version || github.event.release.tag_name }}
+  group: ${{ github.workflow }}-${{ inputs.version }}
   cancel-in-progress: false
 permissions:
   contents: read
@@ -27,12 +30,11 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       INPUT_VERSION: ${{ inputs.version }}
-      TAG_NAME: ${{ github.event.release.tag_name }}
     steps:
       - id: release
         name: Resolve the release
         run: |
-          version="${INPUT_VERSION:-${TAG_NAME#v}}"
+          version="${INPUT_VERSION}"
           [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${version}"; exit 1; }
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/v${version}" --jq .sha)
           [[ "${sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${sha}"; exit 1; }

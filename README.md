@@ -12,19 +12,21 @@
 2. **`main` への push**：
    - Continuous Integration が同じ検査を行い、テスト済みのイメージを `ghcr.io/<repo>-app:sha-<commit>` として push します。
    - 同時に Release が release-please を実行し、リリース PR を作るか更新します。リリース PR では `app/build.gradle.kts` のバージョン、`docs/openapi.yaml` の `info.version`、`CHANGELOG.md` が更新されます。
-3. **リリース PR のマージ**：Release が `vX.Y.Z` のタグと GitHub Release を作ります。GitHub Release の公開をきっかけに、Continuous Delivery が次を行います。
+   - リリース PR を作った・更新したときは、Release がそのブランチで Continuous Integration と Lint を起動します（下の「`GITHUB_TOKEN` の制約」）。
+3. **リリース PR のマージ**：Release が `vX.Y.Z` のタグと GitHub Release を作り、同じ実行の中で Continuous Delivery を呼びます。Continuous Delivery は次を行います。
    - タグのコミットで Continuous Integration が成功するのを待つ（失敗したら止まる）
    - テスト済みの `sha-<commit>` のイメージを、作り直さずに digest のまま `X.Y.Z` と `latest` に昇格させる
    - `docs/openapi.yaml`、`docs/openapi.schema.json`、`docs/openapi.jtd.json` を GitHub Release に添付する
 
-Continuous Delivery は、バージョンを指定して手動でも再実行できます（`workflow_dispatch`）。
+Continuous Delivery は、バージョンを指定して手動でも再実行できます（`workflow_dispatch`）。GitHub の画面で手作業でリリースを作った場合は、自動では動かないので手動で実行してください。
 
-### release-please の GitHub App
+### `GITHUB_TOKEN` の制約
 
-`GITHUB_TOKEN` で作った PR・タグ・リリースは、ほかのワークフローを起動しません。そのままでは、リリース PR で Continuous Integration が動かず（必須チェックがそろわない）、GitHub Release を作っても Continuous Delivery が動きません。そのため、release-please は GitHub App のトークンで動かします。
+release-please は `GITHUB_TOKEN` で動かします。`GITHUB_TOKEN` で作った PR・タグ・リリースは、ほかのワークフローを起動しません。例外は `workflow_dispatch` と `workflow_call` なので、次のように回避しています。
 
-- GitHub App の権限：Contents（Read and write）、Pull requests（Read and write）、Issues（Read and write）。このリポジトリにだけインストールします。
-- リポジトリの Variables に `RELEASE_APP_CLIENT_ID`（App の Client ID）、Secrets に `RELEASE_APP_PRIVATE_KEY`（App の秘密鍵）を登録します。
+- リリース PR：Release が `gh workflow run` で、リリース PR のブランチに対して Continuous Integration と Lint を起動します。実行はリリース PR の先頭のコミットに紐づくので、必須チェックもそろいます（実行の一覧では `workflow_dispatch` と表示されます）。
+- リリース：Release が `workflow_call` で Continuous Delivery を呼びます。
+- リポジトリの設定で「Allow GitHub Actions to create and approve pull requests」を有効にしておく必要があります。
 
 データベースのマイグレーションは、リリースとは別に Flyway CLI で `flyway/migration` を適用します（マイグレーション用のイメージは作りません）。本番の CockroachDB v26.2 には Flyway 13 以上が必要です。
 
@@ -107,8 +109,8 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 | ワークフロー           | ファイル                         | 内容                                                                                 |
 | ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
 | Continuous Integration | `.github/workflows/ci.yaml`      | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン |
-| Release                | `.github/workflows/release.yaml` | release-please（リリース PR、タグ、GitHub Release）                                  |
-| Continuous Delivery    | `.github/workflows/cd.yaml`      | イメージの昇格、API 定義の GitHub Release への添付（GitHub Release の公開で動く）    |
+| Release                | `.github/workflows/release.yaml` | release-please（リリース PR、タグ、GitHub Release）、リリース PR の検査の起動        |
+| Continuous Delivery    | `.github/workflows/cd.yaml`      | イメージの昇格、API 定義の GitHub Release への添付（Release から呼ばれる）           |
 | Lint                   | `.github/workflows/lint.yaml`    | アプリに直接関わらないファイルのリント                                               |
 
 アプリに関わるリントは Continuous Integration に置き、通らなければ Continuous Delivery が昇格させません。それ以外は Lint に置きます。

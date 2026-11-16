@@ -13,17 +13,53 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release-created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
+      pr-branch: ${{ steps.pr.outputs.branch }}
     steps:
-      - id: app-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-          permission-issues: write
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-        with:
-          token: ${{ steps.app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+      - id: pr
+        name: Resolve the release pull request branch
+        env:
+          PR: ${{ steps.release.outputs.pr }}
+        run: |
+          branch=""
+          if [ -n "${PR}" ]; then
+            branch=$(jq -r '.headBranchName // empty' <<< "${PR}")
+          fi
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+  verify-release-pr:
+    needs:
+      - release-please
+    if: needs.release-please.outputs.pr-branch != ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: ${{ needs.release-please.outputs.pr-branch }}
+    steps:
+      - name: Run Continuous Integration and Lint on the release pull request
+        run: |
+          gh workflow run ci.yaml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
+          gh workflow run lint.yaml --repo "${GITHUB_REPOSITORY}" --ref "${BRANCH}"
+          echo "### Continuous Integration and Lint dispatched on \`${BRANCH}\`" >> "${GITHUB_STEP_SUMMARY}"
+  deliver:
+    needs:
+      - release-please
+    if: needs.release-please.outputs.release-created == 'true'
+    permissions:
+      actions: read
+      contents: write
+      packages: write
+    uses: ./.github/workflows/cd.yaml
+    with:
+      version: ${{ needs.release-please.outputs.version }}
