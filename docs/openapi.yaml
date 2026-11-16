@@ -220,7 +220,7 @@ paths:
       tags:
         - Expense Attributes
       summary: ID を指定して支出属性を取得する
-      description: 支出属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      description: 支出属性を返します。ETag ヘッダーには内容のダイジェストが入っており、更新・削除の If-Match に使います。
       operationId: getExpenseAttributeById
       parameters:
         - $ref: '#/components/parameters/ExpenseAttributeId'
@@ -385,7 +385,7 @@ paths:
       tags:
         - Expenses
       summary: ID を指定して支出を取得する
-      description: 支出を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      description: 支出を属性とともに返します。ETag ヘッダーには内容のダイジェストが入っており、更新・削除の If-Match に使います。
       operationId: getExpenseById
       parameters:
         - $ref: '#/components/parameters/ExpenseId'
@@ -562,7 +562,7 @@ paths:
       tags:
         - Income Attributes
       summary: ID を指定して収入属性を取得する
-      description: 収入属性を返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      description: 収入属性を返します。ETag ヘッダーには内容のダイジェストが入っており、更新・削除の If-Match に使います。
       operationId: getIncomeAttributeById
       parameters:
         - $ref: '#/components/parameters/IncomeAttributeId'
@@ -703,7 +703,7 @@ paths:
       tags:
         - Incomes
       summary: ID を指定して収入を取得する
-      description: 収入を属性とともに返します。ETag ヘッダーにはバージョンが入っており、If-Match に使います。
+      description: 収入を属性とともに返します。ETag ヘッダーには内容のダイジェストが入っており、更新・削除の If-Match に使います。
       operationId: getIncomeById
       parameters:
         - $ref: '#/components/parameters/IncomeId'
