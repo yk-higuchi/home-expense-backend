@@ -1,4 +1,4 @@
-name: CD
+name: Continuous Delivery
 run-name: CD · ${{ inputs.version }}
 on:
   workflow_call:
