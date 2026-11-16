@@ -36,3 +36,6 @@ Temporary Items
 .idea/
 .sdkmanrc
 *.iml
+node_modules
+.venv
+.ruff_cache/

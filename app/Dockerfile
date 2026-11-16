@@ -1,31 +1,34 @@
-FROM alpine:3.19.1 as lib
+# syntax=docker/dockerfile:1.29.0
+FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:25.0.5.0-Final-java25@sha256:38f943afcae3218771546a99b41156dd3efa8315483eaf74f88f33d232bb3c8d AS builder
 
-FROM ghcr.io/graalvm/native-image:ol9-java17-22.3.3 AS gradle-cache
+WORKDIR /project
+ENV GRADLE_USER_HOME=/home/quarkus/.gradle
 
-WORKDIR /work
+COPY --chown=quarkus:quarkus gradlew ./
+COPY --chown=quarkus:quarkus gradle/ ./gradle/
+COPY --chown=quarkus:quarkus settings.gradle.kts build.gradle.kts ./
+RUN ./gradlew --no-daemon resolveDependencies
 
-COPY gradle/ ./gradle/
-COPY *.gradle *.gradle.kts gradlew ./
-RUN microdnf install -y findutils-1:4.8.0-5.el9 && microdnf clean all
-RUN ./gradlew --console=plain --no-daemon -q printVersion
+COPY --chown=quarkus:quarkus src/ ./src/
+RUN ./gradlew --no-daemon build \
+    -Dquarkus.native.enabled=true \
+    -Dquarkus.package.jar.enabled=false \
+    -x check
 
-FROM gradle-cache AS builder
+FROM gcr.io/distroless/base-nossl-debian13:nonroot@sha256:89815d620ac01d8de13cdaf04d19ed874447ca2296d4985b14b818f6e5e47854
 
-COPY src/ ./src/
-
-RUN ./gradlew --console=plain --no-daemon -q clean build -Dquarkus.package.type=native -x check
-
-FROM gcr.io/distroless/base-nossl-debian12:nonroot
+ARG VERSION=unspecified
+ARG GIT_SHA=unspecified
+LABEL org.opencontainers.image.title="home-expense-backend" \
+      org.opencontainers.image.description="Home expense management API (Quarkus native)" \
+      org.opencontainers.image.source="https://github.com/yk-higuchi/home-expense-backend" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}"
 
 WORKDIR /app
-
-COPY --from=lib /lib/libz.so.1 /lib/libz.so.1
-COPY --from=lib /lib/libc.musl-x86_64.so.1 /lib/libc.musl-x86_64.so.1
-COPY --chown=nonroot:nonroot --from=builder /work/build/*-runner /app/application
+COPY --from=builder /project/build/*-runner /app/application
 
 EXPOSE 8080
-USER nonroot
-
-ENV PORT 8080
-
-CMD ["/app/application", "-Dquarkus.http.host=0.0.0.0"]
+USER 65532:65532
+ENTRYPOINT ["/app/application"]

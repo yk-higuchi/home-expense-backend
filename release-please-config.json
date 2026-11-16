@@ -1,0 +1,22 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"release-type": "simple",
+	"include-component-in-tag": false,
+	"include-v-in-tag": true,
+	"bootstrap-sha": "c62c475145b965ab4385fb93774bb3e60c6cd356",
+	"packages": {
+		".": {
+			"changelog-path": "CHANGELOG.md",
+			"extra-files": [
+				{
+					"type": "generic",
+					"path": "app/build.gradle.kts"
+				},
+				{
+					"type": "generic",
+					"path": "docs/openapi.yaml"
+				}
+			]
+		}
+	}
+}

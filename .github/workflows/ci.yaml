@@ -1,39 +1,148 @@
 name: Continuous Integration
-run-name: Continuous Integration
+run-name: Continuous Integration · ${{ github.event_name }} · ${{ github.head_ref || github.ref_name }}
 on:
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # main への push はリリースにつながるため途中で取り消さない
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 25
           cache: gradle
-      - name: Gradle lint
+      - name: Start test database (CockroachDB)
+        run: scripts/setup_test_db.sh
+        env:
+          CONTAINER_CLI: docker
+      - name: Gradle check
         run: ./gradlew --console=plain --no-daemon -q check
         working-directory: app
-  build-and-lint-docker-image:
-    uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
-    with:
-      build-context: ${{ matrix.build-context }}
-      version: lint
-      platform: ${{ matrix.platform }}
+      # テストで実際に送受信したリクエスト/レスポンスを OpenAPI と照合し、実装と仕様書のずれを検出する
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: scripts/requirements-openapi.txt
+      - name: Validate API exchanges against OpenAPI
+        run: |
+          pip install -r scripts/requirements-openapi.txt
+          python scripts/validate_openapi_exchanges.py docs/openapi.yaml app/build/openapi-exchanges/exchanges.jsonl
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate API exchanges against JSON Schema
+        run: node scripts/validate_json_schema_exchanges.mjs docs/openapi.yaml docs/openapi.schema.json app/build/openapi-exchanges/exchanges.jsonl
+  openapi-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install vacuum
+        env:
+          VACUUM_VERSION: 0.41.0
+          VACUUM_SHA256: 17b9ca0f23c4f926bac3814393684acc81dc40e2f8fffd28812e4bf885d4269f
+        run: |
+          archive="vacuum_${VACUUM_VERSION}_linux_x86_64.tar.gz"
+          curl -fsSLO "https://github.com/daveshanley/vacuum/releases/download/v${VACUUM_VERSION}/${archive}"
+          echo "${VACUUM_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" vacuum
+          sudo install -m 0755 vacuum /usr/local/bin/vacuum
+      - name: Lint OpenAPI
+        run: vacuum lint -r .vacuum.yaml -d docs/openapi.yaml
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check JSON Schema is generated from OpenAPI
+        run: |
+          pnpm gen:schema
+          git diff --exit-code docs/openapi.schema.json || { echo "docs/openapi.schema.json が古いままです。pnpm gen:schema を実行してコミットしてください"; exit 1; }
+  migration-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Lint migrations (sqlfluff)
+        run: sqlfluff lint --format github-annotation-native flyway/migration
+  # イメージは CI で一度だけビルドしてスキャンする。main への push ではテスト済みのイメージを
+  # sha-<commit> タグで GHCR に置き、リリース時は CD がそれを作り直さずに昇格させる。
+  image:
     needs:
-      - lint
-    strategy:
-      fail-fast: false
-      matrix:
-        build-context:
-          - app
-          - flyway
-        platform:
-          - linux/amd64
+      - test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-app
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read version
+        id: version
+        run: echo "version=$(sed -nE 's/^version = "([^"]+)".*x-release-please-version.*/\1/p' app/build.gradle.kts)" >> "${GITHUB_OUTPUT}"
+      - name: Install hadolint
+        env:
+          HADOLINT_VERSION: 2.15.1
+          HADOLINT_SHA256: c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507
+        run: |
+          curl -fsSL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
+          echo "${HADOLINT_SHA256}  hadolint" | sha256sum -c -
+          sudo install -m 0755 hadolint /usr/local/bin/hadolint
+      - name: Lint app/Dockerfile
+        run: hadolint "app/Dockerfile"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build app
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./app
+          platforms: linux/amd64
+          load: true
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+      - name: Scan app with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+      - name: Login to GitHub Container Registry
+        if: env.PUSH == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push tested image as release candidate
+        if: env.PUSH == 'true'
+        run: docker push "${IMAGE}:sha-${GITHUB_SHA}"

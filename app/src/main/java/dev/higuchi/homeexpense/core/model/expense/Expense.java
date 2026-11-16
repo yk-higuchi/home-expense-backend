@@ -1,0 +1,102 @@
+package dev.higuchi.homeexpense.core.model.expense;
+
+import dev.higuchi.homeexpense.core.model.Amount;
+import dev.higuchi.homeexpense.core.model.Description;
+import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
+import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
+public class Expense {
+  ExpenseIdentifier expenseIdentifier;
+
+  Description description;
+
+  Amount amount;
+
+  PaymentDate paymentDate;
+
+  ExpenseAttributeIdentifier expenseAttributeIdentifier;
+
+  public Expense(
+      ExpenseIdentifier expenseIdentifier,
+      Description description,
+      Amount amount,
+      PaymentDate paymentDate,
+      ExpenseAttributeIdentifier expenseAttributeIdentifier) {
+    this.expenseIdentifier = Objects.requireNonNull(expenseIdentifier, "支出識別子は必須です");
+    this.description = Objects.requireNonNull(description, "説明は必須です");
+    this.amount = Objects.requireNonNull(amount, "金額は必須です");
+    this.paymentDate = Objects.requireNonNull(paymentDate, "支払日は必須です");
+    this.expenseAttributeIdentifier =
+        Objects.requireNonNull(expenseAttributeIdentifier, "支出属性識別子は必須です");
+  }
+
+  public static Expense create(
+      Description description,
+      Amount amount,
+      PaymentDate paymentDate,
+      ExpenseAttributeIdentifier expenseAttributeIdentifier) {
+    ExpenseIdentifier id = new ExpenseIdentifier(UUID.randomUUID().toString());
+    return new Expense(id, description, amount, paymentDate, expenseAttributeIdentifier);
+  }
+
+  public Expense updateWith(
+      Description description,
+      Amount amount,
+      PaymentDate paymentDate,
+      ExpenseAttributeIdentifier expenseAttributeIdentifier) {
+    return new Expense(
+        this.expenseIdentifier, description, amount, paymentDate, expenseAttributeIdentifier);
+  }
+
+  public boolean hasChanges(Expense other) {
+    return !Objects.equals(description, other.description)
+        || !Objects.equals(amount, other.amount)
+        || !Objects.equals(paymentDate, other.paymentDate)
+        || !Objects.equals(expenseAttributeIdentifier, other.expenseAttributeIdentifier);
+  }
+
+  public ExpenseIdentifier expenseIdentifier() {
+    return expenseIdentifier;
+  }
+
+  public Description description() {
+    return description;
+  }
+
+  public Amount amount() {
+    return amount;
+  }
+
+  public PaymentDate paymentDate() {
+    return paymentDate;
+  }
+
+  public ExpenseAttributeIdentifier expenseAttributeIdentifier() {
+    return expenseAttributeIdentifier;
+  }
+
+  public DocumentDigest digest() {
+    return DocumentDigest.of(
+        Map.of(
+            "amount", amount.value(),
+            "attribute_id", expenseAttributeIdentifier.value(),
+            "description", description.value(),
+            "payment_date", paymentDate.asString()));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Expense expense = (Expense) o;
+    return Objects.equals(expenseIdentifier, expense.expenseIdentifier);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expenseIdentifier);
+  }
+}

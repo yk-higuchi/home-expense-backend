@@ -1,0 +1,18 @@
+package dev.higuchi.homeexpense.query.balance.statistics;
+
+import java.util.List;
+
+public record AttributeBreakdown(List<AttributeAmount> amounts) {
+
+  public AttributeBreakdown {
+    amounts = List.copyOf(amounts);
+  }
+
+  public static AttributeBreakdown empty() {
+    return new AttributeBreakdown(List.of());
+  }
+
+  public long total() {
+    return amounts.stream().mapToLong(AttributeAmount::amount).reduce(0L, Math::addExact);
+  }
+}

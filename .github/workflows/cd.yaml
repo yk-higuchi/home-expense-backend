@@ -1,44 +1,114 @@
 name: Continuous Delivery
-run-name: Continuous Delivery
+run-name: Continuous Delivery · ${{ inputs.version }}
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      version:
+        description: Release version (X.Y.Z)
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (X.Y.Z)
+        required: true
+        type: string
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ inputs.version }}
+  cancel-in-progress: false
+permissions:
+  contents: read
 jobs:
-  pre-build-and-push:
+  resolve:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     outputs:
-      version: ${{ steps.set-version.outputs.version }}
+      version: ${{ steps.release.outputs.version }}
+      source-sha: ${{ steps.release.outputs.source-sha }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      INPUT_VERSION: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: gradle
-      - name: Set Version
-        id: set-version
+      - id: release
+        name: Resolve the release
         run: |
-          echo "version=$(./gradlew --console=plain --no-daemon -q printVersion)" >> "${GITHUB_OUTPUT}"
-        working-directory: app
-  build-and-push:
-    uses: yhiguchi-dev/reusable-workflow/.github/workflows/docker-image.yaml@main
-    with:
-      build-context: ${{ matrix.build-context }}
-      version: ${{ needs.pre-build-and-push.outputs.version }}
-      platform: ${{ matrix.platform }}
-      push: true
+          version="${INPUT_VERSION}"
+          [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid version: ${version}"; exit 1; }
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/v${version}" --jq .sha)
+          [[ "${sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid sha: ${sha}"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "source-sha=${sha}" >> "${GITHUB_OUTPUT}"
+      - name: Wait for Continuous Integration on the release commit
+        env:
+          SOURCE_SHA: ${{ steps.release.outputs.source-sha }}
+        run: |
+          for _ in $(seq 1 120); do
+            result=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yaml/runs?head_sha=${SOURCE_SHA}&event=push&branch=main" \
+              --jq '[.workflow_runs[] | {status, conclusion}] | first // {} | "\(.status // "missing") \(.conclusion // "")"')
+            echo "ci: ${result}"
+            case "${result}" in
+              "completed success") exit 0 ;;
+              completed*) echo "Continuous Integration did not succeed on ${SOURCE_SHA}"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "timed out waiting for Continuous Integration on ${SOURCE_SHA}"
+          exit 1
+  # CI でテスト・スキャン済みのイメージ（sha-<commit>）を、作り直さずに digest のまま
+  # バージョンタグと latest に昇格させる。
+  promote:
     needs:
-      - pre-build-and-push
-    strategy:
-      fail-fast: false
-      matrix:
-        build-context:
-          - app
-          - flyway
-        platform:
-          - linux/amd64
+      - resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}-app
+      VERSION: ${{ needs.resolve.outputs.version }}
+      SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
+    steps:
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote tested image
+        run: |
+          source="${IMAGE}:sha-${SOURCE_SHA}"
+          source_digest=$(docker buildx imagetools inspect "${source}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "source: ${source}@${source_digest}"
+          docker buildx imagetools create --tag "${IMAGE}:${VERSION}" --tag "${IMAGE}:latest" "${source}@${source_digest}"
+          promoted_digest=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          [ "${promoted_digest}" = "${source_digest}" ] || { echo "digest mismatch: ${promoted_digest} != ${source_digest}"; exit 1; }
+          echo "### ${IMAGE}:${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "promoted from \`${source}\` (\`${source_digest}\`)" >> "${GITHUB_STEP_SUMMARY}"
+  # フロントエンドなどの API 利用側が版を固定して取得できるよう、リリースした版の
+  # OpenAPI 定義と、そこから生成した JSON Schema を GitHub Release に添付する
+  # （https://github.com/<repo>/releases/download/v<version>/openapi.yaml, openapi.schema.json）。
+  publish-spec:
+    needs:
+      - resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.resolve.outputs.version }}
+      SOURCE_SHA: ${{ needs.resolve.outputs.source-sha }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.source-sha }}
+      - name: Check info.version
+        run: |
+          spec_version=$(yq '.info.version' docs/openapi.yaml)
+          [ "${spec_version}" = "${VERSION}" ] || { echo "info.version ${spec_version} != ${VERSION}"; exit 1; }
+      - name: Attach openapi.yaml to the release
+        run: |
+          gh release upload "v${VERSION}" docs/openapi.yaml docs/openapi.schema.json --clobber --repo "${GITHUB_REPOSITORY}"
+          echo "### openapi.yaml / openapi.schema.json attached to v${VERSION}" >> "${GITHUB_STEP_SUMMARY}"

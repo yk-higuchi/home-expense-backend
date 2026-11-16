@@ -1,0 +1,15 @@
+package dev.higuchi.homeexpense.presentation.validation;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import java.util.Objects;
+
+public class ExpenseCategoryValidator implements ConstraintValidator<ExpenseCategory, String> {
+  @Override
+  public boolean isValid(String value, ConstraintValidatorContext context) {
+    if (Objects.isNull(value)) {
+      return true;
+    }
+    return dev.higuchi.homeexpense.core.model.expense.ExpenseCategory.has(value);
+  }
+}
