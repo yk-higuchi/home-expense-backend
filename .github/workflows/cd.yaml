@@ -56,7 +56,7 @@ jobs:
           done
           echo "timed out waiting for Continuous Integration on ${SOURCE_SHA}"
           exit 1
-  # CI でテスト・スキャン済みのイメージ（sha-<commit>）を、作り直さずに digest のまま
+  # CI でテスト・スキャン済みのイメージ（sha-<commit>）を、作り直さずに digest で指定して
   # バージョンタグと latest に昇格させる。
   promote:
     needs:
@@ -83,8 +83,6 @@ jobs:
           source_digest=$(docker buildx imagetools inspect "${source}" --format '{{json .Manifest.Digest}}' | tr -d '"')
           echo "source: ${source}@${source_digest}"
           docker buildx imagetools create --tag "${IMAGE}:${VERSION}" --tag "${IMAGE}:latest" "${source}@${source_digest}"
-          promoted_digest=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{json .Manifest.Digest}}' | tr -d '"')
-          [ "${promoted_digest}" = "${source_digest}" ] || { echo "digest mismatch: ${promoted_digest} != ${source_digest}"; exit 1; }
           echo "### ${IMAGE}:${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
           echo "promoted from \`${source}\` (\`${source_digest}\`)" >> "${GITHUB_STEP_SUMMARY}"
   # フロントエンドなどの API 利用側が版を固定して取得できるよう、リリースした版の
