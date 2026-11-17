@@ -15,7 +15,7 @@
    - リリース PR を作った・更新したときは、Release がそのブランチで Continuous Integration と Lint を起動します（下の「`GITHUB_TOKEN` の制約」）。
 3. **リリース PR のマージ**：Release が `vX.Y.Z` のタグと GitHub Release を作り、同じ実行の中で Continuous Delivery を呼びます。Continuous Delivery は次を行います。
    - タグのコミットで Continuous Integration が成功するのを待つ（失敗したら止まる）
-   - テスト済みの `sha-<commit>` のイメージを、作り直さずに digest のまま `X.Y.Z` と `latest` に昇格させる
+   - テスト済みの `sha-<commit>` のイメージを、作り直さずに digest で指定して `X.Y.Z` と `latest` に昇格させる（付けたタグはそのイメージを 1 つだけ含む index になるので、タグの digest は元と変わります。元のイメージの digest は Step Summary に書きます）
    - `docs/openapi.yaml` と `docs/openapi.schema.json` を GitHub Release に添付する
 
 Continuous Delivery は、バージョンを指定して手動でも再実行できます（`workflow_dispatch`）。GitHub の画面で手作業でリリースを作った場合は、自動では動かないので手動で実行してください。
