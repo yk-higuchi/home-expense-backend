@@ -24,7 +24,7 @@ dependencies {
 
 group = "dev.higuchi.homeexpense"
 
-version = "2.1.0" // x-release-please-version
+version = "2.1.1" // x-release-please-version
 
 System.getenv("DEPLOY_ENV")?.let { deployEnv ->
   version = "$version-$deployEnv"

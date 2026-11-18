@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/yk-higuchi/home-expense-backend/compare/v2.1.0...v2.1.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* **app:** register API response records for reflection in the native image ([4182ed7](https://github.com/yk-higuchi/home-expense-backend/commit/4182ed764eddffa1f8a2de27a0876243904e910d))
+* **docker:** run the native image on distroless base, which ships zlib ([e904e9b](https://github.com/yk-higuchi/home-expense-backend/commit/e904e9bb7028bc733ebfd9e6ef92f37dc5fd0931))
+
 ## [2.1.0](https://github.com/yk-higuchi/home-expense-backend/compare/v2.0.0...v2.1.0) (2026-11-16)
 
 
