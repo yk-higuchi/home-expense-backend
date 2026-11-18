@@ -136,6 +136,16 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
+      # ネイティブイメージでしか起きない問題（共有ライブラリの不足、リフレクションの登録漏れなど）を
+      # 見つけるため、ビルドしたイメージを起動して、主な API が応答するかを確かめる。
+      - name: Start test database (CockroachDB)
+        run: scripts/setup_test_db.sh
+        env:
+          CONTAINER_CLI: docker
+      - name: Smoke test app image
+        run: scripts/smoke_test_image.sh "${IMAGE}:sha-${GITHUB_SHA}"
+        env:
+          CONTAINER_CLI: docker
       - name: Login to GitHub Container Registry
         if: env.PUSH == 'true'
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0

@@ -89,12 +89,12 @@ API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します�
 
 ## ワークフローとリント
 
-| ワークフロー           | ファイル                         | 内容                                                                                 |
-| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
-| Continuous Integration | `.github/workflows/ci.yaml`      | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルドとスキャン |
-| Release                | `.github/workflows/release.yaml` | release-please（リリース PR、タグ、GitHub Release）、リリース PR の検査の起動        |
-| Continuous Delivery    | `.github/workflows/cd.yaml`      | イメージの昇格、API 定義の GitHub Release への添付（Release から呼ばれる）           |
-| Lint                   | `.github/workflows/lint.yaml`    | アプリに直接関わらないファイルのリント                                               |
+| ワークフロー           | ファイル                         | 内容                                                                                             |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Continuous Integration | `.github/workflows/ci.yaml`      | テスト、OpenAPI と生成物の検査、マイグレーションのリント、イメージのビルド・スキャン・起動の確認 |
+| Release                | `.github/workflows/release.yaml` | release-please（リリース PR、タグ、GitHub Release）、リリース PR の検査の起動                    |
+| Continuous Delivery    | `.github/workflows/cd.yaml`      | イメージの昇格、API 定義の GitHub Release への添付（Release から呼ばれる）                       |
+| Lint                   | `.github/workflows/lint.yaml`    | アプリに直接関わらないファイルのリント                                                           |
 
 アプリに関わるリントは Continuous Integration に置き、通らなければ Continuous Delivery が昇格させません。それ以外は Lint に置きます。
 
@@ -149,6 +149,11 @@ yamllint・sqlfluff・ruff は `.venv/bin` にあるので、コミットする�
 - `scripts/setup_test_db.sh`：テスト用の CockroachDB（本番と同じ版）を作り直し、Flyway CLI で `flyway/migration` を当てる。テストは本番と同じマイグレーションで作ったスキーマで動くので、マイグレーションが最初から当たることも毎回確かめられる
   - `localhost:${TEST_DB_PORT}`（既定は 26257）で待ち受け、`%test` プロファイルの接続先と一致する
   - ローカルでは Apple の `container`、CI では `CONTAINER_CLI=docker` を指定して使う
+- `scripts/smoke_test_image.sh <イメージ>`：ビルドしたイメージを `setup_test_db.sh` の DB につないで起動し、一覧・集計の API と、属性の登録・取得が応答するかを確かめる。CI の `image` ジョブで使う
+  - JVM のテストでは起きず、ネイティブイメージでだけ起きる問題（共有ライブラリの不足、リフレクションの登録漏れ）を見つけるため
+  - API が `jakarta.ws.rs.core.Response` で返すレスポンスのクラスは、Quarkus が型を知らないので、`@RegisterForReflection` を付ける（入れ子の record にも付ける）
+  - ネイティブの実行ファイルは zlib（`libz.so.1`）を使うので、実行用のイメージは zlib を含む `distroless/base-debian13` にする（`base-nossl-debian13` には zlib がない）
+  - ローカルでは `container`（`APP_PORT` で待ち受けるポートを変えられる、既定は 18080）、CI では `CONTAINER_CLI=docker` を指定して使う
 - `scripts/swagger_ui.sh`：`docs/openapi.yaml` を表示する Swagger UI を起動する
 - `scripts/sort_openapi.sh <openapi.yaml>`：OpenAPI のキーを並べ替える。まず全体をアルファベット順にし、そのあと OpenAPI 3.2 仕様のフィールド順に並べ直す。`x-` で始まる拡張は残す
 - `scripts/generate_json_schema.mjs <openapi.yaml> <出力先.json>`：OpenAPI から JSON Schema を生成する（通常は `pnpm gen:schema` から使う）
