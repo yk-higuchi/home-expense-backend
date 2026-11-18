@@ -15,7 +15,7 @@ RUN ./gradlew --no-daemon build \
     -Dquarkus.package.jar.enabled=false \
     -x check
 
-FROM gcr.io/distroless/base-nossl-debian13:nonroot@sha256:89815d620ac01d8de13cdaf04d19ed874447ca2296d4985b14b818f6e5e47854
+FROM gcr.io/distroless/base-debian13:nonroot@sha256:a08d9054afbaf1af9b90fd02cdc7b32236319b5376d374505a41548d42b0c5db
 
 ARG VERSION=unspecified
 ARG GIT_SHA=unspecified
