@@ -2,7 +2,9 @@ package dev.higuchi.homeexpense.presentation.api.expense;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.query.expense.ExpenseDetail;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
+@RegisterForReflection
 public record ExpenseGetResponse(
     @JsonProperty("id") String id,
     @JsonProperty("description") String description,
