@@ -5,8 +5,10 @@ import dev.higuchi.homeexpense.presentation.api.balance.PeriodResponse;
 import dev.higuchi.homeexpense.query.balance.statistics.AttributeAmount;
 import dev.higuchi.homeexpense.query.balance.statistics.AttributeBreakdown;
 import dev.higuchi.homeexpense.query.balance.statistics.BalanceStatistics;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 
+@RegisterForReflection
 public record BalanceStatisticsResponse(
     @JsonProperty("period") PeriodResponse period,
     @JsonProperty("income") AttributeBreakdownResponse income,
@@ -25,6 +27,7 @@ public record BalanceStatisticsResponse(
         statistics.net());
   }
 
+  @RegisterForReflection
   public record AttributeBreakdownResponse(
       @JsonProperty("total") long total,
       @JsonProperty("breakdown") List<AttributeAmountResponse> breakdown) {
@@ -36,6 +39,7 @@ public record BalanceStatisticsResponse(
     }
   }
 
+  @RegisterForReflection
   public record AttributeAmountResponse(
       @JsonProperty("attribute_id") String attributeId,
       @JsonProperty("attribute_name") String attributeName,

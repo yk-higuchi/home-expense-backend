@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.higuchi.homeexpense.presentation.api.balance.PeriodResponse;
 import dev.higuchi.homeexpense.query.balance.series.BalanceSeries;
 import dev.higuchi.homeexpense.query.balance.series.BalanceSeriesPoint;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.List;
 
+@RegisterForReflection
 public record BalanceSeriesResponse(
     @JsonProperty("granularity") String granularity,
     @JsonProperty("items") List<PointResponse> items) {
@@ -16,6 +18,7 @@ public record BalanceSeriesResponse(
         series.items().stream().map(PointResponse::of).toList());
   }
 
+  @RegisterForReflection
   public record PointResponse(
       @JsonProperty("period") PeriodResponse period,
       @JsonProperty("income_total") long incomeTotal,
