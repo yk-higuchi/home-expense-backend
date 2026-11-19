@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.29.0
 FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:25.0.5.0-Final-java25@sha256:38f943afcae3218771546a99b41156dd3efa8315483eaf74f88f33d232bb3c8d AS builder
 
 WORKDIR /project
