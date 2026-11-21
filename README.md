@@ -34,6 +34,29 @@ release-please は `GITHUB_TOKEN` で動かします。`GITHUB_TOKEN` で作っ�
 - V1.0.0〜V1.1.0 は本番に記録されたチェックサムと照合されるので、変更しないでください。適用済みのマイグレーションは書き換えず、変更は新しい版として追加します。
 - まとめる前の V1.2.0〜V1.8.0 を当てたローカルの DB は、Flyway がエラーにします。DB を作り直すか、`flyway clean` をしてから当て直してください。
 
+### 本番への適用
+
+本番（CockroachDB Cloud）には、手元から `scripts/migrate_production.sh` で当てます。
+
+```sh
+DB_HOST=<クラスターのホスト名> DB_NAME=<DB 名> DB_USER=<DDL を実行できるユーザー> scripts/migrate_production.sh
+```
+
+- パスワードは実行時に聞かれます（`DB_PASSWORD` で渡すこともできます）。接続情報はコマンドラインに出さず、権限を絞った一時ファイルでコンテナに渡します。
+- 接続は `sslmode=verify-full` です。Basic・Standard の証明書は公的な CA が発行しているので、Java の既定のトラストストアで検証します。CA 証明書をダウンロードして使う場合は `DB_SSL_ROOT_CERT` にそのパスを指定します。
+- スクリプトは `info` と `validate`（適用済みの分のチェックサムの照合）のあと、未適用のマイグレーションを表示し、DB 名を入力したときだけ `migrate` します。違う値を入れると何も変えずに終わるので、接続の確認にも使えます。
+- `clean` は無効にしています。未適用の分がなければ何もせずに終わります。
+
+CockroachDB では、Flyway は DDL をトランザクションで包みません（`[non-transactional]`）。マイグレーションが途中で失敗すると、そこまでの変更が残り、`flyway_schema_history` には失敗として記録されます。互換性のない変更（列の名前の変更・テーブルの削除など）を含む版は、次の順で当てます。
+
+1. 直近の本番のダンプで、ローカルの CockroachDB に当てるリハーサルをする
+2. アプリを止める
+3. Cloud のコンソールで、直近のバックアップがあることを確かめる（失敗したときはそこから復元します）
+4. `scripts/migrate_production.sh` で当てる
+5. その版に対応するアプリを起動する
+
+V1.2.0 は互換性のない変更を含むので、この順で当て、そのあと 2.1.x を起動します。旧版のアプリは V1.2.0 を当てた DB では動かず、2.1.x は当てる前の DB では動きません。
+
 ## API 定義
 
 API の定義は `docs/openapi.yaml`（OpenAPI 3.2.0）だけで管理します。
@@ -154,6 +177,7 @@ yamllint・sqlfluff・ruff は `.venv/bin` にあるので、コミットする�
   - API が `jakarta.ws.rs.core.Response` で返すレスポンスのクラスは、Quarkus が型を知らないので、`@RegisterForReflection` を付ける（入れ子の record にも付ける）
   - ネイティブの実行ファイルは zlib（`libz.so.1`）を使うので、実行用のイメージは zlib を含む `distroless/base-debian13` にする（`base-nossl-debian13` には zlib がない）
   - ローカルでは `container`（`APP_PORT` で待ち受けるポートを変えられる、既定は 18080）、CI では `CONTAINER_CLI=docker` を指定して使う
+- `scripts/migrate_production.sh`：本番（CockroachDB Cloud）に Flyway CLI で `flyway/migration` を当てる。使い方は「本番への適用」を参照
 - `scripts/swagger_ui.sh`：`docs/openapi.yaml` を表示する Swagger UI を起動する
 - `scripts/sort_openapi.sh <openapi.yaml>`：OpenAPI のキーを並べ替える。まず全体をアルファベット順にし、そのあと OpenAPI 3.2 仕様のフィールド順に並べ直す。`x-` で始まる拡張は残す
 - `scripts/generate_json_schema.mjs <openapi.yaml> <出力先.json>`：OpenAPI から JSON Schema を生成する（通常は `pnpm gen:schema` から使う）
