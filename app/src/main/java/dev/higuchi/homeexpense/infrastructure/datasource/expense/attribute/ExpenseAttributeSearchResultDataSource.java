@@ -3,7 +3,6 @@ package dev.higuchi.homeexpense.infrastructure.datasource.expense.attribute;
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
 import dev.higuchi.homeexpense.core.model.expense.attribute.ExpenseAttributeIdentifier;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.expense.attribute.ExpenseAttributeDetail;
@@ -19,7 +18,7 @@ public class ExpenseAttributeSearchResultDataSource implements ExpenseAttributeS
 
   private final JdbcOperator jdbc;
 
-  public ExpenseAttributeSearchResultDataSource(@ReadOnly JdbcOperator jdbc) {
+  public ExpenseAttributeSearchResultDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 

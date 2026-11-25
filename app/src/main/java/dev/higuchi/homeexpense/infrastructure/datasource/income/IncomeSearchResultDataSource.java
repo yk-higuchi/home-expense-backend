@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.infrastructure.datasource.income;
 
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.IncomeIdentifier;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.income.IncomeDetail;
@@ -37,7 +36,7 @@ public class IncomeSearchResultDataSource implements IncomeSearchResultQuerier {
 
   private final JdbcOperator jdbc;
 
-  public IncomeSearchResultDataSource(@ReadOnly JdbcOperator jdbc) {
+  public IncomeSearchResultDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 
