@@ -35,7 +35,6 @@ trap cleanup EXIT
 "${container_cli}" rm -f "${container_name}" > /dev/null 2>&1 || true
 "${container_cli}" run -d --name "${container_name}" "${run_args[@]}" \
   -e DB_URL="${db_url}" -e DB_USERNAME=expense -e DB_PASSWORD=password \
-  -e DB_READONLY_URL="${db_url}" -e DB_READONLY_USERNAME=expense -e DB_READONLY_PASSWORD=password \
   -e DEPLOY_ENV=smoke \
   "${image}" > /dev/null
 

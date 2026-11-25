@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.infrastructure.datasource.income.attribute;
 
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.income.attribute.IncomeAttributeIdentifier;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.income.attribute.IncomeAttributeDetail;
@@ -18,7 +17,7 @@ public class IncomeAttributeSearchResultDataSource implements IncomeAttributeSea
 
   private final JdbcOperator jdbc;
 
-  public IncomeAttributeSearchResultDataSource(@ReadOnly JdbcOperator jdbc) {
+  public IncomeAttributeSearchResultDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 

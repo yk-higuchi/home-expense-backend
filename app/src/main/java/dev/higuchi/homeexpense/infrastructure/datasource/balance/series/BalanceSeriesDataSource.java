@@ -1,7 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.balance.series;
 
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.Granularity;
@@ -62,7 +61,7 @@ public class BalanceSeriesDataSource implements BalanceSeriesQuerier {
 
   private final JdbcOperator jdbc;
 
-  public BalanceSeriesDataSource(@ReadOnly JdbcOperator jdbc) {
+  public BalanceSeriesDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 

@@ -2,7 +2,6 @@ package dev.higuchi.homeexpense.infrastructure.datasource.expense;
 
 import dev.higuchi.homeexpense.core.model.document.DocumentDigest;
 import dev.higuchi.homeexpense.core.model.expense.ExpenseIdentifier;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.expense.ExpenseDetail;
@@ -38,7 +37,7 @@ public class ExpenseSearchResultDataSource implements ExpenseSearchResultQuerier
 
   private final JdbcOperator jdbc;
 
-  public ExpenseSearchResultDataSource(@ReadOnly JdbcOperator jdbc) {
+  public ExpenseSearchResultDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 

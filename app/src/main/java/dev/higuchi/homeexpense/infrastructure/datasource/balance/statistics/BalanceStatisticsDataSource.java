@@ -1,7 +1,6 @@
 package dev.higuchi.homeexpense.infrastructure.datasource.balance.statistics;
 
 import dev.higuchi.homeexpense.core.model.expense.ExpenseCategory;
-import dev.higuchi.homeexpense.infrastructure.datasource.ReadOnly;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.JdbcOperator;
 import dev.higuchi.homeexpense.infrastructure.datasource.jdbc.ParameterBinder;
 import dev.higuchi.homeexpense.query.balance.statistics.AttributeAmount;
@@ -41,7 +40,7 @@ public class BalanceStatisticsDataSource implements BalanceStatisticsQuerier {
 
   private final JdbcOperator jdbc;
 
-  public BalanceStatisticsDataSource(@ReadOnly JdbcOperator jdbc) {
+  public BalanceStatisticsDataSource(JdbcOperator jdbc) {
     this.jdbc = jdbc;
   }
 
